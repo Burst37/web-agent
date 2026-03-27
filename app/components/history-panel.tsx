@@ -1,33 +1,49 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getHistory, clearHistory, type HistoryEntry } from "@/lib/history";
 import { cn } from "@/utils/cn";
 
-function formatRelativeTime(timestamp: number): string {
-  const diff = Date.now() - timestamp;
-  const minutes = Math.floor(diff / 60000);
+interface ConversationEntry {
+  id: string;
+  title: string;
+  created_at: number;
+  updated_at: number;
+}
+
+function formatRelativeTime(epoch: number): string {
+  const diff = Date.now() / 1000 - epoch;
+  const minutes = Math.floor(diff / 60);
   if (minutes < 1) return "just now";
   if (minutes < 60) return `${minutes}m ago`;
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  if (days < 7) return `${days}d ago`;
+  return new Date(epoch * 1000).toLocaleDateString();
 }
 
 export default function HistoryPanel({
   onSelect,
+  currentId,
 }: {
-  onSelect: (prompt: string) => void;
+  onSelect: (id: string, title: string) => void;
+  currentId?: string;
 }) {
-  const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [conversations, setConversations] = useState<ConversationEntry[]>([]);
   const [show, setShow] = useState(false);
 
+  const refresh = () => {
+    fetch("/api/conversations")
+      .then((r) => r.json())
+      .then(setConversations)
+      .catch(() => setConversations([]));
+  };
+
   useEffect(() => {
-    setHistory(getHistory());
+    refresh();
   }, []);
 
-  if (history.length === 0) return null;
+  if (conversations.length === 0) return null;
 
   return (
     <div className="mt-16">
@@ -36,38 +52,31 @@ export default function HistoryPanel({
         className="text-body-small text-black-alpha-32 hover:text-black-alpha-48 transition-colors"
         onClick={() => setShow(!show)}
       >
-        {show ? "Hide" : "Recent"} ({history.length})
+        {show ? "Hide history" : "Recent"} ({conversations.length})
       </button>
 
       {show && (
-        <div className="mt-8 flex flex-col gap-2 max-h-240 overflow-y-auto">
-          {history.map((entry) => (
+        <div className="mt-8 flex flex-col gap-2 max-h-300 overflow-y-auto">
+          {conversations.map((conv) => (
             <button
-              key={entry.id}
+              key={conv.id}
               type="button"
-              className="w-full text-left px-12 py-8 rounded-8 hover:bg-black-alpha-2 transition-all group"
-              onClick={() => onSelect(entry.prompt)}
+              className={cn(
+                "w-full text-left px-12 py-8 rounded-8 transition-all group",
+                currentId === conv.id
+                  ? "bg-heat-4 border border-heat-20"
+                  : "hover:bg-black-alpha-2 border border-transparent",
+              )}
+              onClick={() => onSelect(conv.id, conv.title)}
             >
               <div className="text-body-medium text-accent-black truncate group-hover:text-heat-100 transition-colors">
-                {entry.prompt}
+                {conv.title}
               </div>
-              <div className="flex items-center gap-6 text-body-small text-black-alpha-32">
-                <span>{entry.model}</span>
-                <span>·</span>
-                <span>{formatRelativeTime(entry.timestamp)}</span>
+              <div className="text-body-small text-black-alpha-32">
+                {formatRelativeTime(conv.updated_at)}
               </div>
             </button>
           ))}
-          <button
-            type="button"
-            className="text-body-small text-black-alpha-24 hover:text-accent-crimson transition-colors py-4"
-            onClick={() => {
-              clearHistory();
-              setHistory([]);
-            }}
-          >
-            Clear history
-          </button>
         </div>
       )}
     </div>

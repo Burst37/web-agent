@@ -12,7 +12,6 @@ import OutputPanel from "./components/output-panel";
 import SettingsPanel from "./components/settings-panel";
 import CsvUpload from "./components/csv-upload";
 import HistoryPanel from "./components/history-panel";
-import { addToHistory } from "@/lib/history";
 import SkillViewer from "./components/skill-viewer";
 import SymbolColored from "@/components/shared/icons/symbol-colored";
 import { cn } from "@/utils/cn";
@@ -231,6 +230,7 @@ export default function AgentPage() {
   const [config, setConfig] = useState<AgentConfig>(defaultConfig);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [followUp, setFollowUp] = useState("");
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [showSkills, setShowSkills] = useState(false);
   const [showModel, setShowModel] = useState(false);
   const [skills, setSkills] = useState<SkillInfo[]>([]);
@@ -257,11 +257,18 @@ export default function AgentPage() {
 
   const onRun = () => {
     if (!config.prompt.trim()) return;
+    const id = `conv-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    setConversationId(id);
     setHasSubmitted(true);
-    addToHistory({
-      prompt: config.prompt,
-      model: currentModelName,
-      skillCount: config.skills.length,
+    // Save to SQLite
+    fetch("/api/conversations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id,
+        title: config.prompt.slice(0, 100),
+        config,
+      }),
     });
     sendMessage({ text: config.prompt });
   };
@@ -404,7 +411,8 @@ export default function AgentPage() {
         {/* History */}
         <div className="w-full max-w-640">
           <HistoryPanel
-            onSelect={(prompt) => setConfig({ ...config, prompt })}
+            onSelect={(id, title) => setConfig({ ...config, prompt: title })}
+            currentId={conversationId ?? undefined}
           />
         </div>
       </div>
