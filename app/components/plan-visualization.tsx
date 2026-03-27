@@ -220,13 +220,16 @@ function extractTimeline(messages: UIMessage[]): TimelineItem[] {
             status,
           });
         } else if (toolName === "scrape" || toolName === "interact" || toolName === "map") {
-          const markdown = typeof output === "object" && output
-            ? String((output as { markdown?: string }).markdown ?? (output as { content?: string }).content ?? "")
+          const outObj = output as Record<string, unknown>;
+          const markdown = typeof outObj === "object" && outObj
+            ? String(outObj.markdown ?? outObj.content ?? outObj.answer ?? "")
             : "";
+          const liveViewUrl = outObj?.liveViewUrl ?? outObj?.interactiveLiveViewUrl;
           items.push({
             type: toolName === "interact" ? "interact" : "scrape",
             url: String(input.url ?? ""),
             content: markdown,
+            command: liveViewUrl ? String(liveViewUrl) : undefined, // reuse command field for liveViewUrl
             status,
           });
         } else if (toolName === "bashExec") {
@@ -309,7 +312,21 @@ export default function PlanVisualization({
           case "scrape":
           case "interact":
             return item.status === "complete" && item.content ? (
-              <ScrapeResult key={i} url={item.url!} content={item.content} />
+              <div key={i}>
+                <ScrapeResult url={item.url!} content={item.content} />
+                {item.type === "interact" && item.command && (
+                  <div className="ml-26 mb-8">
+                    <a
+                      href={item.command}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-label-small text-accent-bluetron hover:underline"
+                    >
+                      Open live view
+                    </a>
+                  </div>
+                )}
+              </div>
             ) : (
               (() => {
                 const domain = item.url ? getDomain(item.url) : null;
