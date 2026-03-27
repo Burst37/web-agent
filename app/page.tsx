@@ -386,7 +386,7 @@ export default function AgentPage() {
     );
   }
 
-  // After submission: split-panel execution view
+  // After submission: centered activity feed
   return (
     <div className="min-h-screen bg-background-base">
       <header className="border-b border-border-faint px-20 py-12 flex items-center gap-10">
@@ -401,26 +401,40 @@ export default function AgentPage() {
           <SymbolColored width={22} height={32} />
           <h1 className="text-title-h5 text-accent-black">Firecrawl Agent</h1>
         </button>
-        <span className="text-body-small text-black-alpha-32 ml-auto">
-          {isRunning ? "Running..." : "Complete"}
-        </span>
+        {isRunning && (
+          <button
+            type="button"
+            className="ml-auto px-12 py-6 rounded-8 text-label-small bg-black-alpha-4 text-accent-black hover:bg-black-alpha-6 transition-all"
+            onClick={stop}
+          >
+            Stop
+          </button>
+        )}
       </header>
 
-      <div className="flex lg-max:flex-col h-[calc(100vh-57px)]">
-        <div className="lg:w-[42%] lg:border-r border-border-faint overflow-y-auto p-20 lg:p-24">
-          <AgentInput
-            config={config}
-            onConfigChange={setConfig}
-            onRun={onRun}
-            onStop={stop}
-            isRunning={isRunning}
-          />
+      <div className="max-w-700 mx-auto px-20 py-24">
+        {/* Query display */}
+        <div className="mb-20">
+          <div className="text-title-h4 text-accent-black mb-6">
+            {config.prompt}
+          </div>
+          <div className="flex items-center gap-8 text-body-small text-black-alpha-40">
+            <ProviderModelIcon icon={currentModelIcon} size={14} />
+            <span>{currentModelName}</span>
+            {config.skills.length > 0 && (
+              <>
+                <span className="text-black-alpha-16">·</span>
+                <span>{config.skills.length} skill{config.skills.length > 1 ? "s" : ""}</span>
+              </>
+            )}
+          </div>
         </div>
 
-        <div className="lg:w-[58%] flex flex-col overflow-hidden">
-          <PlanVisualization messages={messages} isRunning={isRunning} />
-          <OutputPanel messages={messages} />
-        </div>
+        {/* Activity feed */}
+        <PlanVisualization messages={messages} isRunning={isRunning} />
+
+        {/* Output */}
+        <OutputPanel messages={messages} />
       </div>
     </div>
   );

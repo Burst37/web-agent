@@ -77,7 +77,7 @@ export default function OutputPanel({
   ];
 
   return (
-    <div className="border-t border-border-faint">
+    <div className="border-t border-border-faint mt-16">
       <div className="flex items-center justify-between px-16 pt-10">
         <div className="flex gap-2 bg-black-alpha-4 rounded-8 p-2">
           {tabs.map((tab) => (

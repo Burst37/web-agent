@@ -171,18 +171,16 @@ export default function PlanVisualization({
 
   if (toolCalls.length === 0 && !isRunning) {
     return (
-      <div className="flex-1 flex items-center justify-center p-24">
-        <div className="text-center">
-          <div className="text-body-large text-black-alpha-24">
-            Agent activity will appear here
-          </div>
+      <div className="flex items-center justify-center py-40">
+        <div className="text-body-large text-black-alpha-24">
+          Agent activity will appear here
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex-1 p-16 overflow-y-auto">
+    <div>
       <div className="flex flex-col gap-2">
         {toolCalls.map((call) => {
           const style = getToolStyle(call.name);
