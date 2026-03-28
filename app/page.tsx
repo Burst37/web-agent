@@ -17,7 +17,7 @@ import { cn } from "@/utils/cn";
 
 const defaultModel: ModelConfig = {
   provider: "anthropic",
-  model: "claude-sonnet-4-6-20250627",
+  model: "claude-sonnet-4-20250514",
 };
 
 const defaultConfig: AgentConfig = {
