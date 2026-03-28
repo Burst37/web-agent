@@ -676,21 +676,25 @@ export default function AgentPage() {
         <div className="w-full max-w-640 mt-20">
           <div className="grid grid-cols-2 gap-8">
             {[
-              { icon: "🔍", text: "Search for the best open-source dev tools in 2025, scrape each homepage, and compare features" },
-              { icon: "📰", text: "Go to Hacker News, get the top 5 stories, scrape each link, and summarize what's trending" },
-              { icon: "🤖", text: "Find the top 10 AI startups that raised funding this year, scrape their sites, and interact with their pricing pages" },
-              { icon: "🏷️", text: "Scrape Vercel and Netlify pricing pages, interact with the feature comparison tables, and return a side-by-side breakdown" },
-            ].map((ex, i) => (
+              "Search for the top 5 open-source LLM frameworks, scrape each repo, and compare stars, language, and license",
+              "Go to Hacker News, interact with the front page, scrape each of the top 5 links, and summarize the trends",
+              "Find the top AI startups that raised funding this year, scrape their homepages, and interact with their pricing pages",
+              "Scrape Vercel and Netlify pricing pages, interact with the feature toggles, and build a side-by-side comparison",
+              "Search for the best headless CMS platforms, scrape their docs and pricing, and extract key differences",
+              "Find recent YC W25 companies, scrape each company page, and extract founder names, descriptions, and URLs",
+              "Search for React vs Vue vs Svelte performance benchmarks, scrape the top 3 articles, and summarize findings",
+              "Scrape the Stripe and Paddle pricing pages, interact with the calculator widgets, and compare costs at 10k transactions",
+            ].map((text, i) => (
               <button
                 key={i}
                 type="button"
                 className="text-left px-14 py-10 rounded-10 border border-border-faint bg-accent-white hover:border-heat-40 hover:bg-heat-4 transition-all group"
                 onClick={() => {
-                  setConfig({ ...config, prompt: ex.text });
+                  setConfig({ ...config, prompt: text });
                 }}
               >
                 <span className="text-body-medium text-black-alpha-48 group-hover:text-accent-black transition-colors">
-                  {ex.icon} {ex.text}
+                  {text}
                 </span>
               </button>
             ))}
