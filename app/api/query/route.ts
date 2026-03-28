@@ -1,4 +1,4 @@
-import { generateText, stepCountIs, ToolLoopAgent } from "ai";
+import { ToolLoopAgent, stepCountIs } from "ai";
 import { FirecrawlTools } from "firecrawl-aisdk";
 import { resolveModel } from "@/lib/config/resolve-model";
 import { formatOutput } from "@/lib/agents/tools";
@@ -107,20 +107,20 @@ export async function POST(req: Request) {
         stopWhen: stepCountIs(maxSteps),
       });
 
-    const mapStep = (s: { text: string; toolCalls: { toolName: string }[]; toolResults: { toolName: string }[] }) => ({
-      text: s.text,
-      toolCalls: s.toolCalls.map((tc) => {
-        const c = tc as Record<string, unknown>;
-        return { name: tc.toolName, input: c.input ?? c.args };
-      }),
-      toolResults: s.toolResults.map((tr) => {
-        const r = tr as Record<string, unknown>;
-        return { name: tr.toolName, output: r.output ?? r.result };
-      }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mapStep = (s: any) => ({
+      text: s.text ?? "",
+      toolCalls: (s.toolCalls ?? []).filter(Boolean).map((tc: Record<string, unknown>) => ({
+        name: tc.toolName ?? "",
+        input: tc.input ?? tc.args,
+      })),
+      toolResults: (s.toolResults ?? []).filter(Boolean).map((tr: Record<string, unknown>) => ({
+        name: tr.toolName ?? "",
+        output: tr.output ?? tr.result,
+      })),
     });
 
     if (stream) {
-      // SSE streaming mode
       const encoder = new TextEncoder();
       const readable = new ReadableStream({
         async start(controller) {
@@ -130,24 +130,24 @@ export async function POST(req: Request) {
 
           try {
             const agent = createAgent();
-
-            const { text, steps, usage } = await generateText({
-              model: agent as unknown as Parameters<typeof generateText>[0]["model"],
+            const result = await agent.generate({
               prompt,
               onStepFinish: ({ text: stepText, toolCalls, toolResults, usage: stepUsage }) => {
                 if (stepText) {
                   send({ type: "text", content: stepText });
                 }
                 if (toolCalls) {
-                  for (const tc of toolCalls) {
+                  for (const tc of toolCalls ?? []) {
+                    if (!tc) continue;
                     const c = tc as Record<string, unknown>;
-                    send({ type: "tool-call", name: tc.toolName, input: c.input ?? c.args });
+                    send({ type: "tool-call", name: c.toolName, input: c.input ?? c.args });
                   }
                 }
                 if (toolResults) {
-                  for (const tr of toolResults) {
+                  for (const tr of toolResults ?? []) {
+                    if (!tr) continue;
                     const r = tr as Record<string, unknown>;
-                    send({ type: "tool-result", name: tr.toolName, output: r.output ?? r.result });
+                    send({ type: "tool-result", name: r.toolName, output: r.output ?? r.result });
                   }
                 }
                 if (stepUsage) {
@@ -158,9 +158,9 @@ export async function POST(req: Request) {
 
             send({
               type: "done",
-              text,
-              steps: steps.map(mapStep),
-              usage,
+              text: result.text ?? "",
+              steps: (result.steps ?? []).map(mapStep),
+              usage: result.usage,
             });
           } catch (err) {
             send({ type: "error", error: err instanceof Error ? err.message : String(err) });
@@ -181,15 +181,12 @@ export async function POST(req: Request) {
 
     // Non-streaming: run to completion
     const agent = createAgent();
-    const { text, steps, usage } = await generateText({
-      model: agent as unknown as Parameters<typeof generateText>[0]["model"],
-      prompt,
-    });
+    const result = await agent.generate({ prompt });
 
     return Response.json({
-      text,
-      steps: steps.map(mapStep),
-      usage,
+      text: result.text ?? "",
+      steps: (result.steps ?? []).map(mapStep),
+      usage: result.usage,
     });
   } catch (err) {
     return Response.json(
