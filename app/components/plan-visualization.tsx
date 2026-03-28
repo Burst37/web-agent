@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { UIMessage } from "ai";
 import { Streamdown } from "streamdown";
 import { createCodePlugin } from "@streamdown/code";
@@ -452,6 +452,166 @@ function InteractCard({ item }: { item: TimelineItem }) {
   );
 }
 
+// --- Sub-agent card ---
+
+function SubAgentCard({ item }: { item: TimelineItem }) {
+  const [expanded, setExpanded] = useState(false);
+  const isRunning = item.status !== "complete";
+  const steps = item.subagentSteps ?? [];
+
+  // Parse sub-agent steps into mini timeline items
+  const subItems = useMemo(() => {
+    const result: { type: string; label: string; detail?: string; credits?: number }[] = [];
+    for (const step of steps) {
+      if (step.text) result.push({ type: "text", label: step.text.slice(0, 150) });
+      for (let j = 0; j < step.toolCalls.length; j++) {
+        const tc = step.toolCalls[j];
+        const tr = step.toolResults[j];
+        const out = tr?.output as Record<string, unknown> | undefined;
+        const credits = typeof out?.creditsUsed === "number" ? out.creditsUsed as number : undefined;
+        if (tc.toolName === "search") {
+          const q = (tc.input as Record<string, unknown>).query;
+          const count = Array.isArray((out as Record<string, unknown>)?.data) ? (out as Record<string, unknown>).data : undefined;
+          result.push({ type: "search", label: `Search: "${q}"`, detail: count ? `${(count as unknown[]).length} results` : undefined, credits });
+        } else if (tc.toolName === "scrape") {
+          result.push({ type: "scrape", label: `Scrape: ${(tc.input as Record<string, unknown>).url}`, credits });
+        } else if (tc.toolName === "interact") {
+          const prompt = (tc.input as Record<string, unknown>).prompt ?? (tc.input as Record<string, unknown>).url;
+          result.push({ type: "interact", label: `Interact: ${prompt}`, credits });
+        } else if (tc.toolName === "bashExec" || tc.toolName === "bash_exec") {
+          result.push({ type: "bash", label: `$ ${(tc.input as Record<string, unknown>).command}` });
+        } else {
+          result.push({ type: "other", label: tc.toolName });
+        }
+      }
+    }
+    return result;
+  }, [steps]);
+
+  return (
+    <div className={cn(
+      "my-12 rounded-12 border overflow-hidden transition-all",
+      isRunning ? "border-accent-amethyst/30 shadow-sm" : "border-accent-amethyst/15",
+    )}>
+      {/* Header - clickable to expand */}
+      <button
+        type="button"
+        className="w-full flex items-center gap-10 px-14 py-12 hover:bg-accent-amethyst/[0.02] transition-colors text-left cursor-pointer"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <div className="w-28 h-28 rounded-8 bg-accent-amethyst/10 flex-center flex-shrink-0">
+          <svg fill="none" height="16" viewBox="0 0 24 24" width="16" className="text-accent-amethyst">
+            <path d="M16 18l6-6-6-6M8 6l-6 6 6 6" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
+          </svg>
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-6">
+            <span className="text-label-medium text-accent-black">
+              {item.skillName ?? "Sub-agent"}
+            </span>
+            {isRunning && (
+              <div className="w-5 h-5 rounded-full bg-accent-amethyst animate-pulse flex-shrink-0" />
+            )}
+          </div>
+          {item.subagentTask && (
+            <div className="text-body-small text-black-alpha-40 truncate mt-1">
+              {item.subagentTask}
+            </div>
+          )}
+          {!item.subagentTask && item.subagentDescription && (
+            <div className="text-body-small text-black-alpha-32 truncate mt-1">
+              {item.subagentDescription}
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-6 flex-shrink-0">
+          {item.status === "complete" && item.exitCode !== undefined && item.exitCode > 0 && (
+            <span className="text-mono-x-small text-black-alpha-24 bg-black-alpha-4 px-6 py-1 rounded-4">
+              {item.exitCode} step{item.exitCode !== 1 ? "s" : ""}
+            </span>
+          )}
+          {item.status === "complete" && (
+            <svg className="w-14 h-14 text-accent-forest" fill="none" viewBox="0 0 16 16">
+              <path d="M13.3 4.3L6 11.6 2.7 8.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+          <svg fill="none" height="12" viewBox="0 0 24 24" width="12" className={cn("transition-transform text-black-alpha-24", expanded && "rotate-180")} stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </div>
+      </button>
+
+      {/* Expanded: show internal tool calls timeline */}
+      {expanded && subItems.length > 0 && (
+        <div className="border-t border-accent-amethyst/10 bg-accent-amethyst/[0.02] px-14 py-10">
+          <div className="flex flex-col gap-1">
+            {subItems.map((si, j) => (
+              <div key={j} className="flex items-start gap-8 py-3">
+                <div className="w-4 h-4 rounded-full bg-accent-amethyst/30 mt-6 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className={cn(
+                    "text-body-small truncate",
+                    si.type === "text" ? "text-black-alpha-48" : "text-accent-black",
+                  )}>
+                    {si.type === "text" ? si.label : (
+                      <>
+                        <span className={cn(
+                          "text-mono-x-small px-4 py-0.5 rounded-3 mr-4",
+                          si.type === "search" ? "text-heat-100 bg-heat-4" :
+                          si.type === "scrape" ? "text-accent-forest bg-accent-forest/8" :
+                          si.type === "interact" ? "text-accent-amethyst bg-accent-amethyst/8" :
+                          si.type === "bash" ? "text-black-alpha-48 bg-black-alpha-4" :
+                          "text-black-alpha-40 bg-black-alpha-4"
+                        )}>
+                          {si.type}
+                        </span>
+                        <span className="text-body-small text-black-alpha-56">{si.label.replace(/^(Search|Scrape|Interact|bash):\s*/i, "")}</span>
+                      </>
+                    )}
+                  </div>
+                  {si.detail && <div className="text-mono-x-small text-black-alpha-24 mt-1">{si.detail}</div>}
+                </div>
+                {si.credits !== undefined && si.credits > 0 && (
+                  <span className="text-mono-x-small text-black-alpha-24 flex-shrink-0">{si.credits}cr</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Collapsed preview of what it did */}
+      {!expanded && subItems.length > 0 && (
+        <div className="px-14 pb-8">
+          <div className="flex flex-wrap gap-4">
+            {(() => {
+              const counts: Record<string, number> = {};
+              for (const si of subItems) {
+                if (si.type !== "text") counts[si.type] = (counts[si.type] || 0) + 1;
+              }
+              return Object.entries(counts).map(([type, count]) => (
+                <span key={type} className="text-mono-x-small text-black-alpha-24 bg-black-alpha-4 px-6 py-1 rounded-4">
+                  {count} {type}{count !== 1 ? (type === "search" ? "es" : "s") : ""}
+                </span>
+              ));
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* Final result text */}
+      {expanded && item.status === "complete" && item.text && (
+        <div className="border-t border-accent-amethyst/10 px-14 py-10">
+          <div className="text-label-x-small text-black-alpha-24 mb-4">Result</div>
+          <div className="text-body-small text-accent-black leading-relaxed prose prose-sm max-w-none">
+            <Streamdown plugins={{ code }}>{item.text}</Streamdown>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- Bash result rendering ---
 
 function BashResult({ command, stdout, stderr, exitCode }: { command: string; stdout: string; stderr: string; exitCode: number }) {
@@ -574,8 +734,18 @@ interface TimelineItem {
   exitCode?: number;
   // skill
   skillName?: string;
+  // subagent
+  subagentDescription?: string;
+  subagentTask?: string;
+  subagentSteps?: SubagentStep[];
   // status
   status: "running" | "complete";
+}
+
+interface SubagentStep {
+  text: string;
+  toolCalls: { toolName: string; input: Record<string, unknown> }[];
+  toolResults: { toolName: string; output: Record<string, unknown> }[];
 }
 
 function extractTimeline(messages: UIMessage[]): TimelineItem[] {
@@ -726,14 +896,21 @@ function extractTimeline(messages: UIMessage[]): TimelineItem[] {
             status,
           });
         } else if (toolName.startsWith("subagent_")) {
-          const result = (output as { result?: string; subAgent?: string; steps?: number }).result;
-          const agentName = (output as { subAgent?: string }).subAgent ?? toolName.replace("subagent_", "");
-          const steps = (output as { steps?: number }).steps;
+          const outObj = output as Record<string, unknown>;
+          const result = typeof outObj.result === "string" ? outObj.result : undefined;
+          const agentName = typeof outObj.subAgent === "string" ? outObj.subAgent : toolName.replace("subagent_", "");
+          const desc = typeof outObj.description === "string" ? outObj.description : undefined;
+          const task = typeof outObj.task === "string" ? outObj.task : typeof input.task === "string" ? input.task as string : undefined;
+          const steps = typeof outObj.steps === "number" ? outObj.steps : 0;
+          const stepDetails = Array.isArray(outObj.stepDetails) ? outObj.stepDetails as SubagentStep[] : undefined;
           items.push({
             type: "subagent",
-            text: result ? String(result) : String(input.task ?? ""),
+            text: result,
             skillName: agentName,
-            exitCode: steps ?? 0,
+            subagentDescription: desc,
+            subagentTask: task,
+            subagentSteps: stepDetails,
+            exitCode: steps,
             status,
           });
         } else if (toolName === "formatOutput") {
@@ -846,47 +1023,7 @@ export default function PlanVisualization({
           case "skill":
             return <SkillLoad key={i} name={item.skillName!} description={item.text} status={item.status} />;
           case "subagent":
-            return (
-              <div key={i} className="my-12 rounded-12 border border-accent-amethyst/15 bg-accent-amethyst/[0.03] overflow-hidden">
-                {/* Sub-agent header */}
-                <div className="flex items-center gap-8 px-14 py-10 border-b border-accent-amethyst/10">
-                  <div className="w-24 h-24 rounded-6 bg-accent-amethyst/10 flex-center flex-shrink-0">
-                    <svg fill="none" height="14" viewBox="0 0 24 24" width="14" className="text-accent-amethyst">
-                      <path d="M16 18l6-6-6-6M8 6l-6 6 6 6" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-                    </svg>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-label-small text-accent-amethyst font-medium">
-                      {item.skillName ?? "Sub-agent"}
-                    </div>
-                    {item.status === "running" && (
-                      <div className="text-body-small text-black-alpha-32">Running...</div>
-                    )}
-                    {item.status === "complete" && item.exitCode !== undefined && item.exitCode > 0 && (
-                      <div className="text-body-small text-black-alpha-32">
-                        Completed in {item.exitCode} step{item.exitCode !== 1 ? "s" : ""}
-                      </div>
-                    )}
-                  </div>
-                  {item.status === "running" && (
-                    <div className="w-5 h-5 rounded-full bg-accent-amethyst animate-pulse flex-shrink-0" />
-                  )}
-                  {item.status === "complete" && (
-                    <svg className="w-16 h-16 text-accent-forest flex-shrink-0" fill="none" viewBox="0 0 16 16">
-                      <path d="M13.3 4.3L6 11.6 2.7 8.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  )}
-                </div>
-                {/* Sub-agent result */}
-                {item.status === "complete" && item.text && (
-                  <div className="px-14 py-10">
-                    <div className="text-body-medium text-black-alpha-56 whitespace-pre-wrap line-clamp-6">
-                      {item.text}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
+            return <SubAgentCard key={i} item={item} />;
           case "format":
             return null; // Handled by OutputPanel
           default:

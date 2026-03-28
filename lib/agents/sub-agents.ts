@@ -21,10 +21,31 @@ function makeSubagentTool(
     inputSchema: subagentSchema,
     execute: async ({ task }) => {
       const result = await subAgent.generate({ prompt: task });
+      // Return full step details so the UI can render nested timeline
+      const stepDetails = result.steps.map((step) => ({
+        text: step.text || "",
+        toolCalls: step.toolCalls.map((tc) => {
+          const c = tc as Record<string, unknown>;
+          return {
+            toolName: tc.toolName,
+            input: c.input ?? c.args ?? {},
+          };
+        }),
+        toolResults: step.toolResults.map((tr) => {
+          const r = tr as Record<string, unknown>;
+          return {
+            toolName: tr.toolName,
+            output: r.output ?? r.result ?? {},
+          };
+        }),
+      }));
       return {
         subAgent: config.name,
+        description: config.description,
+        task,
         result: result.text,
         steps: result.steps.length,
+        stepDetails,
       };
     },
   });
