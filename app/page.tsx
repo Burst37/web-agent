@@ -360,30 +360,33 @@ export default function AgentPage() {
     let firecrawlCredits = 0;
     let toolCalls = 0;
     let agentTurns = 0;
-    let inputChars = 0;
-    let outputChars = 0;
+    let totalChars = 0;
 
     for (const msg of messages) {
       if (msg.role === "assistant") agentTurns++;
       for (const part of msg.parts) {
         if (part.type === "text") {
-          if (msg.role === "user") inputChars += part.text.length;
-          else outputChars += part.text.length;
+          totalChars += part.text.length;
         }
         const p = part as Record<string, unknown>;
         if (part.type.startsWith("tool-") || part.type === "dynamic-tool") {
           toolCalls++;
+          // Count tool input size
+          const input = p.input ?? p.args;
+          if (input) totalChars += JSON.stringify(input).length;
+          // Count tool output size
           const output = (p.output ?? p.result) as Record<string, unknown> | undefined;
           if (output && typeof output === "object") {
             const credits = typeof output.creditsUsed === "number" ? output.creditsUsed : 0;
             firecrawlCredits += credits;
+            totalChars += JSON.stringify(output).length;
           }
         }
       }
     }
 
     // Rough token estimate: ~4 chars per token
-    const estimatedTokens = Math.round((inputChars + outputChars) / 4);
+    const estimatedTokens = Math.round(totalChars / 4);
 
     return { firecrawlCredits, toolCalls, agentTurns, estimatedTokens };
   }, [messages]);
@@ -885,8 +888,8 @@ export default function AgentPage() {
       </div>
       </div>
 
-      {/* Studio panel -- right side, appears after agent finishes */}
-      {!isRunning && messages.length > 0 && (
+      {/* Studio panel -- right side, stays visible once conversation starts */}
+      {messages.length > 0 && (
         <div className={cn(
           "h-full border-l border-border-faint bg-background-base flex flex-col flex-shrink-0 overflow-hidden transition-all duration-200",
           studioCollapsed ? "w-48" : "w-260",
@@ -919,15 +922,15 @@ export default function AgentPage() {
                 <div key={card.id}>
                   <button
                     type="button"
-                    disabled={isGenerating}
+                    disabled={isGenerating || isRunning}
                     className={cn(
                       "w-full text-left px-14 py-12 rounded-10 border transition-all",
                       generated ? card.activeColor + " " + card.color : card.color,
-                      !isGenerating && !generated && "hover:border-heat-40",
-                      isGenerating && "opacity-70 cursor-wait",
+                      !isGenerating && !isRunning && !generated && "hover:border-heat-40",
+                      (isGenerating || (isRunning && !generated)) && "opacity-70 cursor-wait",
                     )}
                     onClick={() => {
-                      if (isGenerating) return;
+                      if (isGenerating || isRunning) return;
                       const prompts: Record<string, string> = {
                         json: "Format all the collected data as JSON using formatOutput.",
                         csv: "Format all the collected data as CSV using formatOutput.",
