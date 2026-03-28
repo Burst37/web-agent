@@ -1,0 +1,49 @@
+import { createAnthropic } from "@ai-sdk/anthropic";
+import { generateText } from "ai";
+import type { AgentConfig } from "@/lib/types";
+import { discoverSkills } from "@/lib/skills/discovery";
+
+export const maxDuration = 60;
+
+export async function POST(req: Request) {
+  const { prompt, config } = (await req.json()) as {
+    prompt: string;
+    config: AgentConfig;
+  };
+
+  const skills = await discoverSkills();
+  const skillList = skills.length
+    ? `\nAvailable skills: ${skills.map((s) => `${s.name} (${s.description.slice(0, 60)})`).join(", ")}`
+    : "";
+
+  const anthropic = createAnthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  });
+
+  const { text } = await generateText({
+    model: anthropic("claude-haiku-4-5-20251001"),
+    system: `You are a planning agent for a web research tool powered by Firecrawl. Given a user's request, produce a clear, numbered execution plan.
+
+Available tools:
+- search: Web search to discover relevant pages
+- scrape: Extract content from a URL (supports query parameter for targeted extraction)
+- interact: Click buttons, fill forms, handle JavaScript-heavy pages
+- bashExec: Process data with jq, awk, sed, grep, sort, etc.
+- formatOutput: Export results as JSON, CSV, markdown, or HTML
+- Sub-agents: Can delegate export formatting to specialized sub-agents${skillList}
+
+For each step, specify:
+1. What tool to use
+2. What input/URL/query
+3. What data you expect to get
+4. How it feeds into the next step
+
+Be specific about URLs, search queries, and extraction targets. Keep it concise -- one line per step.
+End with the expected final output format and structure.
+Do not use emojis.`,
+    prompt: `Create an execution plan for this request:\n\n${prompt}`,
+    maxOutputTokens: 1024,
+  });
+
+  return Response.json({ plan: text });
+}

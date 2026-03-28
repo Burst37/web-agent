@@ -310,6 +310,11 @@ export default function AgentPage() {
   const [studioCollapsed, setStudioCollapsed] = useState(false);
   const [generatingFormat, setGeneratingFormat] = useState<string | null>(null);
   const [generatedOutputs, setGeneratedOutputs] = useState<Record<string, { format: string; content: string }>>({});
+  const [planMode, setPlanMode] = useState(false);
+  const [planText, setPlanText] = useState<string | null>(null);
+  const [planLoading, setPlanLoading] = useState(false);
+  const [planEditing, setPlanEditing] = useState(false);
+  const [planEditText, setPlanEditText] = useState("");
 
 
   const [acpAgents, setAcpAgents] = useState<{ name: string; bin: string; displayName: string; available: boolean }[]>([]);
@@ -517,10 +522,35 @@ export default function AgentPage() {
 
   const onRun = () => {
     if (!config.prompt.trim()) return;
+    if (planMode && !planText) {
+      // Generate plan first
+      setPlanLoading(true);
+      fetch("/api/plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: config.prompt, config }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          setPlanText(data.plan);
+          setPlanEditText(data.plan);
+          setPlanLoading(false);
+        })
+        .catch(() => {
+          setPlanLoading(false);
+          alert("Failed to generate plan");
+        });
+      return;
+    }
+    // Execute (with or without plan context)
+    const promptWithPlan = planText
+      ? `Execute this plan:\n\n${planText}\n\nOriginal request: ${config.prompt}`
+      : config.prompt;
+    setPlanText(null);
+    setPlanEditText("");
     const id = `conv-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     setConversationId(id);
     setHasSubmitted(true);
-    // Save to SQLite
     fetch("/api/conversations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -530,7 +560,7 @@ export default function AgentPage() {
         config,
       }),
     });
-    sendMessage({ text: config.prompt });
+    sendMessage({ text: promptWithPlan });
   };
 
   const currentModel = AVAILABLE_MODELS[config.model.provider]?.find(
@@ -647,30 +677,143 @@ export default function AgentPage() {
               </div>
             </div>
 
-            {/* Submit */}
-            <button
-              type="button"
-              className={cn(
-                "rounded-8 p-8 transition-all",
-                config.prompt.trim()
-                  ? "bg-heat-100 hover:bg-[color:var(--heat-90)] text-accent-white active:scale-95"
-                  : "bg-black-alpha-8 text-black-alpha-24 cursor-not-allowed",
-              )}
-              disabled={!config.prompt.trim()}
-              onClick={onRun}
-            >
-              <svg fill="none" height="18" viewBox="0 0 20 20" width="18">
-                <path
-                  d="M3.125 10H16.875M11.6667 4.79163L16.875 9.99994L11.6667 15.2083"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="1.5"
-                />
-              </svg>
-            </button>
+            {/* Plan mode toggle + Submit */}
+            <div className="flex items-center gap-6">
+              <button
+                type="button"
+                className={cn(
+                  "flex items-center gap-4 px-8 py-5 rounded-8 text-label-small transition-all",
+                  planMode
+                    ? "bg-accent-amethyst/10 text-accent-amethyst border border-accent-amethyst/20"
+                    : "text-black-alpha-32 hover:bg-black-alpha-4 hover:text-black-alpha-48",
+                )}
+                onClick={() => { setPlanMode(!planMode); setPlanText(null); setPlanEditText(""); }}
+                title={planMode ? "Plan mode on" : "Plan mode off"}
+              >
+                <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
+                  <rect x="9" y="3" width="6" height="4" rx="1" />
+                  <path d="M9 12h6M9 16h4" />
+                </svg>
+                <span>Plan</span>
+              </button>
+              <button
+                type="button"
+                className={cn(
+                  "rounded-8 p-8 transition-all",
+                  config.prompt.trim() && !planLoading
+                    ? "bg-heat-100 hover:bg-[color:var(--heat-90)] text-accent-white active:scale-95"
+                    : "bg-black-alpha-8 text-black-alpha-24 cursor-not-allowed",
+                )}
+                disabled={!config.prompt.trim() || planLoading}
+                onClick={onRun}
+              >
+                {planLoading ? (
+                  <div className="w-18 h-18 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                ) : (
+                  <svg fill="none" height="18" viewBox="0 0 20 20" width="18">
+                    <path
+                      d="M3.125 10H16.875M11.6667 4.79163L16.875 9.99994L11.6667 15.2083"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="1.5"
+                    />
+                  </svg>
+                )}
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* Plan review */}
+        {planText && (
+          <div
+            className="w-full max-w-640 mt-16 bg-accent-white rounded-12 overflow-hidden"
+            style={{
+              boxShadow:
+                "0px 2px 12px -2px rgba(0,0,0,0.06), 0px 0px 0px 1px rgba(0,0,0,0.06)",
+            }}
+          >
+            <div className="flex items-center justify-between px-16 py-10 border-b border-border-faint">
+              <div className="flex items-center gap-6">
+                <svg fill="none" height="14" viewBox="0 0 24 24" width="14" className="text-accent-amethyst" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
+                  <rect x="9" y="3" width="6" height="4" rx="1" />
+                  <path d="M9 12h6M9 16h4" />
+                </svg>
+                <span className="text-label-medium text-accent-black">Execution Plan</span>
+              </div>
+              <button
+                type="button"
+                className="text-label-small text-black-alpha-40 hover:text-accent-black transition-colors"
+                onClick={() => setPlanEditing(!planEditing)}
+              >
+                {planEditing ? "Preview" : "Edit"}
+              </button>
+            </div>
+
+            <div className="px-16 py-12">
+              {planEditing ? (
+                <textarea
+                  className="w-full bg-transparent text-body-small text-accent-black font-mono focus:outline-none resize-none min-h-[120px]"
+                  value={planEditText}
+                  onChange={(e) => setPlanEditText(e.target.value)}
+                  rows={Math.max(6, planEditText.split("\n").length)}
+                />
+              ) : (
+                <div className="text-body-small text-accent-black whitespace-pre-wrap leading-relaxed">
+                  {planEditText || planText}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-6 px-16 py-10 border-t border-border-faint">
+              <button
+                type="button"
+                className="px-14 py-6 rounded-8 text-label-small bg-heat-100 text-white hover:bg-[color:var(--heat-90)] transition-all active:scale-95"
+                onClick={() => {
+                  if (planEditText !== planText) setPlanText(planEditText);
+                  onRun();
+                }}
+              >
+                Run plan
+              </button>
+              <button
+                type="button"
+                className="px-14 py-6 rounded-8 text-label-small text-black-alpha-48 hover:bg-black-alpha-4 transition-all"
+                onClick={() => {
+                  setPlanLoading(true);
+                  fetch("/api/plan", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      prompt: `${config.prompt}\n\nPrevious plan (revise and improve):\n${planEditText}`,
+                      config,
+                    }),
+                  })
+                    .then((r) => r.json())
+                    .then((data) => {
+                      setPlanText(data.plan);
+                      setPlanEditText(data.plan);
+                      setPlanLoading(false);
+                    })
+                    .catch(() => setPlanLoading(false));
+                }}
+                disabled={planLoading}
+              >
+                {planLoading ? "Regenerating..." : "Regenerate"}
+              </button>
+              <button
+                type="button"
+                className="px-14 py-6 rounded-8 text-label-small text-black-alpha-32 hover:text-accent-crimson hover:bg-accent-crimson/5 transition-all ml-auto"
+                onClick={() => { setPlanText(null); setPlanEditText(""); }}
+              >
+                Discard
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Example prompts */}
         <div className="w-full max-w-640 mt-20">
