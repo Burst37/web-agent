@@ -8,47 +8,54 @@ import { createCodePlugin } from "@streamdown/code";
 
 const code = createCodePlugin({ themes: ["github-light", "github-light"] });
 
+function fileExt(formatId: string) {
+  if (formatId === "json") return "json";
+  if (formatId === "csv" || formatId === "spreadsheet") return "csv";
+  if (formatId === "html") return "html";
+  return "md";
+}
+
 const FORMATS = [
   {
     id: "json",
     label: "JSON",
-    prompt: "Format ALL the collected data from this conversation as clean, structured JSON. Use camelCase keys, keep it flat where practical, include every data point. Return ONLY the JSON, no explanation.",
+    prompt: (path: string) => `Format ALL the collected data from this conversation as clean, structured JSON. Use camelCase keys, keep it flat where practical, include every data point. Write the result to ${path} using bashExec. Return ONLY the JSON, no explanation.`,
     icon: <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H7a2 2 0 00-2 2v5a2 2 0 01-2 2 2 2 0 012 2v5a2 2 0 002 2h1M16 3h1a2 2 0 012 2v5a2 2 0 002 2 2 2 0 00-2 2v5a2 2 0 01-2 2h-1" /></svg>,
   },
   {
     id: "csv",
     label: "CSV",
-    prompt: "Format ALL the collected data from this conversation as a CSV table. One row per entity, consistent columns, human-readable headers. Return ONLY the CSV, no explanation.",
+    prompt: (path: string) => `Format ALL the collected data from this conversation as a CSV table. One row per entity, consistent columns, human-readable headers. Write the result to ${path} using bashExec. Return ONLY the CSV, no explanation.`,
     icon: <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M3 12h18M3 18h18M9 6v12M15 6v12" /></svg>,
   },
   {
     id: "markdown",
     label: "Report",
-    prompt: "Format ALL the collected data from this conversation as a structured markdown report with executive summary, findings organized by topic, tables for comparisons, key takeaways, and sources. Return ONLY the markdown.",
+    prompt: (path: string) => `Format ALL the collected data from this conversation as a structured markdown report with executive summary, findings organized by topic, tables for comparisons, key takeaways, and sources. Write the result to ${path} using bashExec. Return ONLY the markdown.`,
     icon: <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" /><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" /></svg>,
   },
   {
     id: "html",
     label: "HTML",
-    prompt: "Format ALL the collected data from this conversation as a complete, styled HTML document with inline CSS, clean tables, sans-serif font, responsive layout. Return ONLY the HTML starting with <!DOCTYPE html>.",
+    prompt: (path: string) => `Format ALL the collected data from this conversation as a complete, styled HTML document with inline CSS, clean tables, sans-serif font, responsive layout. Write the result to ${path} using bashExec. Return ONLY the HTML starting with <!DOCTYPE html>.`,
     icon: <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6" /></svg>,
   },
   {
     id: "spreadsheet",
     label: "Spreadsheet",
-    prompt: "Structure ALL the collected data from this conversation as CSV spreadsheet tables with typed columns, summary rows if applicable. Return ONLY the CSV.",
+    prompt: (path: string) => `Structure ALL the collected data from this conversation as CSV spreadsheet tables with typed columns, summary rows if applicable. Write the result to ${path} using bashExec. Return ONLY the CSV.`,
     icon: <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M3 15h18M9 3v18" /></svg>,
   },
   {
     id: "document",
     label: "Document",
-    prompt: "Structure ALL the collected data from this conversation as a formal document with title, executive summary, sections, analysis, and sources. Return ONLY the markdown.",
+    prompt: (path: string) => `Structure ALL the collected data from this conversation as a formal document with title, executive summary, sections, analysis, and sources. Write the result to ${path} using bashExec. Return ONLY the markdown.`,
     icon: <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16v16H4zM8 8h8M8 12h8M8 16h5" /></svg>,
   },
   {
     id: "slides",
     label: "Slides",
-    prompt: "Structure ALL the collected data from this conversation as a slide deck outline with 5-12 slides. Each slide: title, 3-5 bullet points, speaker notes. Return ONLY the markdown.",
+    prompt: (path: string) => `Structure ALL the collected data from this conversation as a slide deck outline with 5-12 slides. Each slide: title, 3-5 bullet points, speaker notes. Write the result to ${path} using bashExec. Return ONLY the markdown.`,
     icon: <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" /></svg>,
   },
 ];
@@ -259,6 +266,12 @@ function FullscreenViewer({ content, formatId, onClose }: { content: string; for
 
 // --- Export Job ---
 
+interface AgentStep {
+  type: "tool-call" | "tool-result" | "text";
+  name?: string;
+  content?: string;
+}
+
 interface ExportJob {
   id: string;
   formatId: string;
@@ -266,6 +279,16 @@ interface ExportJob {
   status: "running" | "done" | "error";
   content?: string;
   error?: string;
+  steps: AgentStep[];
+  filePath?: string;
+}
+
+function describeToolName(name: string): string {
+  if (name === "bashExec" || name === "bash_exec") return "Writing to disk";
+  if (name === "formatOutput") return "Formatting output";
+  if (name === "search") return "Searching";
+  if (name === "scrape") return "Scraping";
+  return name;
 }
 
 function JobCard({ job, onFullscreen, onRemove }: { job: ExportJob; onFullscreen: () => void; onRemove: () => void }) {
@@ -281,8 +304,10 @@ function JobCard({ job, onFullscreen, onRemove }: { job: ExportJob; onFullscreen
     setTimeout(onRemove, 200);
   };
 
-  const { ext } = job.content ? getOutputMeta(job.content, job.formatId) : { ext: "" };
+  const { ext } = job.content ? getOutputMeta(job.content, job.formatId) : { ext: fileExt(job.formatId) };
   const isDone = job.status === "done" && !!job.content;
+
+  const latestStep = job.steps.filter((s) => s.type === "tool-call").slice(-1)[0];
 
   return (
     <div
@@ -302,7 +327,14 @@ function JobCard({ job, onFullscreen, onRemove }: { job: ExportJob; onFullscreen
         disabled={!isDone}
       >
         {formatDef && <span className="flex-shrink-0 text-black-alpha-40">{formatDef.icon}</span>}
-        <span className="text-body-small text-accent-black flex-1 truncate">{job.label}</span>
+        <div className="flex-1 min-w-0">
+          <span className="text-body-small text-accent-black truncate block">{job.label}</span>
+          {job.status === "running" && latestStep && (
+            <span className="text-mono-x-small text-black-alpha-24 truncate block">
+              {describeToolName(latestStep.name ?? "")}
+            </span>
+          )}
+        </div>
 
         {job.status === "running" && (
           <div className="w-10 h-10 rounded-full border-2 border-heat-100 border-t-transparent animate-spin flex-shrink-0" />
@@ -349,6 +381,20 @@ function JobCard({ job, onFullscreen, onRemove }: { job: ExportJob; onFullscreen
         )}
       </button>
 
+      {/* Agent activity while running */}
+      {job.status === "running" && job.steps.length > 0 && (
+        <div className="border-t border-border-faint px-10 py-6">
+          <div className="flex flex-col gap-2">
+            {job.steps.filter((s) => s.type === "tool-call").slice(-3).map((s, i) => (
+              <div key={i} className="flex items-center gap-6">
+                <div className="w-4 h-4 rounded-full bg-accent-forest animate-pulse flex-shrink-0" />
+                <span className="text-mono-x-small text-black-alpha-32 truncate">{describeToolName(s.name ?? "")}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div
         className={cn(
           "transition-all duration-200 overflow-hidden",
@@ -363,6 +409,49 @@ function JobCard({ job, onFullscreen, onRemove }: { job: ExportJob; onFullscreen
       </div>
     </div>
   );
+}
+
+// --- SSE stream reader ---
+
+async function readSSEStream(
+  response: Response,
+  onStep: (step: AgentStep) => void,
+  onDone: (text: string) => void,
+  onError: (err: string) => void,
+) {
+  const reader = response.body?.getReader();
+  if (!reader) { onError("No response body"); return; }
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      try {
+        const data = JSON.parse(line.slice(6));
+        if (data.type === "tool-call") {
+          onStep({ type: "tool-call", name: data.name });
+        } else if (data.type === "tool-result") {
+          onStep({ type: "tool-result", name: data.name, content: typeof data.output === "string" ? data.output : JSON.stringify(data.output) });
+        } else if (data.type === "text") {
+          onStep({ type: "text", content: data.content });
+        } else if (data.type === "done") {
+          onDone(data.text ?? "");
+          return;
+        } else if (data.type === "error") {
+          onError(data.error ?? "Unknown error");
+          return;
+        }
+      } catch { /* skip malformed lines */ }
+    }
+  }
 }
 
 // --- Export Sidebar ---
@@ -383,23 +472,44 @@ export default function ExportSidebar({ collapsed, onToggleCollapse, messages }:
     const format = FORMATS.find((f) => f.id === formatId);
     if (!format) return;
 
-    const jobId = `${formatId}-${++jobCounter}`;
-    const newJob: ExportJob = { id: jobId, formatId, label: format.label, status: "running" };
+    const num = ++jobCounter;
+    const jobId = `${formatId}-${num}`;
+    const ext = fileExt(formatId);
+    const filePath = `/data/exports/export_${num}.${ext}`;
+    const newJob: ExportJob = { id: jobId, formatId, label: format.label, status: "running", steps: [], filePath };
     setJobs((prev) => [newJob, ...prev]);
 
     const context = extractConversationContext(messagesRef.current);
-    const fullPrompt = `${format.prompt}\n\nHere is the conversation data to format:\n\n${context}`;
+    const fullPrompt = `${format.prompt(filePath)}\n\nAlso return the formatted content as your final text response.\n\nHere is the conversation data to format:\n\n${context}`;
 
     fetch("/api/query", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: fullPrompt, maxSteps: 3 }),
+      body: JSON.stringify({ prompt: fullPrompt, maxSteps: 5, stream: true }),
     })
-      .then((r) => r.json())
-      .then((data) => {
-        setJobs((prev) => prev.map((j) =>
-          j.id === jobId ? { ...j, status: "done", content: data.text ?? "" } : j
-        ));
+      .then(async (r) => {
+        if (!r.ok) {
+          const text = await r.text();
+          throw new Error(text || `HTTP ${r.status}`);
+        }
+        await readSSEStream(
+          r,
+          (step) => {
+            setJobs((prev) => prev.map((j) =>
+              j.id === jobId ? { ...j, steps: [...j.steps, step] } : j
+            ));
+          },
+          (text) => {
+            setJobs((prev) => prev.map((j) =>
+              j.id === jobId ? { ...j, status: "done", content: text } : j
+            ));
+          },
+          (err) => {
+            setJobs((prev) => prev.map((j) =>
+              j.id === jobId ? { ...j, status: "error", error: err } : j
+            ));
+          },
+        );
       })
       .catch((err) => {
         setJobs((prev) => prev.map((j) =>
