@@ -46,7 +46,12 @@ const transitionDurations = Array.from({ length: 60 }, (_, i) => i).reduce(
 );
 
 const themeConfig: Config = {
-  content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
+  content: [
+    "./app/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./node_modules/streamdown/dist/*.js",
+    "./node_modules/@streamdown/code/dist/*.js",
+  ],
   theme: {
     extend: {
       fontFamily: {

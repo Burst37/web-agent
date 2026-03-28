@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     "better-sqlite3",
     "just-bash",
     "@mongodb-js/zstd",
+    "@agentclientprotocol/sdk",
   ],
 };
 

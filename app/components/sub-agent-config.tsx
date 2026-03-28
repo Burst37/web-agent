@@ -14,7 +14,7 @@ const TOOL_OPTIONS = [
 
 const defaultModel: ModelConfig = {
   provider: "anthropic",
-  model: "claude-sonnet-4-20250514",
+  model: "claude-sonnet-4-6",
 };
 
 export default function SubAgentConfigurator({

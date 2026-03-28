@@ -1,21 +1,23 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import type { UIMessage } from "ai";
+import { Streamdown } from "streamdown";
+import { code } from "@streamdown/code";
 import { cn } from "@/utils/cn";
 
 function isToolPart(part: { type: string }): boolean {
   return part.type.startsWith("tool-") || part.type === "dynamic-tool";
 }
 
-interface OutputData {
+type Format = "json" | "csv" | "markdown" | "html";
+
+interface FormattedOutput {
   format: "text" | "json" | "csv";
   content: string;
-  hasExplicitFormat: boolean;
 }
 
-function extractOutput(messages: UIMessage[]): OutputData | null {
-  // 1. Check for explicit formatOutput tool result
+function extractFormattedOutput(messages: UIMessage[]): FormattedOutput | null {
   for (let i = messages.length - 1; i >= 0; i--) {
     const msg = messages[i];
     if (msg.role !== "assistant") continue;
@@ -24,57 +26,21 @@ function extractOutput(messages: UIMessage[]): OutputData | null {
         const p = part as Record<string, unknown>;
         const toolName =
           (p.toolName ?? (part.type as string).replace("tool-", "")) as string;
-        if (toolName === "formatOutput" && p.state === "result" && p.output) {
+        if (toolName === "formatOutput" && (p.state === "output-available" || p.state === "result") && p.output) {
           const output = p.output as { format: string; content: string };
           if (output.format && output.content) {
             return {
               format: output.format as "text" | "json" | "csv",
               content: output.content,
-              hasExplicitFormat: true,
             };
           }
         }
       }
     }
   }
-
-  // 2. Check for scrape/search tool results with answer fields
-  const toolAnswers: string[] = [];
-  for (const msg of messages) {
-    if (msg.role !== "assistant") continue;
-    for (const part of msg.parts) {
-      if (isToolPart(part)) {
-        const p = part as Record<string, unknown>;
-        const state = p.state as string;
-        if (state === "result" && p.output) {
-          const out = p.output as Record<string, unknown>;
-          if (out.answer && typeof out.answer === "string") {
-            toolAnswers.push(out.answer);
-          }
-        }
-      }
-    }
-  }
-  if (toolAnswers.length > 0) {
-    return { format: "text", content: toolAnswers.join("\n\n---\n\n"), hasExplicitFormat: false };
-  }
-
-  // 3. Fallback: only use the LAST assistant text (not narration)
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const msg = messages[i];
-    if (msg.role !== "assistant") continue;
-    const textParts = msg.parts.filter(
-      (p) => p.type === "text" && p.text.trim(),
-    );
-    // Only show if the last text is substantial (not just "I'll do X")
-    const lastText = textParts[textParts.length - 1];
-    if (lastText && lastText.type === "text" && lastText.text.length > 100) {
-      return { format: "text", content: lastText.text, hasExplicitFormat: false };
-    }
-  }
-
   return null;
 }
+
 
 function download(content: string, filename: string) {
   const blob = new Blob([content], { type: "text/plain" });
@@ -203,54 +169,169 @@ function CsvTable({ data }: { data: string }) {
   );
 }
 
-export default function OutputPanel({ messages }: { messages: UIMessage[] }) {
-  const output = extractOutput(messages);
+const FORMAT_OPTIONS: { id: Format; label: string; icon: React.ReactNode; desc: string }[] = [
+  {
+    id: "json",
+    label: "JSON",
+    desc: "Structured data",
+    icon: (
+      <svg fill="none" height="16" viewBox="0 0 24 24" width="16">
+        <path d="M8 3H7a2 2 0 00-2 2v5a2 2 0 01-2 2 2 2 0 012 2v5a2 2 0 002 2h1M16 3h1a2 2 0 012 2v5a2 2 0 002 2 2 2 0 00-2 2v5a2 2 0 01-2 2h-1" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+      </svg>
+    ),
+  },
+  {
+    id: "csv",
+    label: "CSV",
+    desc: "Spreadsheet table",
+    icon: (
+      <svg fill="none" height="16" viewBox="0 0 24 24" width="16">
+        <path d="M3 6h18M3 12h18M3 18h18M9 6v12M15 6v12" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+      </svg>
+    ),
+  },
+  {
+    id: "markdown",
+    label: "Report",
+    desc: "Markdown summary",
+    icon: (
+      <svg fill="none" height="16" viewBox="0 0 24 24" width="16">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+        <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+      </svg>
+    ),
+  },
+  {
+    id: "html",
+    label: "HTML",
+    desc: "Styled document",
+    icon: (
+      <svg fill="none" height="16" viewBox="0 0 24 24" width="16">
+        <path d="M16 18l6-6-6-6M8 6l-6 6 6 6" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" />
+      </svg>
+    ),
+  },
+];
 
-  if (!output) return null;
+interface OutputPanelProps {
+  messages: UIMessage[];
+  onRequestFormat: (format: Format) => void;
+}
 
-  // Only show tabs relevant to the data
-  const fmt = output.format;
+export default function OutputPanel({ messages, onRequestFormat }: OutputPanelProps) {
+  const formatted = extractFormattedOutput(messages);
+
+  if (!formatted) return null;
+
+  const fmt = formatted.format;
   const isJson = fmt === "json";
   const isCsv = fmt === "csv";
-  const [activeTab, setActiveTab] = useState<"text" | "json" | "csv">(fmt);
 
-  const tabs = [
-    { id: "text" as const, label: "Text", show: true },
-    { id: "json" as const, label: "JSON", show: isJson || output.hasExplicitFormat },
+  return <FormattedResult formatted={formatted} isJson={isJson} isCsv={isCsv} onRequestFormat={onRequestFormat} />;
+}
+
+function HtmlViewer({ html }: { html: string }) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [height, setHeight] = useState(400);
+
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    iframe.src = url;
+
+    const onLoad = () => {
+      try {
+        const doc = iframe.contentDocument;
+        if (doc?.body) {
+          setHeight(Math.min(Math.max(doc.body.scrollHeight + 32, 200), 800));
+        }
+      } catch { /* cross-origin fallback */ }
+    };
+    iframe.addEventListener("load", onLoad);
+
+    return () => {
+      iframe.removeEventListener("load", onLoad);
+      URL.revokeObjectURL(url);
+    };
+  }, [html]);
+
+  return (
+    <iframe
+      ref={iframeRef}
+      className="w-full border-0 rounded-12"
+      style={{ height }}
+      sandbox="allow-same-origin"
+      title="HTML output"
+    />
+  );
+}
+
+function FormattedResult({
+  formatted,
+  isJson,
+  isCsv,
+  onRequestFormat,
+}: {
+  formatted: FormattedOutput;
+  isJson: boolean;
+  isCsv: boolean;
+  onRequestFormat: (format: Format) => void;
+}) {
+  const isHtml = formatted.format === "text" && /^\s*<!doctype\s+html|^\s*<html/i.test(formatted.content.trim());
+
+  const allTabs = [
+    { id: "markdown" as const, label: "Report", show: !isJson && !isCsv },
+    { id: "json" as const, label: "JSON", show: isJson },
     { id: "csv" as const, label: "Table", show: isCsv },
-  ].filter((t) => t.show);
+  ];
+  const visibleTabs = allTabs.filter((t) => t.show);
+  const initialTab = visibleTabs[0]?.id ?? "markdown";
+  const [activeTab, setActiveTab] = useState<Format>(initialTab);
+
+  const switchFormat = (fmt: Format) => {
+    const mapping: Record<Format, FormattedOutput["format"]> = {
+      json: "json",
+      csv: "csv",
+      markdown: "text",
+      html: "text",
+    };
+    if (mapping[fmt] === formatted.format) {
+      setActiveTab(fmt);
+    } else {
+      onRequestFormat(fmt);
+    }
+  };
 
   return (
     <div className="border-t border-border-faint mt-20 pt-12">
       <div className="flex items-center justify-between mb-10">
-        {tabs.length > 1 ? (
-          <div className="flex gap-2 bg-black-alpha-4 rounded-8 p-2">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                className={cn(
-                  "px-10 py-4 rounded-6 text-label-small transition-all",
-                  activeTab === tab.id
-                    ? "bg-accent-white text-accent-black shadow-sm"
-                    : "text-black-alpha-56 hover:text-accent-black",
-                )}
-                onClick={() => setActiveTab(tab.id)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="text-label-small text-black-alpha-40">Result</div>
-        )}
+        <div className="flex gap-2 bg-black-alpha-4 rounded-8 p-2">
+          {FORMAT_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              className={cn(
+                "px-10 py-4 rounded-6 text-label-small transition-all",
+                activeTab === opt.id
+                  ? "bg-accent-white text-accent-black shadow-sm"
+                  : "text-black-alpha-56 hover:text-accent-black",
+              )}
+              onClick={() => switchFormat(opt.id)}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
 
         <button
           type="button"
           className="flex items-center gap-6 text-label-small text-black-alpha-40 hover:text-accent-black transition-colors"
           onClick={() => {
-            const ext = activeTab === "json" ? "json" : activeTab === "csv" ? "csv" : "md";
-            download(output.content, `firecrawl-output.${ext}`);
+            const ext = formatted.format === "json" ? "json" : formatted.format === "csv" ? "csv" : "md";
+            download(formatted.content, `firecrawl-output.${ext}`);
           }}
         >
           <svg fill="none" height="14" viewBox="0 0 24 24" width="14">
@@ -260,12 +341,23 @@ export default function OutputPanel({ messages }: { messages: UIMessage[] }) {
         </button>
       </div>
 
-      <div className="bg-background-lighter rounded-12 border border-border-faint p-14 overflow-auto max-h-500">
-        {activeTab === "json" && <JsonViewer data={output.content} />}
-        {activeTab === "csv" && <CsvTable data={output.content} />}
-        {activeTab === "text" && (
-          <div className="text-body-medium text-accent-black whitespace-pre-wrap leading-relaxed prose prose-sm max-w-none">
-            {output.content}
+      <div className="bg-background-lighter rounded-12 border border-border-faint overflow-hidden">
+        {formatted.format === "json" && (
+          <div className="p-14 overflow-auto max-h-500">
+            <JsonViewer data={formatted.content} />
+          </div>
+        )}
+        {formatted.format === "csv" && (
+          <div className="p-14 overflow-auto max-h-500">
+            <CsvTable data={formatted.content} />
+          </div>
+        )}
+        {formatted.format === "text" && isHtml && (
+          <HtmlViewer html={formatted.content} />
+        )}
+        {formatted.format === "text" && !isHtml && (
+          <div className="p-14 overflow-auto max-h-500 text-body-medium text-accent-black leading-relaxed prose prose-sm max-w-none prose-headings:text-accent-black prose-a:text-heat-100 prose-strong:text-accent-black">
+            <Streamdown plugins={{ code }}>{formatted.content}</Streamdown>
           </div>
         )}
       </div>

@@ -52,28 +52,28 @@ export async function createOrchestrator(
 
 ${fcSystemPrompt ?? ""}
 
-## Phase 1: Clarify (ALWAYS do this first)
-Before doing any research, briefly confirm with the user:
-1. What output format they want (JSON, CSV, or text summary)
-2. What specific fields/columns they need (if structured data)
-3. Any scope constraints (how many items, which sites, date range)
+## How you work
+You gather context iteratively through conversation. The user will tell you what they need, and you go get it. Keep it conversational — ask short follow-ups if something is ambiguous, but bias toward action.
 
-Keep this short — 2-3 quick questions max. If the request is very clear and simple, you can skip straight to execution.
-
-## Phase 2: Execute
+## Gathering data
 - Think step by step. Narrate what you're doing and why — the user sees your text in real-time.
-- Use search to discover relevant pages when you don't have specific URLs
+- Use search to discover relevant pages when you don't have specific URLs.
 - Use scrape to extract content from pages. For targeted extraction, use the query parameter.
-- Use interact for pages that need JavaScript interaction (clicks, forms, pagination)
-- Use bashExec for data processing: jq, awk, sed, grep, sort — great for transforming scraped data
-- When scraping for specific data, use scrape with formats: ["json"] or with a query parameter
+- Use interact for pages that need JavaScript interaction (clicks, forms, pagination).
+- Use bashExec liberally for data processing as you go: jq, awk, sed, grep, sort, uniq, wc, head, tail, cut, tr, paste. Write intermediate results to files so you can build on them.
+- When scraping for specific data, use scrape with formats: ["json"] or with a query parameter.
+- Store collected data in the bash filesystem (e.g. /data/results.json) as you go so nothing is lost.
 
-## Phase 3: Output
-- ALWAYS call formatOutput as your final action:
-  - Use format "json" for structured data (pricing, comparisons, lists of items)
-  - Use format "csv" for tabular data (multiple items with consistent fields)
-  - Use format "text" only for narrative summaries
-- Load skills for domain expertise when relevant${skillCatalog}${schemaHint}${urlHint}${csvHint}`;
+## Skills
+- When you encounter a domain that matches an available skill, load it immediately with load_skill. Don't wait to be asked.
+- Skills give you specialized instructions, templates, and scripts for specific domains (e.g. pricing analysis, SEO audits).
+- After loading a skill, follow its instructions and use read_skill_resource to access any scripts or reference files it provides.
+- You can load multiple skills in a single session if the task spans domains.${skillCatalog}
+
+## Output
+- Do NOT call formatOutput on your own. The user will choose their preferred format (JSON, CSV, Markdown, or HTML) after you finish gathering data.
+- When the user requests a specific format, THEN call formatOutput with that format.
+- If the user asks you to "format as JSON/CSV/text/HTML", call formatOutput immediately with the collected data.${schemaHint}${urlHint}${csvHint}`;
 
   return new ToolLoopAgent({
     model,

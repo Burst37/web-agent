@@ -4,6 +4,7 @@ import { GeistMono } from "geist/font/mono";
 import ColorStyles from "@/components/shared/color-styles/color-styles";
 import Scrollbar from "@/components/ui/scrollbar";
 import "@/styles/main.css";
+import "streamdown/styles.css";
 
 const suisseIntl = localFont({
   src: [

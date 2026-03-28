@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import type { AgentConfig } from "@/lib/types";
+import type { AgentConfig, ModelConfig } from "@/lib/types";
 import { AVAILABLE_MODELS, PROVIDER_META, type Provider } from "@/lib/config/models";
 import ProviderModelIcon from "./provider-icon";
 import { cn } from "@/utils/cn";
@@ -77,9 +77,9 @@ export default function SettingsPanel({
                     ...config,
                     model: {
                       ...config.model,
-                      provider: e.target.value as Provider,
+                      provider: e.target.value as ModelConfig["provider"],
                       model:
-                        AVAILABLE_MODELS[e.target.value as Provider][0].id,
+                        (AVAILABLE_MODELS[e.target.value as string] ?? [])[0]?.id ?? "",
                     },
                   })
                 }

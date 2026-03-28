@@ -31,8 +31,8 @@ export default function ModelSelector({
           onChange={(e) =>
             onChange({
               ...value,
-              provider: e.target.value as Provider,
-              model: AVAILABLE_MODELS[e.target.value as Provider][0].id,
+              provider: e.target.value as ModelConfig["provider"],
+              model: (AVAILABLE_MODELS[e.target.value as string] ?? [])[0]?.id ?? "",
             })
           }
         >
