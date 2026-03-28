@@ -765,46 +765,36 @@ function extractTimeline(messages: UIMessage[]): TimelineItem[] {
         const isComplete = state === "output-available" || state === "result" || state === "output-error";
         const status = isComplete ? "complete" as const : "running" as const;
 
-        // Debug: log all tool part structure
-        if (toolName === "search") {
-          console.log("[tool-part debug]", "type:", part.type, "state:", state, "toolName:", toolName, "partKeys:", Object.keys(p), "hasOutput:", !!p.output, "hasResult:", !!p.result, "outputSample:", p.output ? JSON.stringify(p.output).slice(0, 200) : "none");
-        }
+
 
         if (toolName === "search") {
-          // Parse search results from output
-          // Firecrawl returns { success, data: [...] } but the AI SDK may wrap it
           const results: SearchResult[] = [];
           if (output && typeof output === "object") {
-            // Try output.data (standard Firecrawl response)
-            let data = (output as Record<string, unknown>).data;
-            // Try output.results
-            if (!Array.isArray(data)) data = (output as Record<string, unknown>).results;
-            // Try output itself if it's an array
-            if (!Array.isArray(data) && Array.isArray(output)) data = output;
-            // Try output[0].data if wrapped in array
-            if (!Array.isArray(data) && Array.isArray((output as Record<string, unknown>)[0])) {
-              data = (output as Record<string, unknown>)[0];
-            }
-            if (Array.isArray(data)) {
-              for (const r of data as Record<string, unknown>[]) {
-                if (r && typeof r === "object" && (r.url || r.title)) {
+            const o = output as Record<string, unknown>;
+            // Find the results array -- Firecrawl returns { web: [...] } or { data: [...] }
+            let data: unknown[] | undefined;
+            if (Array.isArray(o.web)) data = o.web as unknown[];
+            else if (Array.isArray(o.data)) data = o.data as unknown[];
+            else if (Array.isArray(o.results)) data = o.results as unknown[];
+            else if (Array.isArray(output)) data = output as unknown[];
+
+            if (data) {
+              for (const r of data) {
+                const item = r as Record<string, unknown>;
+                if (item && typeof item === "object" && (item.url || item.title)) {
                   results.push({
-                    title: String(r.title ?? ""),
-                    url: String(r.url ?? ""),
-                    description: String(r.description ?? r.snippet ?? ""),
-                    markdown: typeof r.markdown === "string" ? r.markdown : undefined,
+                    title: String(item.title ?? ""),
+                    url: String(item.url ?? ""),
+                    description: String(item.description ?? item.snippet ?? ""),
+                    markdown: typeof item.markdown === "string" ? item.markdown : undefined,
                   });
                 }
               }
             }
           }
-          const searchCredits = typeof (output as { creditsUsed?: number }).creditsUsed === "number"
-            ? (output as { creditsUsed?: number }).creditsUsed
+          const searchCredits = typeof (output as Record<string, unknown>).creditsUsed === "number"
+            ? (output as Record<string, unknown>).creditsUsed as number
             : undefined;
-          // Debug: always log search output structure
-          if (status === "complete") {
-            console.log("[search debug] status:", status, "results:", results.length, "output type:", typeof output, "isArray:", Array.isArray(output), "keys:", output && typeof output === "object" ? Object.keys(output) : "N/A", "sample:", JSON.stringify(output).slice(0, 500));
-          }
           items.push({
             type: "search",
             query: String(input.query ?? ""),
