@@ -13,6 +13,7 @@ import OutputPanel from "./components/output-panel";
 import SettingsPanel from "./components/settings-panel";
 import CsvUpload from "./components/csv-upload";
 import HistoryPanel from "./components/history-panel";
+import { Streamdown } from "streamdown";
 import Sidebar from "./components/sidebar";
 import SymbolColored from "@/components/shared/icons/symbol-colored";
 import Link from "next/link";
@@ -762,8 +763,8 @@ export default function AgentPage() {
                   rows={Math.max(6, planEditText.split("\n").length)}
                 />
               ) : (
-                <div className="text-body-small text-accent-black whitespace-pre-wrap leading-relaxed">
-                  {planEditText || planText}
+                <div className="text-body-small text-accent-black leading-relaxed prose prose-sm max-w-none">
+                  <Streamdown>{planEditText || planText}</Streamdown>
                 </div>
               )}
             </div>
