@@ -858,6 +858,8 @@ interface TimelineItem {
   subagentDescription?: string;
   subagentTask?: string;
   subagentSteps?: SubagentStep[];
+  // format output
+  formatData?: { format: string; content: string };
   // status
   status: "running" | "complete";
 }
@@ -1037,8 +1039,12 @@ function extractTimeline(messages: UIMessage[]): TimelineItem[] {
             status,
           });
         } else if (toolName === "formatOutput") {
-          // Skip — handled by OutputPanel
-          items.push({ type: "format", status });
+          const fmtOutput = output as { format?: string; content?: string } | undefined;
+          items.push({
+            type: "format",
+            formatData: fmtOutput?.content ? { format: fmtOutput.format ?? "text", content: fmtOutput.content } : undefined,
+            status,
+          });
         } else {
           items.push({ type: "other", text: toolName, status });
         }
@@ -1166,7 +1172,15 @@ export default function PlanVisualization({
           case "subagent":
             return <SubAgentCard key={i} item={item} />;
           case "format":
-            return null; // Handled by OutputPanel
+            if (!item.formatData) {
+              return (
+                <div key={i} className="flex items-center gap-6 my-8 px-4">
+                  <div className="w-12 h-12 rounded-full border-2 border-black-alpha-8 border-t-heat-100 animate-spin flex-shrink-0" />
+                  <span className="text-body-small text-black-alpha-24">Formatting output...</span>
+                </div>
+              );
+            }
+            return null;
           default:
             return null;
         }
