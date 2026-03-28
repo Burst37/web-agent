@@ -467,7 +467,7 @@ export default function SettingsPanel({ config, onChange }: { config: AgentConfi
 
   return (
     <>
-      <button type="button" className="p-8 rounded-8 text-black-alpha-40 hover:text-accent-black hover:bg-black-alpha-4 transition-all" onClick={() => setOpen(true)}>
+      <button type="button" className="p-8 rounded-8 text-black-alpha-40 bg-black-alpha-4 hover:bg-black-alpha-8 hover:text-accent-black transition-all" onClick={() => setOpen(true)}>
         <GearIcon />
       </button>
 

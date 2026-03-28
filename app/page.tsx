@@ -32,7 +32,7 @@ function HeaderLinks() {
     <div className="flex items-center gap-6">
       <Link
         href="/docs"
-        className="px-10 py-6 rounded-8 text-label-small text-black-alpha-48 hover:bg-black-alpha-4 hover:text-accent-black transition-all"
+        className="px-10 py-6 rounded-8 text-label-small text-black-alpha-48 bg-black-alpha-4 hover:bg-black-alpha-8 hover:text-accent-black transition-all"
       >
         API Docs
       </Link>
@@ -40,7 +40,7 @@ function HeaderLinks() {
         href="https://github.com/mendableai/firecrawl-agent"
         target="_blank"
         rel="noopener noreferrer"
-        className="p-6 rounded-8 text-black-alpha-40 hover:bg-black-alpha-4 hover:text-accent-black transition-all"
+        className="p-6 rounded-8 text-black-alpha-40 bg-black-alpha-4 hover:bg-black-alpha-8 hover:text-accent-black transition-all"
       >
         <GitHubIcon />
       </a>
@@ -937,7 +937,7 @@ export default function AgentPage() {
           {isRunning && (
             <button
               type="button"
-              className="px-12 py-6 rounded-8 text-label-small bg-black-alpha-4 text-accent-black hover:bg-black-alpha-6 transition-all"
+              className="px-12 py-6 rounded-8 text-label-small bg-black-alpha-4 text-accent-black hover:bg-black-alpha-8 transition-all"
               onClick={stop}
             >
               Stop
