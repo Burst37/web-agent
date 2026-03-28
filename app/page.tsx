@@ -432,8 +432,6 @@ export default function AgentPage() {
   const [generatedSkillContent, setGeneratedSkillContent] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [exportCollapsed, setExportCollapsed] = useState(true);
-  const [generatingFormat, setGeneratingFormat] = useState<string | null>(null);
-  const [requestedExports, setRequestedExports] = useState<{ formatId: string; outputCountAtRequest: number }[]>([]);
   const [planMode, setPlanMode] = useState(false);
   const [planText, setPlanText] = useState<string | null>(null);
   const [planLoading, setPlanLoading] = useState(false);
@@ -557,10 +555,9 @@ export default function AgentPage() {
 
       // Auto-expand export panel when agent finishes
       setExportCollapsed(false);
-      if (generatingFormat) setGeneratingFormat(null);
     }
     prevIsRunning.current = isRunning;
-  }, [isRunning, messages, config.prompt, generatingFormat]);
+  }, [isRunning, messages, config.prompt]);
 
   const handleSaveSkill = async () => {
     if (!skillName.trim() || savingSkill) return;
@@ -1101,20 +1098,12 @@ export default function AgentPage() {
       </div>
       </div>
 
-      {/* Export sidebar -- right side, mirrors left sidebar */}
+      {/* Export sidebar -- right side */}
       {messages.length > 0 && (
         <ExportSidebar
           collapsed={exportCollapsed}
           onToggleCollapse={() => setExportCollapsed(!exportCollapsed)}
-          onExport={(formatId, prompt, currentOutputCount) => {
-            setGeneratingFormat(formatId);
-            setRequestedExports((prev) => [...prev, { formatId, outputCountAtRequest: currentOutputCount }]);
-            sendMessage({ text: prompt });
-          }}
-          generatingFormat={generatingFormat ?? ""}
-          requestedExports={requestedExports}
           messages={messages}
-          isRunning={isRunning}
         />
       )}
 

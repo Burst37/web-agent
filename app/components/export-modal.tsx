@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import type { UIMessage } from "ai";
 import { cn } from "@/utils/cn";
 import { Streamdown } from "streamdown";
@@ -12,52 +12,56 @@ const FORMATS = [
   {
     id: "json",
     label: "JSON",
-    defaultPrompt: "Format the collected data as clean JSON. Write the result to /data/export.json using bashExec, then call formatOutput with format 'json' and the content.",
+    prompt: "Format ALL the collected data from this conversation as clean, structured JSON. Use camelCase keys, keep it flat where practical, include every data point. Return ONLY the JSON, no explanation.",
     icon: <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H7a2 2 0 00-2 2v5a2 2 0 01-2 2 2 2 0 012 2v5a2 2 0 002 2h1M16 3h1a2 2 0 012 2v5a2 2 0 002 2 2 2 0 00-2 2v5a2 2 0 01-2 2h-1" /></svg>,
   },
   {
     id: "csv",
     label: "CSV",
-    defaultPrompt: "Format the collected data as a CSV table. Write the result to /data/export.csv using bashExec, then call formatOutput with format 'csv' and the content.",
+    prompt: "Format ALL the collected data from this conversation as a CSV table. One row per entity, consistent columns, human-readable headers. Return ONLY the CSV, no explanation.",
     icon: <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M3 12h18M3 18h18M9 6v12M15 6v12" /></svg>,
   },
   {
     id: "markdown",
     label: "Report",
-    defaultPrompt: "Format the collected data as a structured markdown report. Write the result to /data/export.md using bashExec, then call formatOutput with format 'text' and the content.",
+    prompt: "Format ALL the collected data from this conversation as a structured markdown report with executive summary, findings organized by topic, tables for comparisons, key takeaways, and sources. Return ONLY the markdown.",
     icon: <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" /><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" /></svg>,
   },
   {
     id: "html",
     label: "HTML",
-    defaultPrompt: "Format the collected data as a styled HTML document with inline CSS. Write the result to /data/export.html using bashExec, then call formatOutput with format 'text' and the HTML content.",
+    prompt: "Format ALL the collected data from this conversation as a complete, styled HTML document with inline CSS, clean tables, sans-serif font, responsive layout. Return ONLY the HTML starting with <!DOCTYPE html>.",
     icon: <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6" /></svg>,
   },
   {
     id: "spreadsheet",
     label: "Spreadsheet",
-    defaultPrompt: "Structure the collected data as CSV spreadsheet tables. Write the result to /data/export.csv using bashExec, then call formatOutput with format 'csv' and the content.",
+    prompt: "Structure ALL the collected data from this conversation as CSV spreadsheet tables with typed columns, summary rows if applicable. Return ONLY the CSV.",
     icon: <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M3 15h18M9 3v18" /></svg>,
   },
   {
     id: "document",
     label: "Document",
-    defaultPrompt: "Structure the collected data as a formal document with sections. Write the result to /data/export.md using bashExec, then call formatOutput with format 'text' and the content.",
+    prompt: "Structure ALL the collected data from this conversation as a formal document with title, executive summary, sections, analysis, and sources. Return ONLY the markdown.",
     icon: <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16v16H4zM8 8h8M8 12h8M8 16h5" /></svg>,
   },
   {
     id: "slides",
     label: "Slides",
-    defaultPrompt: "Structure the collected data as a slide deck outline. Write the result to /data/export.md using bashExec, then call formatOutput with format 'text' and the content.",
+    prompt: "Structure ALL the collected data from this conversation as a slide deck outline with 5-12 slides. Each slide: title, 3-5 bullet points, speaker notes. Return ONLY the markdown.",
     icon: <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" /></svg>,
   },
 ];
 
-function getOutputMeta(output: { format: string; content: string }) {
-  const isHtml = output.format === "text" && /^\s*<!doctype\s+html|^\s*<html/i.test(output.content.trim());
-  const ext = output.format === "json" ? "json" : output.format === "csv" ? "csv" : isHtml ? "html" : "md";
-  const label = output.format === "json" ? "JSON" : output.format === "csv" ? "CSV" : isHtml ? "HTML" : "Markdown";
-  return { ext, label, isHtml };
+// --- Helpers ---
+
+function getOutputMeta(content: string, formatId: string) {
+  const isHtml = /^\s*<!doctype\s+html|^\s*<html/i.test(content.trim());
+  const isCsv = formatId === "csv" || formatId === "spreadsheet";
+  const isJson = formatId === "json";
+  const ext = isJson ? "json" : isCsv ? "csv" : isHtml ? "html" : "md";
+  const label = isJson ? "JSON" : isCsv ? "CSV" : isHtml ? "HTML" : "Markdown";
+  return { ext, label, isHtml, isCsv, isJson };
 }
 
 function download(content: string, filename: string) {
@@ -68,6 +72,30 @@ function download(content: string, filename: string) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function extractConversationContext(messages: UIMessage[]): string {
+  const parts: string[] = [];
+  for (const msg of messages) {
+    for (const part of msg.parts) {
+      if (part.type === "text" && part.text.trim()) {
+        parts.push(`[${msg.role}]: ${part.text.slice(0, 2000)}`);
+      }
+      const p = part as Record<string, unknown>;
+      if (part.type.startsWith("tool-") || part.type === "dynamic-tool") {
+        const toolName = (p.toolName ?? "") as string;
+        if ((p.state === "output-available" || p.state === "result") && p.output) {
+          const out = p.output as Record<string, unknown>;
+          const content = out.markdown ?? out.content ?? out.answer ?? out.text ?? out.data;
+          if (content) {
+            const str = typeof content === "string" ? content : JSON.stringify(content);
+            parts.push(`[tool:${toolName}]: ${str.slice(0, 3000)}`);
+          }
+        }
+      }
+    }
+  }
+  return parts.join("\n\n").slice(0, 30000);
 }
 
 // --- Viewers ---
@@ -166,7 +194,7 @@ function HtmlViewer({ html, fullHeight }: { html: string; fullHeight?: boolean }
     iframe.src = url;
     const onLoad = () => {
       if (fullHeight) return;
-      try { const doc = iframe.contentDocument; if (doc?.body) setHeight(Math.min(Math.max(doc.body.scrollHeight + 16, 150), 500)); } catch { /* cross-origin */ }
+      try { const doc = iframe.contentDocument; if (doc?.body) setHeight(Math.min(Math.max(doc.body.scrollHeight + 16, 150), 500)); } catch { /* */ }
     };
     iframe.addEventListener("load", onLoad);
     return () => { iframe.removeEventListener("load", onLoad); URL.revokeObjectURL(url); };
@@ -174,26 +202,26 @@ function HtmlViewer({ html, fullHeight }: { html: string; fullHeight?: boolean }
   return <iframe ref={iframeRef} className="w-full border-0" style={{ height: fullHeight ? "100%" : height }} sandbox="allow-same-origin" title="HTML output" />;
 }
 
-function OutputContent({ output, maxH }: { output: { format: string; content: string }; maxH?: string }) {
-  const { isHtml } = getOutputMeta(output);
+function OutputContent({ content, formatId, maxH }: { content: string; formatId: string; maxH?: string }) {
+  const { isHtml, isCsv, isJson } = getOutputMeta(content, formatId);
   return (
     <div className={cn("overflow-auto", maxH)}>
-      {output.format === "json" && <div className="p-14"><JsonViewer data={output.content} /></div>}
-      {output.format === "csv" && <div className="p-0"><CsvTable data={output.content} /></div>}
-      {isHtml && <HtmlViewer html={output.content} />}
-      {output.format === "text" && !isHtml && (
-        <div className="p-14 text-body-medium text-accent-black leading-relaxed prose prose-base max-w-none prose-headings:text-accent-black prose-a:text-heat-100 prose-strong:text-accent-black prose-code:text-heat-100 prose-code:bg-heat-4 prose-code:px-4 prose-code:py-1 prose-code:rounded-4">
-          <Streamdown plugins={{ code }}>{output.content}</Streamdown>
+      {isJson && <div className="p-14"><JsonViewer data={content} /></div>}
+      {isCsv && <CsvTable data={content} />}
+      {isHtml && <HtmlViewer html={content} />}
+      {!isJson && !isCsv && !isHtml && (
+        <div className="p-14 text-body-medium text-accent-black leading-relaxed prose prose-base max-w-none prose-headings:text-accent-black prose-a:text-heat-100 prose-strong:text-accent-black">
+          <Streamdown plugins={{ code }}>{content}</Streamdown>
         </div>
       )}
     </div>
   );
 }
 
-// --- Fullscreen Viewer Modal ---
+// --- Fullscreen Viewer ---
 
-function FullscreenViewer({ output, onClose }: { output: { format: string; content: string }; onClose: () => void }) {
-  const { ext, label, isHtml } = getOutputMeta(output);
+function FullscreenViewer({ content, formatId, onClose }: { content: string; formatId: string; onClose: () => void }) {
+  const { ext, label, isHtml } = getOutputMeta(content, formatId);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -203,95 +231,84 @@ function FullscreenViewer({ output, onClose }: { output: { format: string; conte
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-accent-white">
-      {/* Toolbar */}
       <div className="flex items-center justify-between px-20 py-12 border-b border-border-faint bg-background-base flex-shrink-0">
         <div className="flex items-center gap-12">
           <span className="text-mono-x-small text-black-alpha-48 bg-black-alpha-4 px-8 py-2 rounded-4">{label}</span>
-          <span className="text-body-small text-black-alpha-32">
-            {(output.content.length / 1000).toFixed(1)}k characters
-          </span>
+          <span className="text-body-small text-black-alpha-32">{(content.length / 1000).toFixed(1)}k chars</span>
         </div>
         <div className="flex items-center gap-8">
-          <button
-            type="button"
-            className="flex items-center gap-6 px-12 py-6 rounded-8 text-label-small text-black-alpha-48 hover:bg-black-alpha-4 hover:text-accent-black transition-all"
-            onClick={() => download(output.content, `export.${ext}`)}
-          >
-            <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
-            </svg>
+          <button type="button" className="flex items-center gap-6 px-12 py-6 rounded-8 text-label-small text-black-alpha-48 hover:bg-black-alpha-4 transition-all" onClick={() => download(content, `export.${ext}`)}>
+            <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" /></svg>
             Download .{ext}
           </button>
-          <button
-            type="button"
-            className="p-8 rounded-8 text-black-alpha-32 hover:text-accent-black hover:bg-black-alpha-4 transition-all"
-            onClick={onClose}
-          >
+          <button type="button" className="p-8 rounded-8 text-black-alpha-32 hover:text-accent-black hover:bg-black-alpha-4 transition-all" onClick={onClose}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
           </button>
         </div>
       </div>
-
-      {/* Content */}
       <div className="flex-1 overflow-auto">
-        {isHtml ? (
-          <HtmlViewer html={output.content} fullHeight />
-        ) : (
-          <div className="max-w-[900px] mx-auto">
-            <OutputContent output={output} />
-          </div>
+        {isHtml ? <HtmlViewer html={content} fullHeight /> : (
+          <div className="max-w-[900px] mx-auto"><OutputContent content={content} formatId={formatId} /></div>
         )}
       </div>
     </div>
   );
 }
 
-// --- Extract formatOutput results from messages ---
+// --- Export Job ---
 
-function extractOutputs(messages: UIMessage[]): { format: string; content: string }[] {
-  const outputs: { format: string; content: string }[] = [];
-  for (const msg of messages) {
-    if (msg.role !== "assistant") continue;
-    for (const part of msg.parts) {
-      const p = part as Record<string, unknown>;
-      if (!part.type.startsWith("tool-") && part.type !== "dynamic-tool") continue;
-      const toolName = (p.toolName ?? (part.type as string).replace("tool-", "")) as string;
-      if (toolName === "formatOutput" && (p.state === "output-available" || p.state === "result") && p.output) {
-        const output = p.output as { format?: string; content?: string };
-        if (output.content) {
-          outputs.push({ format: output.format ?? "text", content: output.content });
-        }
-      }
-    }
-  }
-  return outputs;
+interface ExportJob {
+  id: string;
+  formatId: string;
+  label: string;
+  status: "running" | "done" | "error";
+  content?: string;
+  error?: string;
 }
 
 // --- Export Sidebar ---
 
-interface RequestedExport {
-  formatId: string;
-  outputCountAtRequest: number;
-}
-
 interface ExportSidebarProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
-  onExport: (formatId: string, prompt: string, currentOutputCount: number) => void;
-  generatingFormat: string;
-  requestedExports: RequestedExport[];
   messages: UIMessage[];
-  isRunning: boolean;
 }
 
-export default function ExportSidebar({ collapsed, onToggleCollapse, onExport, generatingFormat, requestedExports, messages, isRunning }: ExportSidebarProps) {
-  const [selectedOutput, setSelectedOutput] = useState<number | null>(null);
-  const [fullscreenOutput, setFullscreenOutput] = useState<{ format: string; content: string } | null>(null);
+export default function ExportSidebar({ collapsed, onToggleCollapse, messages }: ExportSidebarProps) {
+  const [jobs, setJobs] = useState<ExportJob[]>([]);
+  const [expandedJob, setExpandedJob] = useState<string | null>(null);
+  const [fullscreenJob, setFullscreenJob] = useState<ExportJob | null>(null);
 
-  const outputs = useMemo(() => extractOutputs(messages), [messages]);
-  const hasOutputs = outputs.length > 0;
-  const formatLabelMap: Record<string, string> = {};
-  for (const f of FORMATS) formatLabelMap[f.id] = f.label;
+  const runExport = useCallback((formatId: string) => {
+    const format = FORMATS.find((f) => f.id === formatId);
+    if (!format) return;
+
+    const jobId = `${formatId}-${Date.now()}`;
+    const newJob: ExportJob = { id: jobId, formatId, label: format.label, status: "running" };
+    setJobs((prev) => [newJob, ...prev]);
+
+    const context = extractConversationContext(messages);
+    const fullPrompt = `${format.prompt}\n\nHere is the conversation data to format:\n\n${context}`;
+
+    fetch("/api/query", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: fullPrompt, maxSteps: 3 }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        setJobs((prev) => prev.map((j) =>
+          j.id === jobId ? { ...j, status: "done", content: data.text ?? "" } : j
+        ));
+      })
+      .catch((err) => {
+        setJobs((prev) => prev.map((j) =>
+          j.id === jobId ? { ...j, status: "error", error: err.message } : j
+        ));
+      });
+  }, [messages]);
+
+  const hasJobs = jobs.length > 0;
 
   return (
     <>
@@ -312,13 +329,14 @@ export default function ExportSidebar({ collapsed, onToggleCollapse, onExport, g
             </svg>
           </button>
           {!collapsed && (
-            <span className="text-label-small text-black-alpha-48 flex-1">
-              {hasOutputs ? "Output" : "Export"}
-            </span>
+            <span className="text-label-small text-black-alpha-48 flex-1">Export</span>
           )}
-          {!collapsed && hasOutputs && (
+          {!collapsed && jobs.filter((j) => j.status === "running").length > 0 && (
+            <div className="w-10 h-10 rounded-full border-2 border-heat-100 border-t-transparent animate-spin flex-shrink-0" />
+          )}
+          {!collapsed && jobs.filter((j) => j.status === "done").length > 0 && (
             <span className="text-mono-x-small text-accent-forest bg-accent-forest/8 px-6 py-1 rounded-4">
-              {outputs.length}
+              {jobs.filter((j) => j.status === "done").length}
             </span>
           )}
         </div>
@@ -326,70 +344,43 @@ export default function ExportSidebar({ collapsed, onToggleCollapse, onExport, g
         {!collapsed && (
           <div className="flex-1 overflow-y-auto px-8 pb-12">
 
-            {/* Generated section */}
-            {requestedExports.length > 0 && (
+            {/* Generated jobs */}
+            {hasJobs && (
               <div className="mb-12">
                 <div className="text-mono-x-small text-black-alpha-24 uppercase tracking-wider px-12 mb-6">Generated</div>
                 <div className="flex flex-col gap-4">
-                  {requestedExports.map((req, ri) => {
-                    const isCurrentlyGenerating = generatingFormat === req.formatId && isRunning;
-                    // The output for this request is the first output that appeared AFTER the request was made
-                    const matchingOutput = outputs.length > req.outputCountAtRequest ? outputs[req.outputCountAtRequest] : undefined;
-                    const label = formatLabelMap[req.formatId] ?? req.formatId;
-                    const formatDef = FORMATS.find((f) => f.id === req.formatId);
-                    const isOpen = selectedOutput === ri;
+                  {jobs.map((job) => {
+                    const formatDef = FORMATS.find((f) => f.id === job.formatId);
+                    const isOpen = expandedJob === job.id;
 
                     return (
-                      <div key={`${req.formatId}-${ri}`} className="rounded-8 border border-border-faint overflow-hidden">
-                        {/* Header row */}
+                      <div key={job.id} className="rounded-8 border border-border-faint overflow-hidden">
                         <div className="flex items-center gap-8 px-10 py-8">
                           {formatDef && <span className="flex-shrink-0 text-black-alpha-40">{formatDef.icon}</span>}
-                          <span className="text-body-small text-accent-black flex-1 truncate">{label}</span>
-                          {(isCurrentlyGenerating || (!matchingOutput && isRunning)) ? (
+                          <span className="text-body-small text-accent-black flex-1 truncate">{job.label}</span>
+                          {job.status === "running" && (
                             <div className="w-10 h-10 rounded-full border-2 border-heat-100 border-t-transparent animate-spin flex-shrink-0" />
-                          ) : matchingOutput ? (
+                          )}
+                          {job.status === "error" && (
+                            <span className="text-mono-x-small text-accent-crimson">failed</span>
+                          )}
+                          {job.status === "done" && job.content && (
                             <>
-                              {/* Fullscreen button */}
-                              <button
-                                type="button"
-                                className="p-4 rounded-4 text-black-alpha-24 hover:text-accent-black hover:bg-black-alpha-4 transition-all"
-                                onClick={() => setFullscreenOutput(matchingOutput)}
-                                title="Open fullscreen"
-                              >
-                                <svg fill="none" height="12" viewBox="0 0 24 24" width="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
-                                </svg>
+                              <button type="button" className="p-4 rounded-4 text-black-alpha-24 hover:text-accent-black hover:bg-black-alpha-4 transition-all" onClick={() => setFullscreenJob(job)} title="Fullscreen">
+                                <svg fill="none" height="12" viewBox="0 0 24 24" width="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
                               </button>
-                              {/* Inline toggle */}
-                              <button
-                                type="button"
-                                className="p-4 rounded-4 text-black-alpha-24 hover:text-accent-black hover:bg-black-alpha-4 transition-all"
-                                onClick={() => setSelectedOutput(isOpen ? null : ri)}
-                              >
-                                <svg fill="none" height="12" viewBox="0 0 24 24" width="12" className={cn("transition-transform", isOpen && "rotate-180")} stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                                  <path d="M6 9l6 6 6-6" />
-                                </svg>
+                              <button type="button" className="p-4 rounded-4 text-black-alpha-24 hover:text-accent-black hover:bg-black-alpha-4 transition-all" onClick={() => setExpandedJob(isOpen ? null : job.id)}>
+                                <svg fill="none" height="12" viewBox="0 0 24 24" width="12" className={cn("transition-transform", isOpen && "rotate-180")} stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 9l6 6 6-6" /></svg>
                               </button>
-                              {/* Download */}
-                              <button
-                                type="button"
-                                className="p-4 rounded-4 text-black-alpha-24 hover:text-accent-black hover:bg-black-alpha-4 transition-all"
-                                onClick={() => { const { ext } = getOutputMeta(matchingOutput); download(matchingOutput.content, `export.${ext}`); }}
-                                title="Download"
-                              >
-                                <svg fill="none" height="12" viewBox="0 0 24 24" width="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
-                                </svg>
+                              <button type="button" className="p-4 rounded-4 text-black-alpha-24 hover:text-accent-black hover:bg-black-alpha-4 transition-all" onClick={() => { const { ext } = getOutputMeta(job.content!, job.formatId); download(job.content!, `export.${ext}`); }} title="Download">
+                                <svg fill="none" height="12" viewBox="0 0 24 24" width="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" /></svg>
                               </button>
                             </>
-                          ) : (
-                            <span className="text-mono-x-small text-black-alpha-24">pending</span>
                           )}
                         </div>
-                        {/* Inline viewer */}
-                        {isOpen && matchingOutput && (
+                        {isOpen && job.content && (
                           <div className="border-t border-border-faint">
-                            <OutputContent output={matchingOutput} maxH="max-h-[350px]" />
+                            <OutputContent content={job.content} formatId={job.formatId} maxH="max-h-[350px]" />
                           </div>
                         )}
                       </div>
@@ -403,36 +394,25 @@ export default function ExportSidebar({ collapsed, onToggleCollapse, onExport, g
             <div className="mb-8">
               <div className="text-mono-x-small text-black-alpha-24 uppercase tracking-wider px-12 mb-6">Export as</div>
               <div className="flex flex-col gap-1">
-                {FORMATS.map((f) => {
-                  const isGen = generatingFormat === f.id;
-                  return (
-                    <button
-                      key={f.id}
-                      type="button"
-                      disabled={isRunning || !!generatingFormat}
-                      className={cn(
-                        "w-full text-left px-12 py-6 rounded-8 transition-all flex items-center gap-8",
-                        isRunning || generatingFormat ? "opacity-50 cursor-not-allowed" : "hover:bg-black-alpha-2",
-                      )}
-                      onClick={() => onExport(f.id, f.defaultPrompt, outputs.length)}
-                    >
-                      <span className="flex-shrink-0 text-black-alpha-40">{f.icon}</span>
-                      <span className="text-body-small flex-1 truncate text-accent-black">{f.label}</span>
-                      {isGen && (
-                        <div className="w-8 h-8 rounded-full border-2 border-heat-100 border-t-transparent animate-spin flex-shrink-0" />
-                      )}
-                    </button>
-                  );
-                })}
+                {FORMATS.map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    className="w-full text-left px-12 py-6 rounded-8 transition-all flex items-center gap-8 hover:bg-black-alpha-2"
+                    onClick={() => runExport(f.id)}
+                  >
+                    <span className="flex-shrink-0 text-black-alpha-40">{f.icon}</span>
+                    <span className="text-body-small flex-1 truncate text-accent-black">{f.label}</span>
+                  </button>
+                ))}
               </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Fullscreen viewer modal */}
-      {fullscreenOutput && (
-        <FullscreenViewer output={fullscreenOutput} onClose={() => setFullscreenOutput(null)} />
+      {fullscreenJob?.content && (
+        <FullscreenViewer content={fullscreenJob.content} formatId={fullscreenJob.formatId} onClose={() => setFullscreenJob(null)} />
       )}
     </>
   );
