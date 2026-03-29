@@ -135,32 +135,6 @@ function SkillsIcon() {
   );
 }
 
-function CategoryIcon({ category }: { category: string }) {
-  const iconProps = { fill: "none", height: "16", width: "16", viewBox: "0 0 24 24", stroke: "currentColor", strokeWidth: "1.5", strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
-  switch (category) {
-    case "Research":
-      return <svg {...iconProps}><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>;
-    case "Competitive Intelligence":
-      return <svg {...iconProps}><path d="M18 20V10M12 20V4M6 20v-6" /></svg>;
-    case "Investment & Finance":
-      return <svg {...iconProps}><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" /></svg>;
-    case "Content":
-      return <svg {...iconProps}><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>;
-    case "SEO":
-      return <svg {...iconProps}><path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z" /></svg>;
-    case "Lead Enrichment":
-      return <svg {...iconProps}><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /></svg>;
-    case "Data Migration":
-      return <svg {...iconProps}><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" /></svg>;
-    case "Product & E-commerce":
-      return <svg {...iconProps}><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" /></svg>;
-    case "Observability":
-      return <svg {...iconProps}><path d="M22 12h-4l-3 9L9 3l-3 9H2" /></svg>;
-    default:
-      return <SkillsIcon />;
-  }
-}
-
 function PlusMenu({
   skills,
   selectedSkills,
@@ -432,7 +406,6 @@ export default function AgentPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionStart, setMentionStart] = useState(0);
 
@@ -701,17 +674,6 @@ export default function AgentPage() {
     });
     sendMessage({ text: promptWithPlan });
   };
-
-  const categories = useMemo(() => {
-    if (!skills) return [];
-    const catMap = new Map<string, SkillInfo[]>();
-    for (const s of skills.filter((s) => s.category !== "Export")) {
-      const cat = s.category ?? "Other";
-      if (!catMap.has(cat)) catMap.set(cat, []);
-      catMap.get(cat)!.push(s);
-    }
-    return Array.from(catMap.entries());
-  }, [skills]);
 
   const mentionSkills = useMemo(() => {
     if (mentionQuery === null || !skills) return [];
@@ -1058,71 +1020,33 @@ export default function AgentPage() {
           </div>
         )}
 
-        {/* Skills tile grid / expanded skill list */}
-        {activeCategory ? (
-          <div
-            className="w-full max-w-640 mt-24 bg-accent-white rounded-12 overflow-hidden"
-            style={{ boxShadow: "0px 2px 12px -2px rgba(0,0,0,0.04), 0px 0px 0px 1px rgba(0,0,0,0.06)" }}
-          >
-            <div className="flex items-center justify-between px-16 py-12 border-b border-border-faint">
-              <div className="flex items-center gap-8">
-                <CategoryIcon category={activeCategory} />
-                <span className="text-label-medium text-accent-black">{activeCategory}</span>
-              </div>
+        {/* Example prompts */}
+        <div className="w-full max-w-640 mt-20">
+          <div className="grid grid-cols-2 gap-8">
+            {[
+              "Compare pricing between Vercel, Netlify, and Cloudflare Pages",
+              "Find the top 10 YC W25 companies and extract their details",
+              "Get the current stock prices for NVDA, AAPL, and GOOGL",
+              "Scrape Hacker News front page and summarize the top stories",
+              "Research the best headless CMS platforms and compare features",
+              "Extract product listings from a Nike shoe category page",
+            ].map((prompt) => (
               <button
+                key={prompt}
                 type="button"
-                className="text-black-alpha-32 hover:text-accent-black transition-colors p-4"
-                onClick={() => setActiveCategory(null)}
+                className="text-left px-14 py-10 rounded-10 border border-border-faint bg-accent-white hover:border-heat-40 hover:bg-heat-4 transition-all group"
+                onClick={() => {
+                  setConfig({ ...config, prompt });
+                  onRun();
+                }}
               >
-                <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                <span className="text-body-medium text-black-alpha-48 group-hover:text-accent-black transition-colors line-clamp-2">
+                  {prompt}
+                </span>
               </button>
-            </div>
-            <div className="max-h-[280px] overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
-              {(categories.find(([cat]) => cat === activeCategory)?.[1] ?? []).map((skill) => (
-                <button
-                  key={skill.name}
-                  type="button"
-                  className="w-full text-left px-16 py-12 border-b border-border-faint last:border-0 hover:bg-black-alpha-2 transition-all"
-                  onClick={() => {
-                    setConfig({
-                      ...config,
-                      prompt: skill.description,
-                      skills: config.skills.includes(skill.name) ? config.skills : [...config.skills, skill.name],
-                    });
-                    setActiveCategory(null);
-                  }}
-                >
-                  <span className="text-body-medium text-accent-black">{skill.name.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}</span>
-                </button>
-              ))}
-            </div>
+            ))}
           </div>
-        ) : categories.length > 0 ? (
-          <div className="w-full max-w-780 mt-32">
-            <div className="flex items-center justify-between mb-16">
-              <h2 className="text-label-medium text-accent-black">Explore What&apos;s Possible</h2>
-              <span className="text-body-small text-black-alpha-32">{categories.reduce((n, [, s]) => n + s.length, 0)} skills</span>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-8">
-              {categories.map(([cat, catSkills]) => (
-                <button
-                  key={cat}
-                  type="button"
-                  className="flex items-center gap-12 px-16 py-14 rounded-12 border border-border-faint bg-accent-white hover:border-heat-40 hover:bg-heat-4 transition-all text-left group"
-                  onClick={() => setActiveCategory(cat)}
-                >
-                  <div className="flex items-center justify-center w-36 h-36 rounded-10 bg-black-alpha-4 group-hover:bg-heat-8 transition-all flex-shrink-0">
-                    <CategoryIcon category={cat} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-label-small text-accent-black">{cat}</div>
-                    <div className="text-body-small text-black-alpha-32">{catSkills.length} skill{catSkills.length !== 1 ? "s" : ""}</div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : null}
+        </div>
 
         {/* Recent conversations */}
         <div className="w-full max-w-780 pb-60">

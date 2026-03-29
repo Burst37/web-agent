@@ -372,7 +372,7 @@ function ScrapeResult({
         {content && !answer && (
           <div className="border-t border-border-faint bg-background-lighter p-14 max-h-500 overflow-auto no-scrollbar">
             {isJsonContent(content) ? (
-              <pre className="text-mono-small text-accent-black whitespace-pre-wrap">{extractJsonContent(content)}</pre>
+              <StreamdownBlock>{"```json\n" + extractJsonContent(content) + "\n```"}</StreamdownBlock>
             ) : (
               <div className="max-w-none">
                 <StreamdownBlock>{content}</StreamdownBlock>
