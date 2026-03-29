@@ -517,7 +517,9 @@ export default function AgentPage() {
         bin: config.model.bin ?? config.model.model,
       });
     } else {
-      sdkChat.sendMessage(opts);
+      sdkChat.sendMessage(opts).catch((err) => {
+        console.error("sendMessage failed:", err);
+      });
     }
   }, [isACP, config.model, acpChat, sdkChat]);
 
