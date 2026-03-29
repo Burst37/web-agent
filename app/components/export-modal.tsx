@@ -5,11 +5,13 @@ import type { UIMessage } from "ai";
 import { cn } from "@/utils/cn";
 import { Streamdown } from "streamdown";
 import { createCodePlugin } from "@streamdown/code";
+import { createMermaidPlugin } from "@streamdown/mermaid";
 import { JsonView, defaultStyles } from "react-json-view-lite";
 import "react-json-view-lite/dist/index.css";
 import Papa from "papaparse";
 
 const code = createCodePlugin({ themes: ["github-light", "github-light"] });
+const mermaid = createMermaidPlugin();
 
 function fileExt(formatId: string) {
   if (formatId === "json") return "json";
@@ -279,7 +281,7 @@ function OutputContent({ content, formatId, maxH }: { content: string; formatId:
       {isHtml && <HtmlViewer html={cleaned} />}
       {!isJson && !isCsv && !isHtml && (
         <div className="p-14 text-body-medium text-accent-black leading-relaxed max-w-none">
-          <Streamdown plugins={{ code }}>{content}</Streamdown>
+          <Streamdown plugins={{ code, mermaid }}>{content}</Streamdown>
         </div>
       )}
     </div>

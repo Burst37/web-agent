@@ -51,6 +51,7 @@ const themeConfig: Config = {
     "./components/**/*.{ts,tsx}",
     "./node_modules/streamdown/dist/*.js",
     "./node_modules/@streamdown/code/dist/*.js",
+    "./node_modules/@streamdown/mermaid/dist/*.js",
   ],
   theme: {
     extend: {

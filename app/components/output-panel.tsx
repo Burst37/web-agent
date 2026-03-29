@@ -4,8 +4,10 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import type { UIMessage } from "ai";
 import { Streamdown } from "streamdown";
 import { createCodePlugin } from "@streamdown/code";
+import { createMermaidPlugin } from "@streamdown/mermaid";
 
 const code = createCodePlugin({ themes: ["github-light", "github-light"] });
+const mermaid = createMermaidPlugin();
 import { cn } from "@/utils/cn";
 
 function isToolPart(part: { type: string }): boolean {
@@ -359,7 +361,7 @@ function FormattedResult({
         )}
         {formatted.format === "text" && !isHtml && (
           <div className="p-14 overflow-auto max-h-500 text-body-medium text-accent-black leading-relaxed max-w-none">
-            <Streamdown plugins={{ code }}>{formatted.content}</Streamdown>
+            <Streamdown plugins={{ code, mermaid }}>{formatted.content}</Streamdown>
           </div>
         )}
       </div>

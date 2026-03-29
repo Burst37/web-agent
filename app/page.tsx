@@ -13,6 +13,9 @@ import SettingsPanel from "./components/settings-panel";
 import type { UploadedFile } from "@/lib/types";
 import HistoryPanel from "./components/history-panel";
 import { Streamdown } from "streamdown";
+import { createMermaidPlugin } from "@streamdown/mermaid";
+
+const mermaid = createMermaidPlugin();
 import Sidebar from "./components/sidebar";
 import ExportSidebar from "./components/export-modal";
 import SymbolColored from "@/components/shared/icons/symbol-colored";
@@ -997,7 +1000,7 @@ export default function AgentPage() {
                 />
               ) : (
                 <div className="text-body-medium text-accent-black leading-relaxed max-w-none">
-                  <Streamdown>{planEditText || planText}</Streamdown>
+                  <Streamdown plugins={{ mermaid }}>{planEditText || planText}</Streamdown>
                 </div>
               )}
             </div>
