@@ -1000,7 +1000,7 @@ export default function AgentPage() {
                   rows={Math.max(6, planEditText.split("\n").length)}
                 />
               ) : (
-                <div className="text-body-medium text-accent-black leading-relaxed max-w-none">
+                <div className="max-w-none">
                   <Streamdown
                     plugins={{ code, mermaid }}
                     controls={{ table: true, code: true, mermaid: { download: true, copy: true, fullscreen: true } }}

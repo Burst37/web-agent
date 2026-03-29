@@ -259,7 +259,7 @@ function OutputContent({ content, formatId, maxH }: { content: string; formatId:
       {isCsv && <CsvTable data={cleaned} />}
       {isHtml && <HtmlViewer html={cleaned} />}
       {!isJson && !isCsv && !isHtml && (
-        <div className="p-14 text-body-medium text-accent-black leading-relaxed max-w-none">
+        <div className="p-14 max-w-none">
           <Streamdown
             plugins={{ code, mermaid }}
             controls={{ table: true, code: true, mermaid: { download: true, copy: true, fullscreen: true } }}

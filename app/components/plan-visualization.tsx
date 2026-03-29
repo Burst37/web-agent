@@ -8,8 +8,7 @@ import { mermaid } from "@streamdown/mermaid";
 import { cn } from "@/utils/cn";
 
 // --- Shared Streamdown wrapper with full plugin + controls support ---
-const SD_CLASSES = "text-body-medium text-accent-black leading-relaxed max-w-none";
-const SD_CLASSES_LARGE = "text-body-large text-accent-black leading-relaxed max-w-none";
+// Don't set text-body-* on the wrapper — Streamdown manages its own font sizes
 
 function StreamdownBlock({ children, isStreaming, className }: { children: string; isStreaming?: boolean; className?: string }) {
   return (
@@ -166,7 +165,7 @@ function SearchResultItem({ result }: { result: SearchResult }) {
 
       {expanded && hasMarkdown && (
         <div className="border-t border-border-faint bg-background-lighter p-12 max-h-400 overflow-auto no-scrollbar">
-          <div className={SD_CLASSES}>
+          <div className="max-w-none">
             <StreamdownBlock>{result.markdown!}</StreamdownBlock>
           </div>
         </div>
@@ -335,7 +334,7 @@ function ScrapeResult({
       )}>
         {interactOutput && (
           <div className="mx-14 mb-10 bg-accent-bluetron/[0.04] rounded-8 border border-accent-bluetron/15 p-12">
-            <div className={SD_CLASSES}>
+            <div className="max-w-none">
               <StreamdownBlock>{interactOutput}</StreamdownBlock>
             </div>
           </div>
@@ -343,7 +342,7 @@ function ScrapeResult({
 
         {answer && (
           <div className="mx-14 mb-10 bg-black-alpha-2 rounded-8 border border-border-faint p-12">
-            <div className={SD_CLASSES}>
+            <div className="max-w-none">
               <StreamdownBlock>{answer}</StreamdownBlock>
             </div>
           </div>
@@ -375,7 +374,7 @@ function ScrapeResult({
             {isJsonContent(content) ? (
               <pre className="text-mono-small text-accent-black whitespace-pre-wrap">{extractJsonContent(content)}</pre>
             ) : (
-              <div className={SD_CLASSES}>
+              <div className="max-w-none">
                 <StreamdownBlock>{content}</StreamdownBlock>
               </div>
             )}
@@ -549,7 +548,7 @@ function InteractCard({ item }: { item: TimelineItem }) {
             <div className={cn("mx-14 mb-10", expanded ? "flex flex-col gap-8" : "flex flex-col gap-8")}>
               {item.interactOutput && (
                 <div className="bg-black-alpha-2 rounded-8 border border-border-faint p-12">
-                  <div className={SD_CLASSES}>
+                  <div className="max-w-none">
                     <StreamdownBlock>{item.interactOutput}</StreamdownBlock>
                   </div>
                 </div>
@@ -562,7 +561,7 @@ function InteractCard({ item }: { item: TimelineItem }) {
                   {isJsonContent(item.content) ? (
                     <pre className="text-mono-small text-accent-black whitespace-pre-wrap">{extractJsonContent(item.content)}</pre>
                   ) : (
-                    <div className={SD_CLASSES}>
+                    <div className="max-w-none">
                       <StreamdownBlock>{item.content}</StreamdownBlock>
                     </div>
                   )}
@@ -727,7 +726,7 @@ function SubAgentCard({ item }: { item: TimelineItem }) {
       {expanded && item.status === "complete" && item.text && (
         <div className="border-t border-accent-amethyst/10 px-14 py-10">
           <div className="text-label-x-small text-black-alpha-24 mb-4">Result</div>
-          <div className={SD_CLASSES}>
+          <div className="max-w-none">
             <StreamdownBlock>{item.text}</StreamdownBlock>
           </div>
         </div>
@@ -836,7 +835,7 @@ function TextBlock({ text, isLatest }: { text: string; isLatest: boolean }) {
 
   if (isShort) {
     return (
-      <div className={cn(SD_CLASSES_LARGE, "my-12")}>
+      <div className="max-w-none my-12">
         <StreamdownBlock>{text}</StreamdownBlock>
       </div>
     );
@@ -867,7 +866,7 @@ function TextBlock({ text, isLatest }: { text: string; isLatest: boolean }) {
         "transition-all duration-300 overflow-hidden",
         collapsed ? "max-h-0 opacity-0" : "max-h-[4000px] opacity-100",
       )}>
-        <div className={cn("border-t border-border-faint p-14 max-h-[600px] overflow-auto no-scrollbar", SD_CLASSES_LARGE)}>
+        <div className="border-t border-border-faint p-14 max-h-[600px] overflow-auto no-scrollbar max-w-none">
           <StreamdownBlock>{text}</StreamdownBlock>
         </div>
       </div>

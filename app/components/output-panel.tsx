@@ -357,7 +357,7 @@ function FormattedResult({
           <HtmlViewer html={formatted.content} />
         )}
         {formatted.format === "text" && !isHtml && (
-          <div className="p-14 overflow-auto max-h-500 text-body-medium text-accent-black leading-relaxed max-w-none">
+          <div className="p-14 overflow-auto max-h-500 max-w-none">
             <Streamdown
               plugins={{ code, mermaid }}
               controls={{ table: true, code: true, mermaid: { download: true, copy: true, fullscreen: true } }}
