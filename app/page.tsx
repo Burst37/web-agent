@@ -1116,10 +1116,6 @@ export default function AgentPage() {
           <div className="text-title-h4 text-accent-black">
             {config.prompt}
           </div>
-          <div className="flex items-center justify-end gap-6 mt-8 text-body-small text-black-alpha-32">
-            <ProviderModelIcon icon={currentModelIcon} size={12} />
-            <span>{currentModelName}</span>
-          </div>
         </div>
 
         {/* Activity feed */}
@@ -1202,6 +1198,10 @@ export default function AgentPage() {
         {messages.length > 0 && (
           <div className="mt-16 mb-8">
             <div className="flex items-center justify-end gap-12">
+              <div className="flex items-center gap-4 text-mono-x-small text-black-alpha-32">
+                <ProviderModelIcon icon={currentModelIcon} size={12} />
+                {currentModelName}
+              </div>
               <div className="flex items-center gap-4 text-mono-x-small text-black-alpha-32">
                 <svg fill="none" height="12" viewBox="0 0 24 24" width="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" /></svg>
                 {sessionStats.agentTurns} turn{sessionStats.agentTurns !== 1 ? "s" : ""}
