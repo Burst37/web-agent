@@ -900,7 +900,9 @@ function WorkersPanel({ item }: { item: TimelineItem }) {
   const tasks = item.workerTasks ?? [];
   const results = (item.workerResults ?? []) as WorkerResultData[];
   const isRunning = item.status === "running";
+  const isDone = !isRunning && results.length > 0;
   const resultMap = new Map(results.map((r) => [r.id, r]));
+  const [collapsed, setCollapsed] = useState(false);
 
   // Poll for live progress while workers are running
   const [liveProgress, setLiveProgress] = useState<Record<string, WorkerLiveProgress>>({});
@@ -919,7 +921,11 @@ function WorkersPanel({ item }: { item: TimelineItem }) {
 
   return (
     <div className="my-12">
-      <div className="flex items-center gap-6 mb-8">
+      <button
+        type="button"
+        className="flex items-center gap-6 mb-8 hover:opacity-80 transition-opacity"
+        onClick={() => isDone && setCollapsed(!collapsed)}
+      >
         {isRunning ? (
           <div className="w-10 h-10 rounded-full border-2 border-heat-100 border-t-transparent animate-spin flex-shrink-0" />
         ) : (
@@ -930,24 +936,31 @@ function WorkersPanel({ item }: { item: TimelineItem }) {
         <span className="text-label-small text-accent-black">
           {isRunning ? `Running ${tasks.length} workers in parallel` : `${results.length} workers completed`}
         </span>
-      </div>
-      <div className="flex flex-col gap-6">
-        {tasks.map((task) => {
-          const r = resultMap.get(task.id);
-          const live = liveProgress[task.id];
-          return (
-            <WorkerCard
-              key={task.id}
-              id={task.id}
-              prompt={task.prompt}
-              result={r?.result}
-              workerStatus={isRunning && !r ? "running" : r?.status === "error" ? "error" : "done"}
-              liveProgress={isRunning && !r ? live : undefined}
-              stepDetails={r?.stepDetails}
-            />
-          );
-        })}
-      </div>
+        {isDone && (
+          <svg fill="none" height="12" viewBox="0 0 24 24" width="12" className={cn("transition-transform text-black-alpha-24", collapsed && "-rotate-90")} stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        )}
+      </button>
+      {!collapsed && (
+        <div className="flex flex-col gap-6">
+          {tasks.map((task) => {
+            const r = resultMap.get(task.id);
+            const live = liveProgress[task.id];
+            return (
+              <WorkerCard
+                key={task.id}
+                id={task.id}
+                prompt={task.prompt}
+                result={r?.result}
+                workerStatus={isRunning && !r ? "running" : r?.status === "error" ? "error" : "done"}
+                liveProgress={isRunning && !r ? live : undefined}
+                stepDetails={r?.stepDetails}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -1181,7 +1194,7 @@ function extractTimeline(messages: UIMessage[]): TimelineItem[] {
             status,
           });
         } else if (toolName === "spawnWorkers") {
-          const outObj = output as { results?: { id: string; status: string; result: string; steps: number }[]; total?: number; completed?: number; failed?: number } | undefined;
+          const outObj = output as { results?: WorkerResultData[]; total?: number; completed?: number; failed?: number } | undefined;
           const taskList = Array.isArray((input as Record<string, unknown>).tasks)
             ? (input as Record<string, unknown>).tasks as { id: string; prompt: string }[]
             : [];
