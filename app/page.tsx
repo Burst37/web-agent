@@ -482,6 +482,7 @@ export default function AgentPage() {
   const messages = isACP ? acpChat.messages : sdkChat.messages;
   const status = isACP ? acpChat.status : sdkChat.status;
   const stop = isACP ? acpChat.stop : sdkChat.stop;
+  const clearMessages = () => { sdkChat.setMessages([]); };
 
   const sendMessage = useCallback((opts: { text: string }) => {
     setSidebarCollapsed(true);
@@ -1075,6 +1076,7 @@ export default function AgentPage() {
             setConfig(defaultConfig);
             setConversationId(null);
             setSuggestions([]);
+            clearMessages();
             stop();
           }}
         >
@@ -1109,6 +1111,7 @@ export default function AgentPage() {
             setHasSubmitted(false);
             setConfig(defaultConfig);
             setConversationId(null);
+            clearMessages();
             stop();
           }}
         />
