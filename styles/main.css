@@ -93,10 +93,18 @@
   min-width: max-content;
 }
 
-/* Hide language labels (mermaid, json, csv, etc.) on code/mermaid blocks */
-[data-streamdown="code-block-header"],
+/* Compact language labels on code/mermaid blocks */
+[data-streamdown="code-block-header"] {
+  padding: 4px 12px;
+  font-size: 0.75rem;
+}
+[data-streamdown="mermaid-block"] > div:first-child {
+  padding: 4px 12px;
+  height: auto;
+  min-height: 0;
+}
 [data-streamdown="mermaid-block"] > div:first-child > span {
-  display: none;
+  font-size: 0.75rem;
 }
 
 /* Smaller pan/zoom controls on mermaid */

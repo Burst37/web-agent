@@ -1221,13 +1221,48 @@ export default function PlanVisualization({
         }
       })}
 
-      {/* Running indicator */}
-      {isRunning && (
-        <div className="flex items-center gap-6 my-12 px-4">
-          <div className="w-12 h-12 rounded-full border-2 border-black-alpha-8 border-t-heat-100 animate-spin flex-shrink-0" />
-          <span className="text-body-small text-black-alpha-24">Working...</span>
-        </div>
-      )}
+      {/* Running indicator — show what's happening */}
+      {isRunning && (() => {
+        const last = timeline.length > 0 ? timeline[timeline.length - 1] : null;
+        const lastRunning = last?.status === "running" ? last : null;
+
+        // spawnWorkers running — show worker cards
+        if (lastRunning?.type === "text" && lastRunning.text?.includes("workers in parallel")) {
+          const workerIds = lastRunning.text.match(/: (.+)\.\.\.$/)?.[1]?.split(", ") ?? [];
+          return (
+            <div className="my-12">
+              <div className="flex items-center gap-6 mb-8 px-4">
+                <div className="w-12 h-12 rounded-full border-2 border-black-alpha-8 border-t-heat-100 animate-spin flex-shrink-0" />
+                <span className="text-body-small text-black-alpha-40">Running {workerIds.length} workers in parallel</span>
+              </div>
+              <div className="grid grid-cols-2 gap-6 px-4">
+                {workerIds.map((id) => (
+                  <div key={id} className="flex items-center gap-8 px-12 py-10 rounded-8 border border-heat-40 bg-heat-4 animate-pulse">
+                    <div className="w-8 h-8 rounded-full border-2 border-heat-100 border-t-transparent animate-spin flex-shrink-0" />
+                    <span className="text-label-small text-accent-black">{id}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        }
+
+        // Regular tool running — describe it
+        let description = "Thinking...";
+        if (lastRunning?.type === "search") description = `Searching: "${lastRunning.text?.slice(0, 60)}"`;
+        else if (lastRunning?.type === "scrape") description = `Scraping ${lastRunning.url ? new URL(lastRunning.url).hostname : "page"}`;
+        else if (lastRunning?.type === "interact") description = `Interacting with ${lastRunning.url ? new URL(lastRunning.url).hostname : "page"}`;
+        else if (lastRunning?.type === "bash") description = describeBashAction(lastRunning.command ?? "").label;
+        else if (lastRunning?.type === "skill") description = `Loading skill: ${lastRunning.skillName}`;
+        else if (lastRunning?.type === "subagent") description = `Running sub-agent: ${lastRunning.skillName}`;
+
+        return (
+          <div className="flex items-center gap-6 my-12 px-4">
+            <div className="w-12 h-12 rounded-full border-2 border-black-alpha-8 border-t-heat-100 animate-spin flex-shrink-0" />
+            <span className="text-body-small text-black-alpha-40">{description}</span>
+          </div>
+        );
+      })()}
 
       {/* Search results empty state while running */}
       {isRunning && timeline.length > 0 && timeline[timeline.length - 1].type === "search" && timeline[timeline.length - 1].status === "running" && (
