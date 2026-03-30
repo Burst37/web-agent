@@ -26,9 +26,9 @@ export const config = {
   // ═══════════════════════════════════════════
   // OpenAI (GPT)
   // ═══════════════════════════════════════════
-  // orchestrator: { provider: "openai", model: "gpt-4.1" } satisfies ModelRef,
-  // subAgent:     { provider: "openai", model: "gpt-4.1" } satisfies ModelRef,
-  // background:   { provider: "openai", model: "o4-mini" } satisfies ModelRef,
+  // orchestrator: { provider: "openai", model: "gpt-5.4" } satisfies ModelRef,
+  // subAgent:     { provider: "openai", model: "gpt-5.4" } satisfies ModelRef,
+  // background:   { provider: "openai", model: "gpt-5.4" } satisfies ModelRef,
 
   // ─── Task-specific overrides ───
   // Set a model here to override the background model for that task.
