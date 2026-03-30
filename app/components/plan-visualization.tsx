@@ -159,10 +159,10 @@ function SearchResults({ query, results, creditsUsed, isLatest }: { query: strin
   const collapsed = userToggled !== null ? !userToggled : autoCollapsed.current;
 
   return (
-    <div className="my-12">
+    <div className="my-12 rounded-10 border border-border-faint overflow-hidden">
       <button
         type="button"
-        className="flex items-center gap-8 mb-8 text-black-alpha-40 w-full text-left hover:text-black-alpha-56 transition-colors"
+        className="flex items-center gap-8 px-14 py-10 text-black-alpha-40 w-full text-left hover:bg-black-alpha-2 transition-colors"
         onClick={() => setUserToggled(collapsed)}
       >
         <SearchIcon />
@@ -184,14 +184,13 @@ function SearchResults({ query, results, creditsUsed, isLatest }: { query: strin
           </svg>
         </div>
       </button>
-      <div className={cn(
-        "flex flex-col gap-4 ml-26 transition-all duration-300 overflow-hidden",
-        collapsed ? "max-h-0 opacity-0" : "max-h-[2000px] opacity-100",
-      )}>
-        {results.map((r, i) => (
-          <SearchResultItem key={i} result={r} />
-        ))}
-      </div>
+      {!collapsed && (
+        <div className="border-t border-border-faint px-14 py-8 flex flex-col gap-4">
+          {results.map((r, i) => (
+            <SearchResultItem key={i} result={r} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -885,7 +884,7 @@ function WorkersPanel({ item }: { item: TimelineItem }) {
   const isRunning = item.status === "running";
   const isDone = !isRunning && results.length > 0;
   const resultMap = new Map(results.map((r) => [r.id, r]));
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(isDone);
 
   // Poll for live progress while workers are running
   const [liveProgress, setLiveProgress] = useState<Record<string, WorkerLiveProgress>>({});
