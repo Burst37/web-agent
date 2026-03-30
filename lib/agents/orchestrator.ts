@@ -150,11 +150,13 @@ graph TD
 - CRITICAL: python, python3, node, curl, wget, npm, pip, bc, ruby, perl ARE NOT AVAILABLE in bash. For JSON use jq. For CSV use awk. For math use awk (e.g. awk 'BEGIN{print 10*1.5}').
 - Store collected data in /data/ as you go so nothing is lost.
 
-## Scraping strategy — prefer markdown over JSON mode
-- Default to formats: ["markdown"] for scraping. Markdown gives you the FULL page content including pagination cues, "showing X of Y results", "next page" links, category counts, and other metadata that tells you if there's more data.
-- Do NOT use formats: ["json"] or the query parameter for open-ended collection tasks (e.g. "get all products", "scrape all listings"). JSON mode and query extraction can silently truncate results — you won't know if you got 24 out of 200 products.
-- Only use query parameter or JSON extraction when: (a) you need a specific single fact from a page, (b) the user provided an explicit schema, or (c) you already scraped with markdown and now want structured extraction of known fields.
-- After scraping with markdown, ALWAYS check the content for pagination signals: "page 1 of 10", "next", "load more", "showing 1-24 of 200", category links, etc. If there are more pages, use interact to paginate or scrape the next page URL.
+## Scraping strategy — use query smartly
+- Use scrape with a query parameter for targeted extraction — it's the most efficient approach and keeps context lean.
+- IMPORTANT: When scraping lists/collections, ALWAYS include pagination awareness in your query. Ask for totals and pagination info alongside the data. Examples:
+  - "List all products with name and price. Also tell me: how many total results are shown? Is there a next page, load more button, or pagination? What page is this (e.g. page 1 of 5, showing 1-24 of 200)?"
+  - "Extract all company names and descriptions. How many total companies are listed? Are there more pages?"
+- If the response indicates there are more pages (e.g. "showing 24 of 200", "page 1 of 8", "next page available"), use interact to paginate or scrape the next page URL. Keep going until you have all the data.
+- For full page content when you need to see everything, use formats: ["markdown"]. But prefer query for most tasks — it's lighter on context.
 - When you see truncated results, say so and keep going — don't present partial data as complete.
 
 ## Skills
