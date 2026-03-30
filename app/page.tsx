@@ -1263,7 +1263,9 @@ export default function AgentPage() {
           onToggleCollapse={() => setExportCollapsed(!exportCollapsed)}
           messages={messages}
           onGenerate={(format) => {
-            sendMessage({ text: `Now format all the collected data as ${format}. Stream it inline as a fenced code block.` });
+            const skillMap: Record<string, string> = { JSON: "export-json", CSV: "export-csv", Markdown: "export-report" };
+            const skill = skillMap[format] ?? "export-json";
+            sendMessage({ text: `Load the "${skill}" skill and then format all the collected data as ${format}. Follow the skill instructions. Stream the output inline.` });
           }}
         />
       )}
