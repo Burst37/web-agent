@@ -78,7 +78,20 @@
   --sd-muted-fg: hsl(var(--muted-foreground));
 }
 
-/* Let Streamdown handle all element styling natively via its own Tailwind classes */
+/* Mermaid diagrams — ensure adequate height */
+[data-streamdown="mermaid-block"] svg {
+  min-height: 300px;
+  max-height: 600px;
+}
+
+/* Code blocks — ensure proper overflow and no content overlap */
+[data-streamdown="code-block"] pre {
+  overflow-x: auto;
+}
+[data-streamdown="code-block"] pre code {
+  display: block;
+  min-width: max-content;
+}
 
 /* JSON viewer overrides */
 .json-view-lite {

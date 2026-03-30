@@ -8,7 +8,21 @@ const plugins = { code, mermaid };
 const controls = {
   table: true as const,
   code: true as const,
-  mermaid: { download: true, copy: true, fullscreen: true },
+  mermaid: { download: true, copy: true, fullscreen: true, panZoom: true },
+};
+
+// Silent error component — hides rendering errors while mermaid is streaming
+function MermaidLoading() {
+  return (
+    <div className="flex items-center gap-8 px-16 py-12 text-body-small text-black-alpha-32">
+      <div className="w-10 h-10 rounded-full border-2 border-black-alpha-16 border-t-transparent animate-spin" />
+      Rendering diagram...
+    </div>
+  );
+}
+
+const mermaidConfig = {
+  errorComponent: MermaidLoading,
 };
 
 export default function StreamdownBlock({
@@ -23,6 +37,7 @@ export default function StreamdownBlock({
       <Streamdown
         plugins={plugins}
         controls={controls}
+        mermaid={mermaidConfig}
         animated
         caret="block"
         isAnimating={isStreaming}
