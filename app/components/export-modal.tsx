@@ -492,6 +492,7 @@ interface ExportSidebarProps {
 interface BashFile {
   path: string;
   size: number;
+  detectedAt: number; // timestamp when first seen
 }
 
 export default function ExportSidebar({ collapsed, onToggleCollapse, messages }: ExportSidebarProps) {
@@ -501,13 +502,36 @@ export default function ExportSidebar({ collapsed, onToggleCollapse, messages }:
   const [viewingFile, setViewingFile] = useState<{ path: string; content: string; formatId: string } | null>(null);
   const messagesRef = useRef(messages);
   messagesRef.current = messages;
+  const baselineFilesRef = useRef<Set<string> | null>(null);
+  const knownFilesRef = useRef<Map<string, number>>(new Map());
 
-  // Poll for bash files
+  // Poll for bash files — only show files created during this session
   useEffect(() => {
     const poll = () => {
       fetch("/api/files")
         .then((r) => r.json())
-        .then((data) => { if (data.files) setBashFiles(data.files); })
+        .then((data) => {
+          if (!data.files) return;
+          const allFiles = data.files as { path: string; size: number }[];
+          // First poll: snapshot existing files as baseline (pre-session)
+          if (baselineFilesRef.current === null) {
+            baselineFilesRef.current = new Set(allFiles.map((f) => f.path));
+            return;
+          }
+          // Track new files with detection timestamp
+          const now = Date.now();
+          const sessionFiles: BashFile[] = [];
+          for (const f of allFiles) {
+            if (baselineFilesRef.current.has(f.path)) continue;
+            if (!knownFilesRef.current.has(f.path)) {
+              knownFilesRef.current.set(f.path, now);
+            }
+            sessionFiles.push({ ...f, detectedAt: knownFilesRef.current.get(f.path)! });
+          }
+          // Sort newest first
+          sessionFiles.sort((a, b) => b.detectedAt - a.detectedAt);
+          setBashFiles(sessionFiles);
+        })
         .catch(() => {});
     };
     poll();
@@ -637,7 +661,7 @@ export default function ExportSidebar({ collapsed, onToggleCollapse, messages }:
                         </span>
                         <div className="min-w-0 flex-1">
                           <div className="text-label-small text-accent-black truncate">{name}</div>
-                          <div className="text-mono-x-small text-black-alpha-32">{sizeStr}</div>
+                          <div className="text-mono-x-small text-black-alpha-32">{sizeStr} · {new Date(f.detectedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
                         </div>
                         <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
