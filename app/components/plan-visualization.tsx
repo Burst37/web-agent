@@ -678,6 +678,7 @@ interface WorkerLiveProgress {
   currentTool?: string;
   currentInput?: string;
   tokens: number;
+  stepLog?: { tool: string; input: string }[];
 }
 
 function WorkerCard({ id, prompt, result, workerStatus, liveProgress, stepDetails }: {
@@ -749,8 +750,18 @@ function WorkerCard({ id, prompt, result, workerStatus, liveProgress, stepDetail
               <StreamdownBlock>{result}</StreamdownBlock>
             </div>
           )}
-          {workerStatus === "running" && !result && (
-            <div className="px-14 py-10 text-body-small text-black-alpha-24">Running...</div>
+          {workerStatus === "running" && !result && liveProgress?.stepLog && liveProgress.stepLog.length > 0 && (
+            <div className="px-14 py-8 flex flex-col gap-2">
+              {liveProgress.stepLog.map((step, si) => (
+                <div key={si} className="flex items-center gap-6">
+                  <span className="text-mono-x-small text-black-alpha-24 w-16 flex-shrink-0">{si + 1}</span>
+                  <span className="text-body-small text-black-alpha-48 truncate">{step.tool}{step.input ? `: ${step.input.slice(0, 60)}` : ""}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {workerStatus === "running" && !result && (!liveProgress?.stepLog || liveProgress.stepLog.length === 0) && (
+            <div className="px-14 py-8 text-body-small text-black-alpha-24">Starting...</div>
           )}
         </div>
       )}

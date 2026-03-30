@@ -16,6 +16,7 @@ export interface WorkerProgress {
   currentTool?: string;
   currentInput?: string;
   tokens: number;
+  stepLog: { tool: string; input: string }[];
 }
 
 const g = globalThis as unknown as { __workerProgress?: Map<string, WorkerProgress> };
@@ -65,6 +66,7 @@ export function createWorkerTool(
           status: "running",
           steps: 0,
           tokens: 0,
+          stepLog: [],
         });
       }
 
@@ -91,19 +93,24 @@ export function createWorkerTool(
                 const prev = workerProgress.get(task.id);
                 const lastTool = toolCalls?.[toolCalls.length - 1];
                 const tc = lastTool as Record<string, unknown> | undefined;
+                const toolName = lastTool?.toolName ?? "thinking";
+                const toolInput = tc?.args ? JSON.stringify(tc.args).slice(0, 80) : "";
+                const prevLog = prev?.stepLog ?? [];
                 workerProgress.set(task.id, {
                   id: task.id,
                   status: "running",
                   steps: (prev?.steps ?? 0) + 1,
-                  currentTool: lastTool?.toolName,
-                  currentInput: tc?.args ? JSON.stringify(tc.args).slice(0, 100) : undefined,
+                  currentTool: toolName,
+                  currentInput: toolInput || undefined,
                   tokens: (prev?.tokens ?? 0) + (usage?.totalTokens ?? 0),
+                  stepLog: [...prevLog, { tool: toolName, input: toolInput }],
                 });
               },
             });
 
             const tokens = workerProgress.get(task.id)?.tokens ?? 0;
-            workerProgress.set(task.id, { id: task.id, status: "done", steps: result.steps.length, tokens });
+            const doneLog = workerProgress.get(task.id)?.stepLog ?? [];
+            workerProgress.set(task.id, { id: task.id, status: "done", steps: result.steps.length, tokens, stepLog: doneLog });
 
             return {
               id: task.id,
@@ -120,7 +127,7 @@ export function createWorkerTool(
               })),
             };
           } catch (err) {
-            workerProgress.set(task.id, { id: task.id, status: "error", steps: 0, tokens: 0 });
+            workerProgress.set(task.id, { id: task.id, status: "error", steps: 0, tokens: 0, stepLog: [] });
             return {
               id: task.id,
               status: "error" as const,
