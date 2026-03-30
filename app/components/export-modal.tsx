@@ -38,12 +38,6 @@ const FORMATS = [
     prompt: () => `${EXPORT_PREAMBLE}Format the data below as clean, structured markdown with headings, tables, and bullet points. Include all data points.`,
     icon: <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" /><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" /></svg>,
   },
-  {
-    id: "html",
-    label: "HTML App",
-    prompt: () => `${EXPORT_PREAMBLE}Build a single-file HTML application that visualizes and presents the data below. Use inline CSS and vanilla JavaScript. Make it interactive — sortable tables, filters, charts where appropriate, responsive layout, modern design with a clean sans-serif font. Start with <!DOCTYPE html>. The entire app must be self-contained in one HTML file with no external dependencies.`,
-    icon: <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6" /></svg>,
-  },
 ];
 
 // --- Helpers ---

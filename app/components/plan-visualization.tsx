@@ -737,39 +737,82 @@ function SubAgentCard({ item }: { item: TimelineItem }) {
 
 // --- Bash result rendering ---
 
-function describeBashAction(command: string): { label: string; detail?: string } {
+function describeBashAction(command: string): { label: string; detail?: string; isFileOp: boolean } {
   const cmd = command.trim();
-  // File writes
-  if (cmd.startsWith("cat <<") || cmd.startsWith("cat >") || cmd.includes("> /data/")) {
+  // File writes — show as light card
+  if (cmd.startsWith("cat <<") || cmd.startsWith("cat >") || cmd.includes("> /data/") || (cmd.startsWith("printf") && cmd.includes("> /data/"))) {
     const fileMatch = cmd.match(/>\s*(\/\S+)/);
-    return { label: "Saving notes", detail: fileMatch?.[1] };
+    return { label: "Saving notes", detail: fileMatch?.[1], isFileOp: true };
   }
   if (cmd.startsWith("echo") && cmd.includes(">")) {
     const fileMatch = cmd.match(/>\s*(\/\S+)/);
-    return { label: "Writing data", detail: fileMatch?.[1] };
+    return { label: "Writing data", detail: fileMatch?.[1], isFileOp: true };
   }
-  if (cmd.startsWith("mkdir")) return { label: "Creating directory" };
-  // File reads
-  if (cmd.startsWith("cat ") && !cmd.includes(">")) return { label: "Reading file", detail: cmd.replace("cat ", "") };
-  if (cmd.startsWith("head ") || cmd.startsWith("tail ")) return { label: "Previewing file" };
-  if (cmd.startsWith("wc ")) return { label: "Counting lines" };
-  // Data processing
-  if (cmd.includes("jq ")) return { label: "Processing JSON" };
-  if (cmd.includes("awk ")) return { label: "Processing data" };
-  if (cmd.includes("sort") || cmd.includes("uniq")) return { label: "Sorting and filtering" };
-  if (cmd.includes("grep ")) return { label: "Searching data" };
-  if (cmd.includes("sed ")) return { label: "Transforming text" };
-  if (cmd.includes("cut ") || cmd.includes("tr ")) return { label: "Extracting fields" };
-  if (cmd.includes("paste ")) return { label: "Merging data" };
-  if (cmd.includes("bc") || cmd.includes("expr")) return { label: "Calculating" };
-  return { label: "Running command" };
+  if (cmd.startsWith("mkdir")) return { label: "Creating directory", isFileOp: true };
+  // File reads — show as light card
+  if (cmd.startsWith("cat ") && !cmd.includes(">")) return { label: "Reading file", detail: cmd.replace("cat ", "").trim(), isFileOp: true };
+  if (cmd.startsWith("head ") || cmd.startsWith("tail ")) return { label: "Previewing file", isFileOp: true };
+  if (cmd.startsWith("wc ")) return { label: "Counting lines", isFileOp: true };
+  if (cmd.startsWith("ls ")) return { label: "Listing files", isFileOp: true };
+  // Data processing — show as terminal
+  if (cmd.includes("jq ")) return { label: "Processing JSON", isFileOp: false };
+  if (cmd.includes("awk ")) return { label: "Processing data", isFileOp: false };
+  if (cmd.includes("sort") || cmd.includes("uniq")) return { label: "Sorting and filtering", isFileOp: false };
+  if (cmd.includes("grep ")) return { label: "Searching data", isFileOp: false };
+  if (cmd.includes("sed ")) return { label: "Transforming text", isFileOp: false };
+  if (cmd.includes("cut ") || cmd.includes("tr ")) return { label: "Extracting fields", isFileOp: false };
+  if (cmd.includes("paste ")) return { label: "Merging data", isFileOp: false };
+  if (cmd.includes("bc") || cmd.includes("expr")) return { label: "Calculating", isFileOp: false };
+  return { label: "Running command", isFileOp: false };
 }
 
 function BashResult({ command, stdout, stderr, exitCode }: { command: string; stdout: string; stderr: string; exitCode: number }) {
   const [expanded, setExpanded] = useState(false);
   const hasOutput = !!(stdout || stderr);
-  const { label, detail } = describeBashAction(command);
+  const { label, detail, isFileOp } = describeBashAction(command);
 
+  // File operations (save, read, mkdir) — light card style
+  if (isFileOp) {
+    return (
+      <div className={cn("my-12 rounded-10 border overflow-hidden transition-all", expanded ? "border-black-alpha-16 shadow-sm" : "border-border-faint hover:border-black-alpha-16")}>
+        <button
+          type="button"
+          className="w-full flex items-center gap-8 px-14 py-10 hover:bg-black-alpha-2 transition-colors text-left cursor-pointer"
+          onClick={() => hasOutput ? setExpanded(!expanded) : undefined}
+        >
+          <div className="w-24 h-24 rounded-6 bg-black-alpha-4 flex-center flex-shrink-0">
+            <svg fill="none" height="12" viewBox="0 0 24 24" width="12" className="text-black-alpha-40" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" /><path d="M14 2v6h6" />
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-label-small text-accent-black">{label}</div>
+            {detail && <div className="text-mono-x-small text-black-alpha-24 truncate">{detail}</div>}
+          </div>
+          <div className="flex items-center gap-6 flex-shrink-0">
+            {exitCode === 0 && (
+              <svg className="w-14 h-14 text-accent-forest" fill="none" viewBox="0 0 16 16">
+                <path d="M13.3 4.3L6 11.6 2.7 8.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+            {hasOutput && (
+              <svg fill="none" height="12" viewBox="0 0 24 24" width="12" className={cn("transition-transform text-black-alpha-24", expanded && "rotate-180")} stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            )}
+          </div>
+        </button>
+        {expanded && hasOutput && (
+          <div className="border-t border-border-faint bg-black-alpha-2 px-14 py-10 max-h-300 overflow-auto no-scrollbar">
+            <pre className="text-mono-small text-accent-black whitespace-pre-wrap">{stdout}</pre>
+            {stderr && <pre className="text-mono-small text-accent-crimson whitespace-pre-wrap mt-6">{stderr}</pre>}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Data processing commands — terminal style
   return (
     <div className={cn("my-12 rounded-10 overflow-hidden transition-all", expanded ? "shadow-sm" : "")} style={{ background: "#1e1e1e" }}>
       <button
@@ -777,7 +820,6 @@ function BashResult({ command, stdout, stderr, exitCode }: { command: string; st
         className="w-full flex items-center gap-8 px-14 py-10 hover:brightness-110 transition-all text-left cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >
-        {/* Terminal traffic lights */}
         <div className="flex items-center gap-4 flex-shrink-0">
           <div className="w-8 h-8 rounded-full" style={{ background: "#ff5f57" }} />
           <div className="w-8 h-8 rounded-full" style={{ background: "#febc2e" }} />
@@ -804,7 +846,6 @@ function BashResult({ command, stdout, stderr, exitCode }: { command: string; st
         </div>
       </button>
 
-      {/* Expanded: terminal output via Streamdown */}
       {expanded && (
         <div className="px-10 py-8 max-h-300 overflow-auto no-scrollbar" style={{ borderTop: "1px solid #333" }}>
           <StreamdownBlock>{[
@@ -1241,22 +1282,40 @@ export default function PlanVisualization({
           case "bash":
             return item.status === "complete" ? (
               <BashResult key={i} command={item.command!} stdout={item.stdout!} stderr={item.stderr!} exitCode={item.exitCode!} />
-            ) : (
-              <div key={i} className="my-12 rounded-10 overflow-hidden" style={{ background: "#1e1e1e" }}>
-                <div className="flex items-center gap-8 px-14 py-10">
-                  <div className="flex items-center gap-4 flex-shrink-0">
-                    <div className="w-8 h-8 rounded-full" style={{ background: "#ff5f57" }} />
-                    <div className="w-8 h-8 rounded-full" style={{ background: "#febc2e" }} />
-                    <div className="w-8 h-8 rounded-full" style={{ background: "#28c840" }} />
+            ) : (() => {
+              const bashInfo = describeBashAction(item.command ?? "");
+              return bashInfo.isFileOp ? (
+                <div key={i} className="my-12 rounded-10 border border-border-faint overflow-hidden">
+                  <div className="flex items-center gap-8 px-14 py-10">
+                    <div className="w-24 h-24 rounded-6 bg-black-alpha-4 flex-center flex-shrink-0">
+                      <svg fill="none" height="12" viewBox="0 0 24 24" width="12" className="text-black-alpha-40" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" /><path d="M14 2v6h6" />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-label-small text-accent-black">{bashInfo.label}</div>
+                      {bashInfo.detail && <div className="text-mono-x-small text-black-alpha-24 truncate">{bashInfo.detail}</div>}
+                    </div>
+                    <div className="w-10 h-10 rounded-full border-2 border-heat-100 border-t-transparent animate-spin flex-shrink-0" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-label-small" style={{ color: "#e0e0e0" }}>{describeBashAction(item.command ?? "").label}</div>
-                    <div className="text-mono-x-small truncate" style={{ color: "#888" }}>{describeBashAction(item.command ?? "").detail}</div>
-                  </div>
-                  <div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin flex-shrink-0" style={{ borderColor: "#28c840", borderTopColor: "transparent" }} />
                 </div>
-              </div>
-            );
+              ) : (
+                <div key={i} className="my-12 rounded-10 overflow-hidden" style={{ background: "#1e1e1e" }}>
+                  <div className="flex items-center gap-8 px-14 py-10">
+                    <div className="flex items-center gap-4 flex-shrink-0">
+                      <div className="w-8 h-8 rounded-full" style={{ background: "#ff5f57" }} />
+                      <div className="w-8 h-8 rounded-full" style={{ background: "#febc2e" }} />
+                      <div className="w-8 h-8 rounded-full" style={{ background: "#28c840" }} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-label-small" style={{ color: "#e0e0e0" }}>{bashInfo.label}</div>
+                      {bashInfo.detail && <div className="text-mono-x-small truncate" style={{ color: "#888" }}>{bashInfo.detail}</div>}
+                    </div>
+                    <div className="w-10 h-10 rounded-full border-2 border-t-transparent animate-spin flex-shrink-0" style={{ borderColor: "#28c840", borderTopColor: "transparent" }} />
+                  </div>
+                </div>
+              );
+            })();
           case "skill":
             return <SkillLoad key={i} name={item.skillName!} description={item.text} status={item.status} />;
           case "subagent":
