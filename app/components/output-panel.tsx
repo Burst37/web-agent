@@ -2,9 +2,7 @@
 
 import { useState, useMemo, useRef, useEffect } from "react";
 import type { UIMessage } from "ai";
-import { Streamdown } from "streamdown";
-import { code } from "@streamdown/code";
-import { mermaid } from "@streamdown/mermaid";
+import StreamdownBlock from "@/components/shared/streamdown-block";
 import { cn } from "@/utils/cn";
 
 function isToolPart(part: { type: string }): boolean {
@@ -357,13 +355,8 @@ function FormattedResult({
           <HtmlViewer html={formatted.content} />
         )}
         {formatted.format === "text" && !isHtml && (
-          <div className="p-14 overflow-auto max-h-500 max-w-none">
-            <Streamdown
-              plugins={{ code, mermaid }}
-              controls={{ table: true, code: true, mermaid: { download: true, copy: true, fullscreen: true } }}
-            >
-              {formatted.content}
-            </Streamdown>
+          <div className="p-14 overflow-auto max-h-500">
+            <StreamdownBlock>{formatted.content}</StreamdownBlock>
           </div>
         )}
       </div>

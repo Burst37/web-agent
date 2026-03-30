@@ -30,7 +30,8 @@ export async function initBashWithFiles(
 export async function listBashFiles(): Promise<{ path: string; size: number }[]> {
   const bash = getSharedBash();
   if (!bash) return [];
-  const result = await bash.exec("ls -R /data 2>/dev/null");
+  // Single command: list all files with sizes
+  const result = await bash.exec("ls -lR /data 2>/dev/null");
   if (result.exitCode !== 0 || !result.stdout.trim()) return [];
   const files: { path: string; size: number }[] = [];
   let currentDir = "/data";
@@ -38,10 +39,13 @@ export async function listBashFiles(): Promise<{ path: string; size: number }[]>
     if (line.endsWith(":")) {
       currentDir = line.slice(0, -1);
     } else if (line.trim() && !line.startsWith("total")) {
-      const path = `${currentDir}/${line.trim()}`;
-      const sizeResult = await bash.exec(`wc -c < "${path}" 2>/dev/null`);
-      const size = parseInt(sizeResult.stdout.trim()) || 0;
-      if (size > 0) files.push({ path, size });
+      // ls -l format: permissions links owner group size date time name
+      const parts = line.trim().split(/\s+/);
+      if (parts.length >= 5) {
+        const size = parseInt(parts[4]) || 0;
+        const name = parts.slice(8).join(" ") || parts[parts.length - 1];
+        if (size > 0 && name) files.push({ path: `${currentDir}/${name}`, size });
+      }
     }
   }
   return files;

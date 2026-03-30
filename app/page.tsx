@@ -12,9 +12,7 @@ import PlanVisualization from "./components/plan-visualization";
 import SettingsPanel from "./components/settings-panel";
 import type { UploadedFile } from "@/lib/types";
 import HistoryPanel from "./components/history-panel";
-import { Streamdown } from "streamdown";
-import { code } from "@streamdown/code";
-import { mermaid } from "@streamdown/mermaid";
+import StreamdownBlock from "@/components/shared/streamdown-block";
 import Sidebar from "./components/sidebar";
 import ExportSidebar from "./components/export-modal";
 import SymbolColored from "@/components/shared/icons/symbol-colored";
@@ -466,13 +464,16 @@ export default function AgentPage() {
 
   const isACP = config.model.provider === "acp";
 
+  const configRef = useRef(config);
+  configRef.current = config;
+
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
         api: "/api/agent",
-        body: { config },
+        body: () => ({ config: configRef.current }),
       }),
-    [config],
+    [],
   );
 
   const sdkChat = useChat({ transport });
@@ -962,14 +963,7 @@ export default function AgentPage() {
                   rows={Math.max(6, planEditText.split("\n").length)}
                 />
               ) : (
-                <div className="max-w-none">
-                  <Streamdown
-                    plugins={{ code, mermaid }}
-                    controls={{ table: true, code: true, mermaid: { download: true, copy: true, fullscreen: true } }}
-                  >
-                    {planEditText || planText}
-                  </Streamdown>
-                </div>
+                <StreamdownBlock>{planEditText || planText}</StreamdownBlock>
               )}
             </div>
 
@@ -1036,8 +1030,18 @@ export default function AgentPage() {
                 type="button"
                 className="text-left px-14 py-10 rounded-10 border border-border-faint bg-accent-white hover:border-heat-40 hover:bg-heat-4 transition-all group"
                 onClick={() => {
-                  setConfig({ ...config, prompt });
-                  onRun();
+                  const updated = { ...config, prompt };
+                  setConfig(updated);
+                  // Run directly with the updated config to avoid stale state
+                  const id = `conv-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+                  setConversationId(id);
+                  setHasSubmitted(true);
+                  fetch("/api/conversations", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id, title: prompt.slice(0, 100), config: updated }),
+                  });
+                  sendMessage({ text: prompt });
                 }}
               >
                 <span className="text-body-medium text-black-alpha-48 group-hover:text-accent-black transition-colors line-clamp-2">

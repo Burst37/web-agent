@@ -3,46 +3,12 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import type { UIMessage } from "ai";
 import { cn } from "@/utils/cn";
-import { Streamdown } from "streamdown";
-import { code } from "@streamdown/code";
-import { mermaid } from "@streamdown/mermaid";
+import StreamdownBlock from "@/components/shared/streamdown-block";
 import { JsonView, defaultStyles } from "react-json-view-lite";
 import "react-json-view-lite/dist/index.css";
 import Papa from "papaparse";
 
-function fileExt(formatId: string) {
-  if (formatId === "json") return "json";
-  if (formatId === "csv" || formatId === "spreadsheet") return "csv";
-  if (formatId === "html") return "html";
-  return "md";
-}
-
-const EXPORT_PREAMBLE = "IMPORTANT: Do NOT search, scrape, or use any web tools. Do NOT do any research. ONLY format the data already provided below. Respond with ONLY the formatted output, no narration or explanation.\n\n";
-
-const FORMATS = [
-  {
-    id: "json",
-    label: "JSON",
-    prompt: () => `${EXPORT_PREAMBLE}Format the data below as clean, structured JSON. Use camelCase keys, keep it flat where practical, include every data point. Return ONLY valid JSON.`,
-    icon: <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H7a2 2 0 00-2 2v5a2 2 0 01-2 2 2 2 0 012 2v5a2 2 0 002 2h1M16 3h1a2 2 0 012 2v5a2 2 0 002 2 2 2 0 00-2 2v5a2 2 0 01-2 2h-1" /></svg>,
-  },
-  {
-    id: "csv",
-    label: "CSV",
-    prompt: () => `${EXPORT_PREAMBLE}Format the data below as a CSV table. One row per entity, consistent columns, human-readable headers. Return ONLY the CSV.`,
-    icon: <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M3 12h18M3 18h18M9 6v12M15 6v12" /></svg>,
-  },
-  {
-    id: "markdown",
-    label: "Markdown",
-    prompt: () => `${EXPORT_PREAMBLE}Format the data below as clean, structured markdown with headings, tables, and bullet points. Include all data points.`,
-    icon: <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" /><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" /></svg>,
-  },
-];
-
 // --- Helpers ---
-
-let jobCounter = 0;
 
 function getOutputMeta(content: string, formatId: string) {
   const isHtml = /^\s*<!doctype\s+html|^\s*<html/i.test(content.trim());
@@ -63,29 +29,6 @@ function download(content: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-function extractConversationContext(messages: UIMessage[]): string {
-  const parts: string[] = [];
-  for (const msg of messages) {
-    for (const part of msg.parts) {
-      if (part.type === "text" && part.text.trim()) {
-        parts.push(`[${msg.role}]: ${part.text.slice(0, 2000)}`);
-      }
-      const p = part as Record<string, unknown>;
-      if (part.type.startsWith("tool-") || part.type === "dynamic-tool") {
-        const toolName = (p.toolName ?? "") as string;
-        if ((p.state === "output-available" || p.state === "result") && p.output) {
-          const out = p.output as Record<string, unknown>;
-          const content = out.markdown ?? out.content ?? out.answer ?? out.text ?? out.data;
-          if (content) {
-            const str = typeof content === "string" ? content : JSON.stringify(content);
-            parts.push(`[tool:${toolName}]: ${str.slice(0, 3000)}`);
-          }
-        }
-      }
-    }
-  }
-  return parts.join("\n\n").slice(0, 30000);
-}
 
 function stripCodeFences(content: string): string {
   const trimmed = content.trim();
@@ -253,13 +196,8 @@ function OutputContent({ content, formatId, maxH }: { content: string; formatId:
       {isCsv && <CsvTable data={cleaned} />}
       {isHtml && <HtmlViewer html={cleaned} />}
       {!isJson && !isCsv && !isHtml && (
-        <div className="p-14 max-w-none">
-          <Streamdown
-            plugins={{ code, mermaid }}
-            controls={{ table: true, code: true, mermaid: { download: true, copy: true, fullscreen: true } }}
-          >
-            {content}
-          </Streamdown>
+        <div className="p-14">
+          <StreamdownBlock>{content}</StreamdownBlock>
         </div>
       )}
     </div>
@@ -307,175 +245,7 @@ function FullscreenViewer({ content, formatId, onClose }: { content: string; for
 
 // --- Export Job ---
 
-interface AgentStep {
-  type: "tool-call" | "tool-result" | "text";
-  name?: string;
-  content?: string;
-}
-
-interface ExportJob {
-  id: string;
-  formatId: string;
-  label: string;
-  status: "running" | "done" | "error";
-  content?: string;
-  error?: string;
-  steps: AgentStep[];
-}
-
-function describeToolName(name: string): string {
-  if (name === "bashExec" || name === "bash_exec") return "Writing to disk";
-  if (name === "formatOutput") return "Formatting output";
-  if (name === "search") return "Searching";
-  if (name === "scrape") return "Scraping";
-  return name;
-}
-
-function JobCard({ job, onView, onRemove }: { job: ExportJob; onView: () => void; onRemove: () => void }) {
-  const [mounted, setMounted] = useState(false);
-  const [removing, setRemoving] = useState(false);
-  const formatDef = FORMATS.find((f) => f.id === job.formatId);
-
-  useEffect(() => { requestAnimationFrame(() => setMounted(true)); }, []);
-
-  const handleRemove = () => {
-    setRemoving(true);
-    setTimeout(onRemove, 200);
-  };
-
-  const { ext } = job.content ? getOutputMeta(job.content, job.formatId) : { ext: fileExt(job.formatId) };
-  const isDone = job.status === "done" && !!job.content;
-
-  const latestStep = job.steps.filter((s) => s.type === "tool-call").slice(-1)[0];
-
-  return (
-    <div
-      className={cn(
-        "rounded-8 border overflow-hidden transition-all duration-200",
-        mounted && !removing ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8",
-        isDone ? "border-border-faint hover:border-black-alpha-16" : "border-border-faint",
-      )}
-    >
-      <button
-        type="button"
-        className={cn(
-          "w-full flex items-center gap-8 px-10 py-8 text-left transition-colors",
-          isDone && "cursor-pointer hover:bg-black-alpha-2",
-        )}
-        onClick={() => { if (isDone) onView(); }}
-        disabled={!isDone}
-      >
-        {formatDef && <span className="flex-shrink-0 text-black-alpha-40">{formatDef.icon}</span>}
-        <div className="flex-1 min-w-0">
-          <span className="text-body-small text-accent-black truncate block">{job.label}</span>
-          {job.status === "running" && latestStep && (
-            <span className="text-mono-x-small text-black-alpha-24 truncate block">
-              {describeToolName(latestStep.name ?? "")}
-            </span>
-          )}
-        </div>
-
-        {job.status === "running" && (
-          <div className="w-10 h-10 rounded-full border-2 border-heat-100 border-t-transparent animate-spin flex-shrink-0" />
-        )}
-        {job.status === "error" && (
-          <>
-            <span className="text-mono-x-small text-accent-crimson">failed</span>
-            <span
-              role="button"
-              tabIndex={0}
-              className="p-4 rounded-4 text-black-alpha-24 hover:text-accent-black hover:bg-black-alpha-4 transition-all"
-              onClick={(e) => { e.stopPropagation(); handleRemove(); }}
-              onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); handleRemove(); } }}
-              title="Dismiss"
-            >
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
-            </span>
-          </>
-        )}
-        {isDone && (
-          <span
-            role="button"
-            tabIndex={0}
-            className="p-4 rounded-4 text-black-alpha-24 hover:text-accent-black hover:bg-black-alpha-4 transition-all"
-            onClick={(e) => { e.stopPropagation(); download(stripCodeFences(job.content!), `export.${ext}`); }}
-            onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); download(stripCodeFences(job.content!), `export.${ext}`); } }}
-            title="Download"
-          >
-            <svg fill="none" height="12" viewBox="0 0 24 24" width="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" /></svg>
-          </span>
-        )}
-      </button>
-
-      {/* Agent activity while running */}
-      {job.status === "running" && job.steps.length > 0 && (
-        <div className="border-t border-border-faint px-10 py-6">
-          <div className="flex flex-col gap-2">
-            {job.steps.filter((s) => s.type === "tool-call").slice(-3).map((s, i) => (
-              <div key={i} className="flex items-center gap-6">
-                <div className="w-4 h-4 rounded-full bg-black-alpha-24 animate-pulse flex-shrink-0" />
-                <span className="text-mono-x-small text-black-alpha-32 truncate">{describeToolName(s.name ?? "")}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// --- SSE stream reader ---
-
-async function readSSEStream(
-  response: Response,
-  onStep: (step: AgentStep) => void,
-  onDone: (text: string) => void,
-  onError: (err: string) => void,
-) {
-  const reader = response.body?.getReader();
-  if (!reader) { onError("No response body"); return; }
-  const decoder = new TextDecoder();
-  let buffer = "";
-  let formatOutputContent = "";
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-
-    for (const line of lines) {
-      if (!line.startsWith("data: ")) continue;
-      try {
-        const data = JSON.parse(line.slice(6));
-        if (data.type === "tool-call") {
-          onStep({ type: "tool-call", name: data.name });
-        } else if (data.type === "tool-result") {
-          onStep({ type: "tool-result", name: data.name, content: typeof data.output === "string" ? data.output : JSON.stringify(data.output) });
-          if (data.name === "formatOutput" && data.output?.content) {
-            formatOutputContent = data.output.content;
-          }
-          if (data.name === "bashExec" && data.output?.stdout) {
-            formatOutputContent = formatOutputContent || data.output.stdout;
-          }
-        } else if (data.type === "text") {
-          onStep({ type: "text", content: data.content });
-        } else if (data.type === "done") {
-          const text = data.text || formatOutputContent || "";
-          onDone(text);
-          return;
-        } else if (data.type === "error") {
-          onError(data.error ?? "Unknown error");
-          return;
-        }
-      } catch { /* skip malformed lines */ }
-    }
-  }
-}
-
-// --- Export Sidebar ---
+// --- Assets Sidebar ---
 
 interface ExportSidebarProps {
   collapsed: boolean;
@@ -491,16 +261,14 @@ interface BashFile {
 }
 
 export default function ExportSidebar({ collapsed, onToggleCollapse, messages, onGenerate }: ExportSidebarProps) {
-  const [jobs, setJobs] = useState<ExportJob[]>([]);
-  const [fullscreenJob, setFullscreenJob] = useState<ExportJob | null>(null);
   const [bashFiles, setBashFiles] = useState<BashFile[]>([]);
   const [viewingFile, setViewingFile] = useState<{ path: string; content: string; formatId: string } | null>(null);
-  const messagesRef = useRef(messages);
-  messagesRef.current = messages;
   const knownFilesRef = useRef<Map<string, number>>(new Map());
 
   // Poll for bash files — only show files created during this session
+  // Poll for files only when sidebar is open
   useEffect(() => {
+    if (collapsed) return;
     const poll = () => {
       fetch("/api/files")
         .then((r) => r.json())
@@ -508,13 +276,11 @@ export default function ExportSidebar({ collapsed, onToggleCollapse, messages, o
           if (!data.files) return;
           const allFiles = data.files as { path: string; size: number }[];
           const now = Date.now();
-          // Track detection time for each file
           for (const f of allFiles) {
             if (!knownFilesRef.current.has(f.path)) {
               knownFilesRef.current.set(f.path, now);
             }
           }
-          // Show all files, newest first
           const withTimestamps: BashFile[] = allFiles.map((f) => ({
             ...f,
             detectedAt: knownFilesRef.current.get(f.path) ?? now,
@@ -527,7 +293,7 @@ export default function ExportSidebar({ collapsed, onToggleCollapse, messages, o
     poll();
     const interval = setInterval(poll, 2000);
     return () => clearInterval(interval);
-  }, []);
+  }, [collapsed]);
 
   const viewFile = useCallback(async (path: string) => {
     const r = await fetch(`/api/files?path=${encodeURIComponent(path)}`);
@@ -543,61 +309,6 @@ export default function ExportSidebar({ collapsed, onToggleCollapse, messages, o
     const filename = path.split("/").pop() ?? "download";
     download(data.content, filename);
   }, []);
-
-  const runExport = useCallback((formatId: string) => {
-    const format = FORMATS.find((f) => f.id === formatId);
-    if (!format) return;
-
-    const num = ++jobCounter;
-    const jobId = `${formatId}-${num}`;
-    const newJob: ExportJob = { id: jobId, formatId, label: format.label, status: "running", steps: [] };
-    setJobs((prev) => [newJob, ...prev]);
-
-    const context = extractConversationContext(messagesRef.current);
-    const fullPrompt = `${format.prompt()}\n\n---\nDATA:\n${context}`;
-
-    fetch("/api/query", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: fullPrompt, maxSteps: 1, stream: true }),
-    })
-      .then(async (r) => {
-        if (!r.ok) {
-          const text = await r.text();
-          throw new Error(text || `HTTP ${r.status}`);
-        }
-        await readSSEStream(
-          r,
-          (step) => {
-            setJobs((prev) => prev.map((j) =>
-              j.id === jobId ? { ...j, steps: [...j.steps, step] } : j
-            ));
-          },
-          (text) => {
-            setJobs((prev) => prev.map((j) =>
-              j.id === jobId ? { ...j, status: "done", content: text } : j
-            ));
-          },
-          (err) => {
-            setJobs((prev) => prev.map((j) =>
-              j.id === jobId ? { ...j, status: "error", error: err } : j
-            ));
-          },
-        );
-      })
-      .catch((err) => {
-        setJobs((prev) => prev.map((j) =>
-          j.id === jobId ? { ...j, status: "error", error: err.message } : j
-        ));
-      });
-  }, []);
-
-  const removeJob = useCallback((id: string) => {
-    setJobs((prev) => prev.filter((j) => j.id !== id));
-  }, []);
-
-  const runningCount = jobs.filter((j) => j.status === "running").length;
-  const doneCount = jobs.filter((j) => j.status === "done").length;
 
   return (
     <>
@@ -620,13 +331,8 @@ export default function ExportSidebar({ collapsed, onToggleCollapse, messages, o
           {!collapsed && (
             <span className="text-label-small text-black-alpha-48 flex-1">Assets</span>
           )}
-          {!collapsed && runningCount > 0 && (
-            <div className="w-10 h-10 rounded-full border-2 border-heat-100 border-t-transparent animate-spin flex-shrink-0" />
-          )}
-          {!collapsed && doneCount > 0 && (
-            <span className="text-mono-x-small text-accent-forest bg-accent-forest/8 px-6 py-1 rounded-4">
-              {doneCount}
-            </span>
+          {!collapsed && bashFiles.length > 0 && (
+            <span className="text-mono-x-small text-black-alpha-32">{bashFiles.length}</span>
           )}
         </div>
 
@@ -706,28 +412,10 @@ export default function ExportSidebar({ collapsed, onToggleCollapse, messages, o
               </div>
             )}
 
-            {/* Job list */}
-            {jobs.length > 0 && (
-              <div>
-                <div className="flex flex-col gap-4">
-                  {jobs.map((job) => (
-                    <JobCard
-                      key={job.id}
-                      job={job}
-                      onView={() => setFullscreenJob(job)}
-                      onRemove={() => removeJob(job.id)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>
 
-      {fullscreenJob?.content && (
-        <FullscreenViewer content={fullscreenJob.content} formatId={fullscreenJob.formatId} onClose={() => setFullscreenJob(null)} />
-      )}
       {viewingFile && (
         <FullscreenViewer content={viewingFile.content} formatId={viewingFile.formatId} onClose={() => setViewingFile(null)} />
       )}
