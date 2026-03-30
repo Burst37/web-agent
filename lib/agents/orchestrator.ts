@@ -131,12 +131,15 @@ Rules:
 - After loading a skill, follow its instructions and use read_skill_resource to access any scripts or reference files it provides.
 - You can load multiple skills in a single session if the task spans domains.${skillCatalog}
 
-## Output and formatting
-- You have sub-agents for creating formatted output: subagent_create_json, subagent_create_csv, subagent_create_markdown. Each is a mini version of you with the full toolkit.
-- When the user asks for a specific format, delegate to the matching sub-agent and pass ALL collected data as the task.
-- If you have no matching sub-agent tool, call formatOutput directly.
-- IMPORTANT: Always write formatted output to a file in /data/ (e.g. /data/results.json, /data/results.csv) using bashExec. Use jq for JSON formatting and awk for CSV generation.
-- When you call formatOutput, do NOT repeat or describe the formatted content in your text response. The UI renders the output automatically. Just call the tool and move on.${schemaHint}${urlHint}${uploadHint}`;
+## Presenting results — STREAM INLINE
+- When you have collected data, OUTPUT IT DIRECTLY in your response as a fenced code block. Do NOT write a narrative summary — just stream the actual data.
+- For JSON: output a \`\`\`json code block with the full structured data
+- For CSV: output a \`\`\`csv code block with headers and all rows
+- For markdown tables: output the table directly in your response
+- The UI renders code blocks with copy/download buttons automatically — the user can grab the data right from the stream.
+- Do NOT call formatOutput or sub-agents unless explicitly asked. Do NOT write to bash just to format output. Just stream the data inline.
+- Only use bashExec to SAVE data to /data/ when: (a) the dataset is very large (100+ rows), (b) you need to process it further, or (c) you want to persist intermediate results between steps.
+- Keep narration minimal — a one-line summary before the data block is fine. No paragraphs explaining what you're about to show.${schemaHint}${urlHint}${uploadHint}`;
 
   return new ToolLoopAgent({
     model,

@@ -481,6 +481,7 @@ interface ExportSidebarProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
   messages: UIMessage[];
+  onGenerate?: (format: string) => void;
 }
 
 interface BashFile {
@@ -489,14 +490,13 @@ interface BashFile {
   detectedAt: number; // timestamp when first seen
 }
 
-export default function ExportSidebar({ collapsed, onToggleCollapse, messages }: ExportSidebarProps) {
+export default function ExportSidebar({ collapsed, onToggleCollapse, messages, onGenerate }: ExportSidebarProps) {
   const [jobs, setJobs] = useState<ExportJob[]>([]);
   const [fullscreenJob, setFullscreenJob] = useState<ExportJob | null>(null);
   const [bashFiles, setBashFiles] = useState<BashFile[]>([]);
   const [viewingFile, setViewingFile] = useState<{ path: string; content: string; formatId: string } | null>(null);
   const messagesRef = useRef(messages);
   messagesRef.current = messages;
-  const baselineFilesRef = useRef<Set<string> | null>(null);
   const knownFilesRef = useRef<Map<string, number>>(new Map());
 
   // Poll for bash files — only show files created during this session
@@ -507,29 +507,25 @@ export default function ExportSidebar({ collapsed, onToggleCollapse, messages }:
         .then((data) => {
           if (!data.files) return;
           const allFiles = data.files as { path: string; size: number }[];
-          // First poll: snapshot existing files as baseline (pre-session)
-          if (baselineFilesRef.current === null) {
-            baselineFilesRef.current = new Set(allFiles.map((f) => f.path));
-            return;
-          }
-          // Track new files with detection timestamp
           const now = Date.now();
-          const sessionFiles: BashFile[] = [];
+          // Track detection time for each file
           for (const f of allFiles) {
-            if (baselineFilesRef.current.has(f.path)) continue;
             if (!knownFilesRef.current.has(f.path)) {
               knownFilesRef.current.set(f.path, now);
             }
-            sessionFiles.push({ ...f, detectedAt: knownFilesRef.current.get(f.path)! });
           }
-          // Sort newest first
-          sessionFiles.sort((a, b) => b.detectedAt - a.detectedAt);
-          setBashFiles(sessionFiles);
+          // Show all files, newest first
+          const withTimestamps: BashFile[] = allFiles.map((f) => ({
+            ...f,
+            detectedAt: knownFilesRef.current.get(f.path) ?? now,
+          }));
+          withTimestamps.sort((a, b) => b.detectedAt - a.detectedAt);
+          setBashFiles(withTimestamps);
         })
         .catch(() => {});
     };
     poll();
-    const interval = setInterval(poll, 3000);
+    const interval = setInterval(poll, 2000);
     return () => clearInterval(interval);
   }, []);
 
@@ -687,22 +683,28 @@ export default function ExportSidebar({ collapsed, onToggleCollapse, messages }:
             )}
 
             {/* Generate section */}
-            <div className="mb-10">
-              <div className="text-mono-x-small text-black-alpha-32 uppercase tracking-wider px-4 pb-6">Generate</div>
-              <div className="grid grid-cols-2 gap-4">
-                {FORMATS.map((f) => (
-                  <button
-                    key={f.id}
-                    type="button"
-                    className="flex items-center gap-6 px-10 py-6 rounded-8 text-body-small text-black-alpha-56 bg-black-alpha-2 hover:bg-black-alpha-4 hover:text-accent-black transition-all whitespace-nowrap"
-                    onClick={() => runExport(f.id)}
-                  >
-                    <span className="flex-shrink-0">{f.icon}</span>
-                    {f.label}
-                  </button>
-                ))}
+            {onGenerate && (
+              <div className="mb-10">
+                <div className="text-mono-x-small text-black-alpha-32 uppercase tracking-wider px-4 pb-6">Generate</div>
+                <div className="flex flex-col gap-3">
+                  {[
+                    { id: "JSON", icon: <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H7a2 2 0 00-2 2v5a2 2 0 01-2 2 2 2 0 012 2v5a2 2 0 002 2h1M16 3h1a2 2 0 012 2v5a2 2 0 002 2 2 2 0 00-2 2v5a2 2 0 01-2 2h-1" /></svg> },
+                    { id: "CSV", icon: <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18M3 12h18M3 18h18M9 6v12M15 6v12" /></svg> },
+                    { id: "Markdown", icon: <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" /><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" /></svg> },
+                  ].map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      className="flex items-center gap-6 px-10 py-6 rounded-8 text-body-small text-black-alpha-56 bg-black-alpha-2 hover:bg-black-alpha-4 hover:text-accent-black transition-all whitespace-nowrap"
+                      onClick={() => onGenerate(f.id)}
+                    >
+                      <span className="flex-shrink-0">{f.icon}</span>
+                      {f.id}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Job list */}
             {jobs.length > 0 && (

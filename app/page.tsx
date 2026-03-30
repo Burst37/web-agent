@@ -1251,6 +1251,9 @@ export default function AgentPage() {
           collapsed={exportCollapsed}
           onToggleCollapse={() => setExportCollapsed(!exportCollapsed)}
           messages={messages}
+          onGenerate={(format) => {
+            sendMessage({ text: `Now format all the collected data as ${format}. Stream it inline as a fenced code block.` });
+          }}
         />
       )}
 
