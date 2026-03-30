@@ -21,7 +21,7 @@ export const config = {
   // ═══════════════════════════════════════════
   orchestrator: { provider: "google", model: "gemini-3-flash-preview" } satisfies ModelRef,
   subAgent:     { provider: "google", model: "gemini-3-flash-preview" } satisfies ModelRef,
-  background:   { provider: "google", model: "gemini-2.5-flash" } satisfies ModelRef,
+  background:   { provider: "google", model: "gemini-3-flash-preview" } satisfies ModelRef,
 
   // ═══════════════════════════════════════════
   // OpenAI (GPT)
