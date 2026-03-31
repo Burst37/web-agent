@@ -32,6 +32,7 @@ export interface AgentConfig {
   prompt: string;
   urls?: string[];
   schema?: Record<string, unknown>;
+  columns?: string[];
   csvContext?: string;
   uploads?: UploadedFile[];
   model: ModelConfig;

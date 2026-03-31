@@ -30,6 +30,7 @@ export async function loadOrchestratorPrompt(vars: {
   TODAY: string;
   FIRECRAWL_SYSTEM_PROMPT: string;
   SKILL_CATALOG: string;
+  RESEARCH_PLAN: string;
   SCHEMA_HINT: string;
   URL_HINTS: string;
   UPLOAD_HINTS: string;

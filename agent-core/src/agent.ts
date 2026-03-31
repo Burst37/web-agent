@@ -160,6 +160,7 @@ Do not use emojis.`,
         prompt: params.prompt,
         urls: params.urls,
         schema: params.schema,
+        columns: params.columns,
         uploads: params.uploads,
         model: this.options.model,
         subAgentModel: this.options.subAgentModel,
@@ -186,12 +187,14 @@ Do not use emojis.`,
 
   private buildFormatInstructions(params: RunParams): string {
     const { format, schema, columns } = params;
+    // When schema/columns are provided, the research plan in the system prompt
+    // already contains the full schema. Keep user-prompt instructions brief.
     if (format === "json" && schema) {
-      return `\n\nReturn the data as JSON matching this schema:\n${JSON.stringify(schema, null, 2)}\nCall formatOutput with format "json" when done.`;
+      return `\n\nCollect all data from your research plan, then call formatOutput with format "json".`;
     } else if (format === "json") {
       return `\n\nReturn the data as structured JSON. Call formatOutput with format "json" and the data as a well-structured JSON object or array.`;
     } else if (format === "csv" && columns?.length) {
-      return `\n\nReturn the data as CSV with columns: ${columns.join(", ")}\nCall formatOutput with format "csv", data as array of objects, columns: ${JSON.stringify(columns)}.`;
+      return `\n\nCollect all column data from your research plan, then call formatOutput with format "csv" and columns: ${JSON.stringify(columns)}.`;
     } else if (format === "csv") {
       return `\n\nReturn the data as CSV. Call formatOutput with format "csv" and data as array of objects.`;
     } else if (format === "markdown") {

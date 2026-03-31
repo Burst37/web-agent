@@ -9,6 +9,75 @@ import { formatOutput, bashExec, initBashWithFiles } from "./tools";
 import { discoverSkills } from "./skills/discovery";
 import { loadOrchestratorPrompt } from "./prompts/loader";
 
+// --- Research plan builder ---
+
+function extractFieldPaths(obj: unknown, prefix = "", depth = 0): string[] {
+  if (depth > 4) return [prefix || "(nested)"];
+  if (Array.isArray(obj)) {
+    if (obj.length === 0) return [`${prefix}[]`];
+    const item = obj[0];
+    if (typeof item === "object" && item !== null) {
+      return extractFieldPaths(item, `${prefix}[]`, depth + 1);
+    }
+    return [`${prefix}[] (get ALL items)`];
+  }
+  if (typeof obj === "object" && obj !== null) {
+    const paths: string[] = [];
+    for (const [key, value] of Object.entries(obj)) {
+      const fieldPath = prefix ? `${prefix}.${key}` : key;
+      if (typeof value === "object" && value !== null) {
+        paths.push(...extractFieldPaths(value, fieldPath, depth + 1));
+      } else {
+        paths.push(fieldPath);
+      }
+    }
+    return paths;
+  }
+  return prefix ? [prefix] : [];
+}
+
+function buildResearchPlan(
+  schema?: Record<string, unknown>,
+  columns?: string[],
+): string {
+  const lines: string[] = [
+    "",
+    "## Research plan -- required data fields",
+    "The user has defined a schema that serves as your research checklist. You MUST find data for every field before presenting results.",
+    "",
+  ];
+
+  if (schema) {
+    lines.push("Target schema:", "```json", JSON.stringify(schema, null, 2), "```", "");
+    const fields = extractFieldPaths(schema);
+    if (fields.length > 0) {
+      lines.push("Data collection checklist:");
+      for (const field of fields) {
+        lines.push(`- ${field}`);
+      }
+      lines.push("");
+    }
+  }
+
+  if (columns?.length) {
+    lines.push("Required columns (each is a data point to collect):");
+    for (const col of columns) {
+      lines.push(`- ${col}`);
+    }
+    lines.push("");
+  }
+
+  lines.push(
+    "Do NOT present results until you have attempted every field. If a field cannot be found after searching, set it to null.",
+    "When using spawnAgents, include the relevant fields from this checklist in each worker's prompt.",
+    "",
+  );
+
+  return lines.join("\n");
+}
+
+// --- Orchestrator factory ---
+
 export interface OrchestratorOptions {
   config: AgentConfig;
   firecrawlApiKey: string;
@@ -55,9 +124,17 @@ export async function createOrchestrator(options: OrchestratorOptions) {
     ? `\n\nAvailable skills (use load_skill to activate):\n${skills.map((s) => `- ${s.name}: ${s.description.slice(0, 100)}`).join("\n")}`
     : "";
 
-  const schemaHint = config.schema
-    ? `\n\nStructure your output to match this JSON schema:\n${JSON.stringify(config.schema, null, 2)}\nUse formatOutput with format "json" when done.`
+  // Research plan (early in prompt — guides data collection)
+  const researchPlan = (config.schema || config.columns)
+    ? buildResearchPlan(config.schema, config.columns)
     : "";
+
+  // Slim schema hint (end of prompt — output formatting reminder)
+  const schemaHint = config.schema
+    ? `\n\nWhen you have gathered ALL data from your research plan, compile it into the exact schema shape and call formatOutput with format "json".`
+    : config.columns
+      ? `\n\nWhen you have gathered ALL data from your research plan, call formatOutput with format "csv" and columns: ${JSON.stringify(config.columns)}.`
+      : "";
 
   const urlHint =
     config.urls && config.urls.length > 0
@@ -106,6 +183,7 @@ export async function createOrchestrator(options: OrchestratorOptions) {
     TODAY: new Date().toISOString().split("T")[0],
     FIRECRAWL_SYSTEM_PROMPT: fcSystemPrompt ?? "",
     SKILL_CATALOG: skillCatalog,
+    RESEARCH_PLAN: researchPlan,
     SCHEMA_HINT: schemaHint,
     URL_HINTS: urlHint,
     UPLOAD_HINTS: uploadHint,
