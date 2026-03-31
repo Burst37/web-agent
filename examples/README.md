@@ -1,33 +1,49 @@
 # Examples
 
-Working examples showing how to call the Firecrawl Agent from different languages and frameworks.
+Working examples for calling the Firecrawl Agent from 17 languages and frameworks.
 
-## Quick Start
+## Quick start
 
-All examples assume a running Firecrawl Agent server at `http://localhost:3000/api/v1`. Start one with:
+Start the agent server:
 
 ```bash
 npm run dev
 ```
 
-## Examples
+Pick your language and run. Each one hits `POST /v1/run` and prints results.
 
-| Example | Language | Framework | Use Case |
-|---------|----------|-----------|----------|
-| [curl](./curl/) | Shell | None | Universal baseline. Copy-paste HTTP calls. |
-| [python-basic](./python-basic/) | Python | requests | Simple script. No AI framework. |
-| [python-langchain](./python-langchain/) | Python | LangChain | Use the agent as a tool in a LangChain chain. |
-| [typescript-ai-sdk](./typescript-ai-sdk/) | TypeScript | AI SDK | Direct import of agent-core. No HTTP server needed. |
-| [go-basic](./go-basic/) | Go | stdlib | HTTP client using only the standard library. |
+## All examples
 
-## Two ways to use the agent
+| Example | Language | Dependencies | Run |
+|---------|----------|-------------|-----|
+| [curl](./curl/) | Shell | None | `bash run.sh` |
+| [python-basic](./python-basic/) | Python | requests | `python main.py` |
+| [python-langchain](./python-langchain/) | Python | langchain | `python main.py` |
+| [typescript-ai-sdk](./typescript-ai-sdk/) | TypeScript | agent-core | `npx tsx index.ts` |
+| [go-basic](./go-basic/) | Go | stdlib | `go run main.go` |
+| [ruby](./ruby/) | Ruby | stdlib | `ruby main.rb` |
+| [java](./java/) | Java | stdlib | `javac Main.java && java Main` |
+| [rust](./rust/) | Rust | stdlib | `rustc main.rs && ./main` |
+| [php](./php/) | PHP | curl ext | `php main.php` |
+| [dart](./dart/) | Dart | stdlib | `dart run main.dart` |
+| [kotlin](./kotlin/) | Kotlin | JVM stdlib | `kotlinc -script main.kts` |
+| [csharp](./csharp/) | C# | .NET 8+ | `dotnet run` |
+| [elixir](./elixir/) | Elixir | jason | `elixir main.exs` |
+| [perl](./perl/) | Perl | core modules | `perl main.pl` |
+| [r](./r/) | R | curl CLI | `Rscript main.R` |
+| [cpp](./cpp/) | C++ | POSIX sockets | `clang++ -std=c++17 main.cpp && ./a.out` |
+| [scala](./scala/) | Scala | JVM stdlib | `scala-cli run Main.scala` |
 
-**HTTP client (any language)** -- call the deployed agent as an API. This is what curl, Python, and Go examples show.
+## Two integration paths
 
-**Direct import (TypeScript only)** -- import `agent-core` as a library. No HTTP overhead. This is what the typescript-ai-sdk example shows.
+**HTTP client (any language)** -- POST to `/v1/run`, get JSON back. All examples except typescript-ai-sdk use this.
 
-## Adding new examples
+**Direct import (TypeScript only)** -- import agent-core as a library. No server needed. See [typescript-ai-sdk](./typescript-ai-sdk/).
 
-Create a directory with:
-- `README.md` -- setup and run instructions
-- Source file(s) -- keep it minimal, under 50 lines
+## Configuration
+
+All examples accept `AGENT_URL` env var (defaults to `http://localhost:3000/api/v1`):
+
+```bash
+AGENT_URL=https://my-agent.railway.app/api/v1 python examples/python-basic/main.py
+```

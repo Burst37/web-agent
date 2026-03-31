@@ -3,7 +3,7 @@
 import os
 import requests
 
-BASE_URL = os.getenv("FIRECRAWL_AGENT_URL", "http://localhost:3000/api/v1")
+BASE_URL = os.getenv("AGENT_URL", "http://localhost:3000/api/v1")
 
 resp = requests.post(
     f"{BASE_URL}/run",

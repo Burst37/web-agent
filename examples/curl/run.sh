@@ -7,7 +7,7 @@
 
 set -euo pipefail
 
-BASE_URL="http://localhost:3000/api/v1/run"
+BASE_URL="${AGENT_URL:-http://localhost:3000/api/v1}/run"
 
 # --------------------------------------------------------------------------
 # 1. Simple query (non-streaming)
