@@ -591,13 +591,7 @@ export default function AgentPage() {
   const isRunning = status === "streaming" || status === "submitted";
   // Compute session stats from messages
   const sessionStats = useMemo(() => {
-    let firecrawlCredits = 0;
-    let searchCredits = 0;
-    let scrapeCredits = 0;
-    let interactCredits = 0;
-    let searchCount = 0;
-    let scrapeCount = 0;
-    let interactCount = 0;
+    const fc = { total: 0, search: { count: 0, credits: 0 }, scrape: { count: 0, credits: 0 }, map: { count: 0, credits: 0 }, crawl: { count: 0, credits: 0 }, interact: { count: 0, credits: 0 } };
     let toolCalls = 0;
     let agentTurns = 0;
     let llmCalls = 0;
@@ -623,10 +617,14 @@ export default function AgentPage() {
           const output = (p.output ?? p.result) as Record<string, unknown> | undefined;
           if (output && typeof output === "object") {
             const credits = typeof output.creditsUsed === "number" ? output.creditsUsed as number : 0;
-            firecrawlCredits += credits;
-            if (toolName === "search") { searchCredits += credits; searchCount++; }
-            else if (toolName === "scrape" || toolName === "map") { scrapeCredits += credits; scrapeCount++; }
-            else if (toolName === "interact") { interactCredits += credits; interactCount++; }
+            if (credits > 0) {
+              fc.total += credits;
+              const bucket = fc[toolName as keyof typeof fc];
+              if (bucket && typeof bucket === "object") {
+                (bucket as { count: number; credits: number }).count++;
+                (bucket as { count: number; credits: number }).credits += credits;
+              }
+            }
             const contentKeys = ["markdown", "content", "answer", "text", "json", "extract", "data", "output", "web"];
             let contentSize = 0;
             for (const k of contentKeys) {
@@ -650,7 +648,7 @@ export default function AgentPage() {
 
     llmCalls += toolCalls;
 
-    return { firecrawlCredits, searchCredits, scrapeCredits, interactCredits, searchCount, scrapeCount, interactCount, toolCalls, agentTurns, llmCalls, orchestratorIn, orchestratorOut, workerInputTokens, workerOutputTokens };
+    return { fc, toolCalls, agentTurns, llmCalls, orchestratorIn, orchestratorOut, workerInputTokens, workerOutputTokens };
   }, [messages]);
 
   const prevIsRunning = useRef(false);
@@ -1333,12 +1331,6 @@ export default function AgentPage() {
                 <svg fill="none" height="12" viewBox="0 0 24 24" width="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a4 4 0 014 4c0 1.95-2 4-4 6-2-2-4-4.05-4-6a4 4 0 014-4zM8 14v.5A3.5 3.5 0 004.5 18v0a1.5 1.5 0 001.5 1.5h12a1.5 1.5 0 001.5-1.5v0A3.5 3.5 0 0016 14.5V14" /></svg>
                 {sessionStats.llmCalls} LLM call{sessionStats.llmCalls !== 1 ? "s" : ""}
               </div>
-              {(sessionStats.searchCount + sessionStats.scrapeCount + sessionStats.interactCount) > 0 && (
-                <div className="flex items-center gap-4 text-mono-x-small text-black-alpha-32">
-                  <svg fill="none" height="12" viewBox="0 0 24 24" width="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
-                  {sessionStats.searchCount + sessionStats.scrapeCount + sessionStats.interactCount} Firecrawl call{(sessionStats.searchCount + sessionStats.scrapeCount + sessionStats.interactCount) !== 1 ? "s" : ""}
-                </div>
-              )}
               <div className="flex items-center gap-4 text-mono-x-small text-black-alpha-32">
                 <svg fill="none" height="12" viewBox="0 0 24 24" width="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7V4h16v3M9 20h6M12 4v16" /></svg>
                 {(() => {
@@ -1350,30 +1342,24 @@ export default function AgentPage() {
                   return `~${fmt(sessionStats.orchestratorIn)}↓ ${fmt(sessionStats.orchestratorOut)}↑`;
                 })()}
               </div>
-              {sessionStats.firecrawlCredits > 0 && (
+              {sessionStats.fc.total > 0 && (
                 <div className="flex items-center gap-4 text-mono-x-small text-black-alpha-32">
                   <svg fill="none" height="12" viewBox="0 0 24 24" width="12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
-                  {sessionStats.firecrawlCredits} credits
+                  {sessionStats.fc.total} credits
                 </div>
               )}
             </div>
-            {sessionStats.firecrawlCredits > 0 && (
-              <div className="flex items-center justify-end gap-8 mt-4">
-                {sessionStats.searchCount > 0 && (
-                  <span className="text-mono-x-small text-black-alpha-24">
-                    {sessionStats.searchCount} search{sessionStats.searchCount !== 1 ? "es" : ""} ({sessionStats.searchCredits}cr)
-                  </span>
-                )}
-                {sessionStats.scrapeCount > 0 && (
-                  <span className="text-mono-x-small text-black-alpha-24">
-                    {sessionStats.scrapeCount} scrape{sessionStats.scrapeCount !== 1 ? "s" : ""} ({sessionStats.scrapeCredits}cr)
-                  </span>
-                )}
-                {sessionStats.interactCount > 0 && (
-                  <span className="text-mono-x-small text-black-alpha-24">
-                    {sessionStats.interactCount} interact ({sessionStats.interactCredits}cr)
-                  </span>
-                )}
+            {sessionStats.fc.total > 0 && (
+              <div className="flex items-center justify-end gap-x-8 gap-y-4 flex-wrap mt-4">
+                {(["search", "scrape", "map", "crawl", "interact"] as const).map((tool) => {
+                  const b = sessionStats.fc[tool];
+                  if (b.count === 0) return null;
+                  return (
+                    <span key={tool} className="text-mono-x-small text-black-alpha-24">
+                      {b.count} {tool}{b.count !== 1 && tool !== "search" ? "s" : b.count !== 1 ? "es" : ""} ({b.credits}cr)
+                    </span>
+                  );
+                })}
               </div>
             )}
           </div>
