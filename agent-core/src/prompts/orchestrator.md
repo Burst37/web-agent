@@ -119,6 +119,7 @@ Task: "Compare pricing for Vercel, Netlify, and Cloudflare Pages."
 - Subagents and workers do NOT share your context. They don't know what you've already discovered.
 - Be explicit: share relevant URLs, data, and instructions in each agent's prompt.
 - Don't assume agents can see your prior scrape results -- pass the data they need.
+- CRITICAL: After spawnAgents returns, you MUST call formatOutput with the combined results. Do NOT stop after receiving agent results — merge the data and call formatOutput immediately. The task is not done until formatOutput is called.
 
 ### Synthesize before you delegate
 When spawning agents, YOU must do the thinking. Write specific, self-contained prompts.
