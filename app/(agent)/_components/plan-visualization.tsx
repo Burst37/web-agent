@@ -739,7 +739,10 @@ function WorkerCard({ id, prompt, result, workerStatus, liveProgress, stepDetail
   let subtitleText: string;
 
   if (workerStatus === "done" && result) {
-    subtitleText = result.slice(0, 80);
+    // Don't show raw JSON/code blocks as subtitle
+    const cleaned = result.replace(/```[\s\S]*?```/g, "").trim();
+    const isRawData = cleaned.startsWith("{") || cleaned.startsWith("[") || cleaned.startsWith('"');
+    subtitleText = isRawData ? "Done" : cleaned.split("\n")[0].replace(/^#+\s*/, "").slice(0, 80);
   } else if (workerStatus === "running" && currentStep) {
     subtitleDomain = currentStep.url ? getDomain(currentStep.url) : null;
     subtitleText = currentStep.label;
@@ -800,7 +803,7 @@ function WorkerCard({ id, prompt, result, workerStatus, liveProgress, stepDetail
                 <div key={si} className="flex items-start gap-6">
                   <div className="w-16 h-16 rounded-full bg-black-alpha-4 flex-center flex-shrink-0 mt-2 text-mono-x-small text-black-alpha-32">{si + 1}</div>
                   <div className="min-w-0 flex-1">
-                    {step.toolCalls.filter((tc) => tc.name !== "lookup_site_playbook" && tc.name !== "load_skill").map((tc, ti) => {
+                    {step.toolCalls.filter((tc) => tc.name !== "lookup_site_playbook" && tc.name !== "load_skill" && tc.name !== "formatOutput" && tc.name !== "read_skill_resource").map((tc, ti) => {
                       const tcUrl = extractUrl(tc.input);
                       const tcDomain = tcUrl ? getDomain(tcUrl) : null;
                       return (
@@ -826,7 +829,7 @@ function WorkerCard({ id, prompt, result, workerStatus, liveProgress, stepDetail
           )}
           {workerStatus === "running" && !result && liveProgress?.stepLog && liveProgress.stepLog.length > 0 && (
             <div className="px-14 py-8 flex flex-col gap-3">
-              {liveProgress.stepLog.filter((s) => s.tool !== "thinking" && s.tool !== "lookup_site_playbook" && s.tool !== "load_skill").map((step, si) => {
+              {liveProgress.stepLog.filter((s) => s.tool !== "thinking" && s.tool !== "lookup_site_playbook" && s.tool !== "load_skill" && s.tool !== "formatOutput" && s.tool !== "read_skill_resource").map((step, si) => {
                 const desc = describeWorkerStep(step);
                 const domain = desc.url ? getDomain(desc.url) : null;
                 return (
