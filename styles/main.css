@@ -126,11 +126,16 @@
   min-height: 0 !important;
 }
 /* Let mermaid SVGs grow to fit their content */
-[data-streamdown="mermaid-block"] svg {
+[data-streamdown="mermaid-block"] > div:not([data-streamdown]) svg {
   max-height: none !important;
   height: auto !important;
   min-height: 300px;
-  width: 100% !important;
+}
+/* Don't blow up action button SVGs */
+[data-streamdown="mermaid-block-actions"] svg {
+  min-height: unset !important;
+  width: unset !important;
+  height: unset !important;
 }
 [data-streamdown="mermaid-block"] > div:last-of-type:not([data-streamdown]) {
   max-height: none !important;
