@@ -162,6 +162,7 @@ function PlusMenu({
   const [schemaDesc, setSchemaDesc] = useState("");
   const [schemaLoading, setSchemaLoading] = useState(false);
   const [showSkills, setShowSkills] = useState(false);
+  const [maxH, setMaxH] = useState(400);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -171,13 +172,23 @@ function PlusMenu({
     return () => document.removeEventListener("mousedown", handler);
   }, [onClose]);
 
+  // Clamp height to available space above the trigger button
+  useEffect(() => {
+    if (!ref.current) return;
+    const parent = ref.current.parentElement;
+    if (!parent) return;
+    const rect = parent.getBoundingClientRect();
+    const available = rect.top - 12; // 12px padding from top of viewport
+    setMaxH(Math.max(200, Math.min(400, available)));
+  }, [showSkills, showSchemaInput]);
+
   const visibleSkills = (skills ?? []).filter((s) => s.category !== "Export");
 
   return (
     <div
       ref={ref}
       className="absolute bottom-full left-0 mb-6 w-320 bg-accent-white rounded-12 border border-border-muted overflow-hidden flex flex-col"
-      style={{ boxShadow: "0px 16px 32px -8px rgba(0,0,0,0.08), 0px 4px 12px -2px rgba(0,0,0,0.04)", maxHeight: "min(400px, 50vh)" }}
+      style={{ boxShadow: "0px 16px 32px -8px rgba(0,0,0,0.08), 0px 4px 12px -2px rgba(0,0,0,0.04)", maxHeight: maxH }}
     >
       <div className="px-6 py-6 flex flex-col gap-1 overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
         {/* Plan toggle */}
