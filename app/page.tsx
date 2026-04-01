@@ -158,12 +158,11 @@ function PlusMenu({
   onSchemaChange: (schema: Record<string, unknown> | undefined) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [showSchema, setShowSchema] = useState(false);
+  const [activePanel, setActivePanel] = useState<"plan" | "upload" | "schema" | "skills" | null>(null);
   const [schemaMode, setSchemaMode] = useState<"describe" | "paste">("describe");
   const [schemaDesc, setSchemaDesc] = useState("");
   const [schemaPaste, setSchemaPaste] = useState("");
   const [schemaLoading, setSchemaLoading] = useState(false);
-  const [showSkills, setShowSkills] = useState(false);
   const [maxH, setMaxH] = useState(400);
 
   useEffect(() => {
@@ -174,217 +173,242 @@ function PlusMenu({
     return () => document.removeEventListener("mousedown", handler);
   }, [onClose]);
 
-  // Clamp height to available space above the trigger button
   useEffect(() => {
     if (!ref.current) return;
     const parent = ref.current.parentElement;
     if (!parent) return;
     const rect = parent.getBoundingClientRect();
-    const available = rect.top - 12; // 12px padding from top of viewport
-    setMaxH(Math.max(200, Math.min(400, available)));
-  }, [showSkills, showSchema]);
+    const available = rect.top - 12;
+    setMaxH(Math.max(200, Math.min(420, available)));
+  }, [activePanel]);
 
   const visibleSkills = (skills ?? []).filter((s) => s.category !== "Export");
+
+  const menuItems: { id: "plan" | "upload" | "schema" | "skills"; label: string; icon: React.ReactNode; badge?: string }[] = [
+    {
+      id: "plan", label: "Plan", badge: planMode ? "on" : undefined,
+      icon: <svg fill="none" height="16" viewBox="0 0 24 24" width="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /><rect x="9" y="3" width="6" height="4" rx="1" /><path d="M9 12h6M9 16h4" /></svg>,
+    },
+    {
+      id: "upload", label: "Upload", badge: uploads.length > 0 ? String(uploads.length) : undefined,
+      icon: <svg fill="none" height="16" viewBox="0 0 24 24" width="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" /></svg>,
+    },
+    {
+      id: "schema", label: "Schema", badge: schema ? "set" : undefined,
+      icon: <svg fill="none" height="16" viewBox="0 0 24 24" width="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H7a2 2 0 00-2 2v5a2 2 0 01-2 2 2 2 0 012 2v5a2 2 0 002 2h1M16 3h1a2 2 0 012 2v5a2 2 0 002 2 2 2 0 00-2 2v5a2 2 0 01-2 2h-1" /></svg>,
+    },
+    {
+      id: "skills", label: "Skills", badge: selectedSkills.length > 0 ? String(selectedSkills.length) : undefined,
+      icon: <svg fill="none" height="16" viewBox="0 0 24 24" width="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" /></svg>,
+    },
+  ];
 
   return (
     <div
       ref={ref}
-      className="absolute bottom-full left-0 mb-6 w-320 bg-accent-white rounded-12 border border-border-muted overflow-hidden flex flex-col"
+      className="absolute bottom-full left-0 mb-6 bg-accent-white rounded-12 border border-border-muted overflow-hidden flex"
       style={{ boxShadow: "0px 16px 32px -8px rgba(0,0,0,0.08), 0px 4px 12px -2px rgba(0,0,0,0.04)", maxHeight: maxH }}
     >
-      <div className="px-6 py-6 flex flex-col gap-1 overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
-        {/* Plan toggle */}
-        <button
-          type="button"
-          className={cn(
-            "w-full flex items-center gap-8 px-10 py-8 rounded-8 text-left transition-all",
-            planMode ? "bg-heat-8" : "hover:bg-black-alpha-2",
-          )}
-          onClick={() => { onTogglePlan(); onClose(); }}
-        >
-          <svg fill="none" height="16" viewBox="0 0 24 24" width="16" className={cn("flex-shrink-0", planMode ? "text-heat-100" : "text-black-alpha-40")} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
-            <rect x="9" y="3" width="6" height="4" rx="1" />
-            <path d="M9 12h6M9 16h4" />
-          </svg>
-          <span className={cn("text-label-small", planMode ? "text-heat-100" : "text-accent-black")}>Plan before running{planMode ? " (on)" : ""}</span>
-        </button>
-
-        {/* Upload file */}
-        <button
-          type="button"
-          className="w-full flex items-center gap-8 px-10 py-8 rounded-8 text-left hover:bg-black-alpha-2 transition-all"
-          onClick={() => { onUploadClick(); onClose(); }}
-        >
-          <svg fill="none" height="16" viewBox="0 0 24 24" width="16" className="text-black-alpha-40 flex-shrink-0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />
-          </svg>
-          <span className="text-label-small text-accent-black">Upload file</span>
-        </button>
-        {uploads.length > 0 && (
-          <div className="px-10 pt-2 flex flex-wrap gap-4">
-            {uploads.map((f, i) => (
-              <span key={i} className="flex items-center gap-2 px-6 py-2 rounded-6 bg-black-alpha-4 text-mono-x-small text-black-alpha-48 max-w-[140px]">
-                <span className="truncate">{f.name}</span>
-                <button
-                  type="button"
-                  className="flex-shrink-0 text-black-alpha-24 hover:text-accent-crimson transition-colors"
-                  onClick={() => onRemoveUpload(i)}
-                >
-                  <svg fill="none" height="8" viewBox="0 0 24 24" width="8" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Schema */}
-        <button
-          type="button"
-          className={cn(
-            "w-full flex items-center gap-8 px-10 py-8 rounded-8 text-left transition-all",
-            schema ? "bg-heat-8" : "hover:bg-black-alpha-2",
-          )}
-          onClick={() => setShowSchema(!showSchema)}
-        >
-          <svg fill="none" height="16" viewBox="0 0 24 24" width="16" className={cn("flex-shrink-0", schema ? "text-heat-100" : "text-black-alpha-40")} stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M8 3H7a2 2 0 00-2 2v5a2 2 0 01-2 2 2 2 0 012 2v5a2 2 0 002 2h1M16 3h1a2 2 0 012 2v5a2 2 0 002 2 2 2 0 00-2 2v5a2 2 0 01-2 2h-1" />
-          </svg>
-          <span className={cn("text-label-small flex-1", schema ? "text-heat-100" : "text-accent-black")}>Schema{schema ? " (set)" : ""}</span>
-          {schema && (
-            <button
-              type="button"
-              className="text-black-alpha-24 hover:text-accent-crimson transition-colors flex-shrink-0"
-              onClick={(e) => { e.stopPropagation(); onSchemaChange(undefined); setSchemaDesc(""); setSchemaPaste(""); }}
-            >
-              <svg fill="none" height="10" viewBox="0 0 24 24" width="10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
-            </button>
-          )}
-        </button>
-        {showSchema && (
-          <div className="px-10 pt-2 pb-2">
-            {/* Describe / Paste toggle */}
-            <div className="flex gap-2 mb-6">
-              <button
-                type="button"
-                className={cn("px-8 py-3 rounded-6 text-mono-x-small transition-all", schemaMode === "describe" ? "bg-black-alpha-8 text-accent-black" : "text-black-alpha-32 hover:text-black-alpha-48")}
-                onClick={() => setSchemaMode("describe")}
-              >Describe</button>
-              <button
-                type="button"
-                className={cn("px-8 py-3 rounded-6 text-mono-x-small transition-all", schemaMode === "paste" ? "bg-black-alpha-8 text-accent-black" : "text-black-alpha-32 hover:text-black-alpha-48")}
-                onClick={() => setSchemaMode("paste")}
-              >Paste JSON</button>
-            </div>
-            {schemaMode === "describe" ? (
-              <>
-                <textarea
-                  className="w-full bg-black-alpha-4 rounded-8 px-10 py-6 text-body-small text-accent-black placeholder:text-black-alpha-32 focus:outline-none resize-none"
-                  rows={2}
-                  placeholder="e.g. company name, funding amount, list of investors, website"
-                  value={schemaDesc}
-                  onChange={(e) => setSchemaDesc(e.target.value)}
-                  onKeyDown={async (e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      if (!schemaDesc.trim() || schemaLoading) return;
-                      setSchemaLoading(true);
-                      try {
-                        const resp = await fetch("/api/schema/generate", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ description: schemaDesc }),
-                        });
-                        const data = await resp.json();
-                        if (data.schema) {
-                          onSchemaChange(data.schema);
-                          setShowSchema(false);
-                        }
-                      } catch { /* ignore */ }
-                      setSchemaLoading(false);
-                    }
-                  }}
-                />
-                <div className="text-mono-x-small text-black-alpha-32 mt-4">
-                  {schemaLoading ? "Generating..." : "Enter to generate"}
-                </div>
-              </>
-            ) : (
-              <>
-                <textarea
-                  className="w-full bg-black-alpha-4 rounded-8 px-10 py-6 text-mono-x-small text-accent-black placeholder:text-black-alpha-32 focus:outline-none resize-none"
-                  rows={4}
-                  placeholder='{"type":"object","properties":{"name":{"type":"string"}}}'
-                  value={schemaPaste}
-                  onChange={(e) => setSchemaPaste(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      try {
-                        const parsed = JSON.parse(schemaPaste);
-                        onSchemaChange(parsed);
-                        setShowSchema(false);
-                      } catch { /* invalid JSON, ignore */ }
-                    }
-                  }}
-                />
-                <div className="text-mono-x-small text-black-alpha-32 mt-4">
-                  Enter to apply
-                </div>
-              </>
+      {/* Left nav */}
+      <div className="w-160 flex-shrink-0 py-6 px-6 flex flex-col gap-1 border-r border-border-faint">
+        {menuItems.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={cn(
+              "w-full flex items-center gap-8 px-10 py-8 rounded-8 text-left transition-all",
+              activePanel === item.id ? "bg-black-alpha-4" : "hover:bg-black-alpha-2",
             )}
-          </div>
-        )}
-
-        {/* Skills */}
-        {visibleSkills.length > 0 && (
-          <div>
-            <button
-              type="button"
-              className="w-full flex items-center gap-8 px-10 py-8 rounded-8 text-left hover:bg-black-alpha-2 transition-all"
-              onClick={() => setShowSkills(!showSkills)}
-            >
-              <svg fill="none" height="16" viewBox="0 0 24 24" width="16" className="text-black-alpha-40 flex-shrink-0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
-              </svg>
-              <span className="text-label-small text-accent-black flex-1">Skills{selectedSkills.length > 0 ? ` (${selectedSkills.length})` : ""}</span>
-            </button>
-            {showSkills && visibleSkills.map((skill) => {
-              const active = selectedSkills.includes(skill.name);
-              return (
-                <button
-                  key={skill.name}
-                  type="button"
-                  className={cn(
-                    "w-full text-left px-10 py-5 rounded-8 transition-all",
-                    active ? "bg-heat-8" : "hover:bg-black-alpha-2",
-                  )}
-                  onClick={() =>
-                    onSkillsChange(active ? selectedSkills.filter((s) => s !== skill.name) : [...selectedSkills, skill.name])
-                  }
-                >
-                  <div className="flex items-center gap-8">
-                    <div className={cn(
-                      "w-14 h-14 rounded-4 border-2 flex-shrink-0 flex items-center justify-center transition-all",
-                      active ? "bg-heat-100 border-heat-100" : "border-black-alpha-16",
-                    )}>
-                      {active && (
-                        <svg viewBox="0 0 16 16" className="text-white w-10 h-10">
-                          <path d="M6.5 11.5L3 8l1-1 2.5 2.5L11 5l1 1-5.5 5.5z" fill="currentColor" />
-                        </svg>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-label-small text-accent-black">{skill.name}</div>
-                      <div className="text-body-small text-black-alpha-48 truncate">{skill.description}</div>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
+            onClick={() => setActivePanel(activePanel === item.id ? null : item.id)}
+          >
+            <span className={cn("flex-shrink-0", activePanel === item.id || item.badge ? "text-accent-black" : "text-black-alpha-40")}>{item.icon}</span>
+            <span className={cn("text-label-small flex-1", activePanel === item.id ? "text-accent-black" : item.badge ? "text-accent-black" : "text-accent-black")}>{item.label}</span>
+            {item.badge && (
+              <span className="text-mono-x-small text-heat-100 bg-heat-8 px-4 py-1 rounded-4">{item.badge}</span>
+            )}
+          </button>
+        ))}
       </div>
+
+      {/* Right panel */}
+      {activePanel && (
+        <div className="w-280 flex-shrink-0 overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
+          {/* Plan */}
+          {activePanel === "plan" && (
+            <div className="p-14 flex flex-col gap-8">
+              <div className="text-label-medium text-accent-black">Plan before running</div>
+              <div className="text-body-small text-black-alpha-48">Generate an execution plan before the agent starts working. Review and approve before any tools are called.</div>
+              <button
+                type="button"
+                className={cn(
+                  "w-full py-8 rounded-8 text-label-small transition-all",
+                  planMode ? "bg-heat-100 text-white" : "bg-black-alpha-4 text-accent-black hover:bg-black-alpha-8",
+                )}
+                onClick={() => { onTogglePlan(); }}
+              >
+                {planMode ? "Enabled" : "Enable"}
+              </button>
+            </div>
+          )}
+
+          {/* Upload */}
+          {activePanel === "upload" && (
+            <div className="p-14 flex flex-col gap-8">
+              <div className="text-label-medium text-accent-black">Upload files</div>
+              <div className="text-body-small text-black-alpha-48">Attach CSV, JSON, or text files. They will be available to the agent via bash.</div>
+              <button
+                type="button"
+                className="w-full py-8 rounded-8 text-label-small bg-black-alpha-4 text-accent-black hover:bg-black-alpha-8 transition-all"
+                onClick={() => { onUploadClick(); }}
+              >
+                Choose file
+              </button>
+              {uploads.length > 0 && (
+                <div className="flex flex-col gap-4 pt-4">
+                  {uploads.map((f, i) => (
+                    <div key={i} className="flex items-center gap-6 px-8 py-6 rounded-8 bg-black-alpha-2">
+                      <svg fill="none" height="14" viewBox="0 0 24 24" width="14" className="text-black-alpha-32 flex-shrink-0" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" /><path d="M14 2v6h6" />
+                      </svg>
+                      <span className="text-body-small text-accent-black flex-1 truncate">{f.name}</span>
+                      <button
+                        type="button"
+                        className="text-black-alpha-24 hover:text-accent-crimson transition-colors flex-shrink-0"
+                        onClick={() => onRemoveUpload(i)}
+                      >
+                        <svg fill="none" height="10" viewBox="0 0 24 24" width="10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Schema */}
+          {activePanel === "schema" && (
+            <div className="p-14 flex flex-col gap-8">
+              <div className="flex items-center justify-between">
+                <div className="text-label-medium text-accent-black">Schema</div>
+                {schema && (
+                  <button
+                    type="button"
+                    className="text-mono-x-small text-black-alpha-32 hover:text-accent-crimson transition-colors"
+                    onClick={() => { onSchemaChange(undefined); setSchemaDesc(""); setSchemaPaste(""); }}
+                  >Clear</button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  className={cn("px-10 py-4 rounded-6 text-label-small transition-all", schemaMode === "describe" ? "bg-black-alpha-8 text-accent-black" : "text-black-alpha-32 hover:text-black-alpha-48")}
+                  onClick={() => setSchemaMode("describe")}
+                >Describe</button>
+                <button
+                  type="button"
+                  className={cn("px-10 py-4 rounded-6 text-label-small transition-all", schemaMode === "paste" ? "bg-black-alpha-8 text-accent-black" : "text-black-alpha-32 hover:text-black-alpha-48")}
+                  onClick={() => setSchemaMode("paste")}
+                >Paste JSON</button>
+              </div>
+              {schemaMode === "describe" ? (
+                <>
+                  <textarea
+                    className="w-full bg-black-alpha-4 rounded-8 px-10 py-8 text-body-small text-accent-black placeholder:text-black-alpha-32 focus:outline-none resize-none"
+                    rows={3}
+                    placeholder="e.g. company name, funding amount, list of investors, website"
+                    value={schemaDesc}
+                    onChange={(e) => setSchemaDesc(e.target.value)}
+                    onKeyDown={async (e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        if (!schemaDesc.trim() || schemaLoading) return;
+                        setSchemaLoading(true);
+                        try {
+                          const resp = await fetch("/api/schema/generate", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ description: schemaDesc }),
+                          });
+                          const data = await resp.json();
+                          if (data.schema) onSchemaChange(data.schema);
+                        } catch { /* ignore */ }
+                        setSchemaLoading(false);
+                      }
+                    }}
+                  />
+                  <div className="text-mono-x-small text-black-alpha-32">
+                    {schemaLoading ? "Generating..." : "Enter to generate"}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <textarea
+                    className="w-full bg-black-alpha-4 rounded-8 px-10 py-8 text-mono-x-small text-accent-black placeholder:text-black-alpha-32 focus:outline-none resize-none"
+                    rows={5}
+                    placeholder='{"type":"object","properties":{"name":{"type":"string"}}}'
+                    value={schemaPaste}
+                    onChange={(e) => setSchemaPaste(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        try {
+                          const parsed = JSON.parse(schemaPaste);
+                          onSchemaChange(parsed);
+                        } catch { /* ignore */ }
+                      }
+                    }}
+                  />
+                  <div className="text-mono-x-small text-black-alpha-32">Enter to apply</div>
+                </>
+              )}
+              {schema && (
+                <div className="bg-black-alpha-2 rounded-8 px-10 py-6 text-mono-x-small text-black-alpha-40 break-all max-h-[100px] overflow-auto" style={{ scrollbarWidth: "thin" }}>
+                  {JSON.stringify(schema, null, 2)}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Skills */}
+          {activePanel === "skills" && (
+            <div className="py-6 px-6 flex flex-col gap-1">
+              {visibleSkills.map((skill) => {
+                const active = selectedSkills.includes(skill.name);
+                return (
+                  <button
+                    key={skill.name}
+                    type="button"
+                    className={cn(
+                      "w-full text-left px-10 py-6 rounded-8 transition-all",
+                      active ? "bg-heat-8" : "hover:bg-black-alpha-2",
+                    )}
+                    onClick={() =>
+                      onSkillsChange(active ? selectedSkills.filter((s) => s !== skill.name) : [...selectedSkills, skill.name])
+                    }
+                  >
+                    <div className="flex items-center gap-8">
+                      <div className={cn(
+                        "w-14 h-14 rounded-4 border-2 flex-shrink-0 flex items-center justify-center transition-all",
+                        active ? "bg-heat-100 border-heat-100" : "border-black-alpha-16",
+                      )}>
+                        {active && (
+                          <svg viewBox="0 0 16 16" className="text-white w-10 h-10">
+                            <path d="M6.5 11.5L3 8l1-1 2.5 2.5L11 5l1 1-5.5 5.5z" fill="currentColor" />
+                          </svg>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-label-small text-accent-black">{skill.name}</div>
+                        <div className="text-body-small text-black-alpha-48 truncate">{skill.description}</div>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
