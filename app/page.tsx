@@ -16,7 +16,6 @@ import StreamdownBlock from "@/components/shared/streamdown-block";
 import Sidebar from "./components/sidebar";
 import ArtifactPanel from "./components/artifact-panel";
 import SymbolColored from "@/components/shared/icons/symbol-colored";
-import Link from "next/link";
 import { cn } from "@/utils/cn";
 
 function GitHubIcon() {
@@ -30,12 +29,6 @@ function GitHubIcon() {
 function HeaderLinks() {
   return (
     <div className="flex items-center gap-6">
-      <Link
-        href="/docs"
-        className="px-10 py-6 rounded-8 text-label-small text-black-alpha-48 bg-black-alpha-4 hover:bg-black-alpha-8 hover:text-accent-black transition-all"
-      >
-        API Docs
-      </Link>
       <a
         href="https://github.com/mendableai/firecrawl-agent"
         target="_blank"
