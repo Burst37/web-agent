@@ -582,7 +582,7 @@ export default function AgentPage() {
       .then((data: { keys: Record<string, { configured: boolean }> }) => {
         const configured = new Set<string>();
         for (const [id, status] of Object.entries(data.keys)) {
-          if (status.configured && id !== "firecrawl") configured.add(id);
+          if (status.configured) configured.add(id);
         }
         setConfiguredProviders(configured);
       })
