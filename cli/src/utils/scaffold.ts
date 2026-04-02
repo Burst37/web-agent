@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
 import type { TemplateEntry } from './manifest';
+import { getSourceRoot } from './manifest';
 import { success, info, warn } from './ui';
 
 const SKIP_DIRS = new Set([
@@ -18,10 +19,6 @@ const NEXTJS_COPY_FILES = [
   'package.json', 'next.config.ts', 'tsconfig.json',
   'tailwind.config.ts', 'postcss.config.js', 'postcss.config.mjs',
 ];
-
-function getRepoRoot(): string {
-  return path.resolve(__dirname, '../../..');
-}
 
 function copyDirRecursive(src: string, dest: string): void {
   if (!fs.existsSync(src)) return;
@@ -61,7 +58,7 @@ function rewriteImports(dir: string): void {
 function generateEnvFile(keys: Record<string, string>): string {
   const lines: string[] = [];
   for (const [envVar, value] of Object.entries(keys)) {
-    lines.push(`${envVar}=${value}`);
+    if (value) lines.push(`${envVar}=${value}`);
   }
   return lines.join('\n') + '\n';
 }
@@ -75,14 +72,14 @@ export interface ScaffoldOptions {
 
 export async function scaffoldProject(opts: ScaffoldOptions): Promise<void> {
   const { projectDir, template, envVars, skipInstall } = opts;
-  const repoRoot = getRepoRoot();
+  const sourceRoot = getSourceRoot();
 
   fs.mkdirSync(projectDir, { recursive: true });
 
   if (template.copyRoot) {
-    scaffoldNextJs(repoRoot, projectDir);
+    scaffoldNextJs(sourceRoot, projectDir);
   } else {
-    scaffoldStandalone(repoRoot, projectDir, template);
+    scaffoldStandalone(sourceRoot, projectDir, template);
   }
 
   // Write .env file
@@ -100,49 +97,38 @@ export async function scaffoldProject(opts: ScaffoldOptions): Promise<void> {
     } catch {
       warn('npm install failed — run it manually in the project directory');
     }
-  } else {
-    info('Skipping npm install (--skip-install)');
   }
 }
 
-function scaffoldNextJs(repoRoot: string, projectDir: string): void {
-  info('Copying Next.js app...');
-
-  // Copy directories
+function scaffoldNextJs(sourceRoot: string, projectDir: string): void {
   for (const dir of NEXTJS_COPY_DIRS) {
-    const src = path.join(repoRoot, dir);
+    const src = path.join(sourceRoot, dir);
     const dest = path.join(projectDir, dir);
-    if (fs.existsSync(src)) {
-      copyDirRecursive(src, dest);
-    }
+    if (fs.existsSync(src)) copyDirRecursive(src, dest);
   }
 
-  // Copy individual files
   for (const file of NEXTJS_COPY_FILES) {
-    const src = path.join(repoRoot, file);
+    const src = path.join(sourceRoot, file);
     const dest = path.join(projectDir, file);
-    if (fs.existsSync(src)) {
-      fs.copyFileSync(src, dest);
-    }
+    if (fs.existsSync(src)) fs.copyFileSync(src, dest);
   }
 
   success('Next.js app scaffolded');
 }
 
 function scaffoldStandalone(
-  repoRoot: string,
+  sourceRoot: string,
   projectDir: string,
   template: TemplateEntry
 ): void {
-  info(`Copying ${template.name} template...`);
-
   // Copy agent-core
-  const agentCoreSrc = path.join(repoRoot, 'agent-core');
-  const agentCoreDest = path.join(projectDir, 'agent-core');
-  copyDirRecursive(agentCoreSrc, agentCoreDest);
+  const agentCoreSrc = path.join(sourceRoot, 'agent-core');
+  if (fs.existsSync(agentCoreSrc)) {
+    copyDirRecursive(agentCoreSrc, path.join(projectDir, 'agent-core'));
+  }
 
   // Copy template files
-  const templateSrc = path.join(repoRoot, template.path);
+  const templateSrc = path.join(sourceRoot, template.path);
   for (const entry of fs.readdirSync(templateSrc, { withFileTypes: true })) {
     if (SKIP_DIRS.has(entry.name)) continue;
     const srcPath = path.join(templateSrc, entry.name);
@@ -155,7 +141,6 @@ function scaffoldStandalone(
     }
   }
 
-  // Rewrite import paths
   rewriteImports(projectDir);
   success(`${template.name} template scaffolded`);
 }

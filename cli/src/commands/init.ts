@@ -1,67 +1,80 @@
 import { Command } from 'commander';
-import { select, checkbox, input, password } from '@inquirer/prompts';
+import { select, password } from '@inquirer/prompts';
 import * as path from 'path';
 import * as fs from 'fs';
-import { getTemplates, getProviders, getTemplate } from '../utils/manifest';
-import type { TemplateEntry, ProviderEntry } from '../utils/manifest';
+import {
+  getTemplates, getProviders, getTemplate,
+  loadExternalManifest,
+} from '../utils/manifest';
+import type { TemplateEntry } from '../utils/manifest';
 import { resolveFirecrawlApiKey } from '../utils/credentials';
 import { scaffoldProject } from '../utils/scaffold';
-import { printBanner, step, success, warn, info, dim, reset, green, orange, bold, cyan } from '../utils/ui';
+import { printBanner, success, warn, info, dim, reset, green, bold } from '../utils/ui';
 import { spawn } from 'child_process';
 
 interface InitOptions {
   template?: string;
-  yes?: boolean;
+  from?: string;
+  apiKey?: string;
+  key?: string[];
   skipInstall?: boolean;
 }
 
 export function createInitCommand(): Command {
   return new Command('init')
     .description('Create a new Firecrawl Agent project')
-    .argument('[project-name]', 'Project directory name')
-    .option('-t, --template <id>', 'Template to use (next, express, hono)')
-    .option('-y, --yes', 'Skip prompts and use defaults')
+    .argument('[project-name]', 'Project directory name', 'my-firecrawl-agent')
+    .option('-t, --template <id>', 'Template (next, express, hono)')
+    .option('--from <source>', 'External repo (user/repo) or local path with agent-manifest.json')
+    .option('--api-key <key>', 'Firecrawl API key')
+    .option('--key <provider=key>', 'Provider API key (repeatable, e.g. --key anthropic=sk-...)', collect, [])
     .option('--skip-install', 'Skip npm install')
-    .action(async (projectName: string | undefined, options: InitOptions) => {
+    .action(async (projectName: string, options: InitOptions) => {
       await handleInit(projectName, options);
     });
 }
 
-async function handleInit(projectName: string | undefined, options: InitOptions): Promise<void> {
+function collect(val: string, acc: string[]): string[] {
+  acc.push(val);
+  return acc;
+}
+
+function parseKeyFlags(keys: string[]): Record<string, string> {
+  const map: Record<string, string> = {};
+  const providerEnvMap: Record<string, string> = {
+    anthropic: 'ANTHROPIC_API_KEY',
+    openai: 'OPENAI_API_KEY',
+    google: 'GOOGLE_GENERATIVE_AI_API_KEY',
+    gateway: 'AI_GATEWAY_API_KEY',
+  };
+
+  for (const entry of keys) {
+    const eq = entry.indexOf('=');
+    if (eq === -1) continue;
+    const provider = entry.slice(0, eq).toLowerCase();
+    const value = entry.slice(eq + 1);
+    const envVar = providerEnvMap[provider] ?? provider.toUpperCase();
+    map[envVar] = value;
+  }
+  return map;
+}
+
+async function handleInit(projectName: string, options: InitOptions): Promise<void> {
   printBanner();
 
-  // Step 1: Project name
-  step(1, 'Project name');
-  const name = projectName ?? (options.yes
-    ? 'my-firecrawl-agent'
-    : await input({
-        message: 'What is your project called?',
-        default: 'my-firecrawl-agent',
-        validate: (val) => {
-          if (!val.trim()) return 'Project name cannot be empty';
-          if (/\s/.test(val)) return 'Project name cannot contain spaces';
-          return true;
-        },
-      }));
-
-  const projectDir = path.resolve(process.cwd(), name);
-  if (fs.existsSync(projectDir)) {
-    warn(`Directory ${name} already exists`);
-    const overwrite = options.yes || await select({
-      message: 'Directory exists. Continue anyway?',
-      choices: [
-        { name: 'Yes, continue', value: true },
-        { name: 'No, cancel', value: false },
-      ],
-    });
-    if (!overwrite) {
-      process.exit(0);
+  // Load external manifest if --from is provided
+  if (options.from) {
+    try {
+      await loadExternalManifest(options.from);
+      success(`Loaded manifest from ${options.from}`);
+    } catch (err) {
+      warn(err instanceof Error ? err.message : String(err));
+      process.exit(1);
     }
+    console.log('');
   }
-  console.log('');
 
-  // Step 2: Template selection
-  step(2, 'Template');
+  // --- Template selection (only interactive prompt if not passed via flag) ---
   const templates = getTemplates();
   let template: TemplateEntry;
 
@@ -72,13 +85,9 @@ async function handleInit(projectName: string | undefined, options: InitOptions)
       process.exit(1);
     }
     template = found;
-    success(`Using ${template.name}`);
-  } else if (options.yes) {
-    template = templates.find((t) => t.id === 'express')!;
-    success(`Using ${template.name} (default)`);
   } else {
     const templateId = await select({
-      message: 'Which template would you like?',
+      message: 'Template',
       choices: templates.map((t) => ({
         name: `${t.name}  ${dim}${t.description}${reset}`,
         value: t.id,
@@ -86,141 +95,100 @@ async function handleInit(projectName: string | undefined, options: InitOptions)
     });
     template = getTemplate(templateId)!;
   }
-  console.log('');
 
-  // Step 3: Firecrawl API key
-  step(3, 'Firecrawl API key');
+  // --- Collect all env vars silently ---
   const envVars: Record<string, string> = {};
+  const missing: string[] = [];
 
-  const resolved = await resolveFirecrawlApiKey();
-  if (resolved) {
-    const sourceLabel = resolved.source === 'env'
-      ? 'environment variable'
-      : 'firecrawl-cli credentials';
-    success(`Found Firecrawl API key from ${sourceLabel}`);
-    envVars.FIRECRAWL_API_KEY = resolved.key;
-  } else if (options.yes) {
-    warn('No Firecrawl API key found — add FIRECRAWL_API_KEY to your .env later');
-    envVars.FIRECRAWL_API_KEY = '';
+  // Firecrawl API key: flag > env > credentials > prompt
+  if (options.apiKey) {
+    envVars.FIRECRAWL_API_KEY = options.apiKey;
   } else {
+    const resolved = await resolveFirecrawlApiKey();
+    if (resolved) {
+      envVars.FIRECRAWL_API_KEY = resolved.key;
+    }
+  }
+
+  // Provider keys from --key flags
+  const flagKeys = parseKeyFlags(options.key ?? []);
+  Object.assign(envVars, flagKeys);
+
+  // Auto-detect remaining provider keys from environment
+  const providers = getProviders();
+  for (const provider of providers) {
+    if (!envVars[provider.envVar] && process.env[provider.envVar]) {
+      envVars[provider.envVar] = process.env[provider.envVar]!;
+    }
+  }
+
+  // Check if Firecrawl key is still missing — only thing we prompt for
+  if (!envVars.FIRECRAWL_API_KEY) {
     const key = await password({
-      message: `Enter your Firecrawl API key ${dim}(https://firecrawl.dev/app/api-keys)${reset}:`,
+      message: `Firecrawl API key ${dim}(https://firecrawl.dev/app/api-keys)${reset}`,
     });
     if (key) {
       envVars.FIRECRAWL_API_KEY = key;
-      success('Firecrawl API key saved');
     } else {
-      warn('No key entered — add FIRECRAWL_API_KEY to your .env later');
-      envVars.FIRECRAWL_API_KEY = '';
+      missing.push('FIRECRAWL_API_KEY');
     }
   }
+
+  // Track what's missing for the summary
+  for (const envVar of template.optionalEnvVars) {
+    if (!envVars[envVar]) missing.push(envVar);
+  }
+
+  // --- Scaffold ---
+  const projectDir = path.resolve(process.cwd(), projectName);
   console.log('');
 
-  // Step 4: Provider selection
-  step(4, 'LLM providers');
-  const providers = getProviders();
-  const allOptionalVars = [...template.optionalEnvVars];
-
-  // Filter to providers that are relevant for this template
-  const relevantProviders = providers.filter((p) =>
-    allOptionalVars.includes(p.envVar)
-  );
-
-  let selectedProviders: ProviderEntry[] = [];
-
-  if (options.yes) {
-    // In --yes mode, auto-detect providers from env
-    selectedProviders = relevantProviders.filter((p) => process.env[p.envVar]);
-    if (selectedProviders.length > 0) {
-      success(`Detected ${selectedProviders.map((p) => p.name).join(', ')} from environment`);
-    } else {
-      info('No provider keys detected — you can add them to .env later');
-    }
-  } else if (relevantProviders.length > 0) {
-    const selected = await checkbox({
-      message: 'Select LLM providers to configure:',
-      choices: relevantProviders.map((p) => ({
-        name: `${p.name}${process.env[p.envVar] ? ` ${green}(detected)${reset}` : ''}`,
-        value: p.id,
-        checked: !!process.env[p.envVar],
-      })),
-    });
-    selectedProviders = relevantProviders.filter((p) => selected.includes(p.id));
-  }
-  console.log('');
-
-  // Step 5: Provider API keys
-  if (selectedProviders.length > 0) {
-    step(5, 'API keys');
-    for (const provider of selectedProviders) {
-      const existingKey = process.env[provider.envVar];
-      if (existingKey) {
-        envVars[provider.envVar] = existingKey;
-        success(`${provider.name}: using environment variable`);
-      } else {
-        const key = await password({
-          message: `${provider.name} API key ${dim}(${provider.hint})${reset}:`,
-        });
-        if (key) {
-          envVars[provider.envVar] = key;
-          success(`${provider.name}: saved`);
-        } else {
-          info(`${provider.name}: skipped — add ${provider.envVar} to .env later`);
-        }
-      }
-    }
-    console.log('');
-  }
-
-  // Step 6: Scaffold
-  const scaffoldStep = selectedProviders.length > 0 ? 6 : 5;
-  step(scaffoldStep, 'Scaffolding project');
   await scaffoldProject({
     projectDir,
     template,
     envVars,
     skipInstall: options.skipInstall,
   });
+
+  // --- Summary ---
+  console.log('');
+  console.log(`  ${green}${bold}Ready!${reset}  ${projectDir}`);
   console.log('');
 
-  // Step 7: Post-setup
-  console.log(`  ${green}${bold}Project ready!${reset}  ${dim}${projectDir}${reset}`);
+  // Show detected keys
+  const detected = Object.keys(envVars).filter((k) => envVars[k]);
+  if (detected.length > 0) {
+    info(`Keys: ${detected.join(', ')}`);
+  }
+  if (missing.length > 0) {
+    info(`Missing: ${missing.join(', ')} ${dim}(add to .env later)${reset}`);
+  }
   console.log('');
 
-  if (options.yes) {
-    printNextSteps(name, template);
+  // --- What next? ---
+  // Skip prompt entirely if running non-interactively (all flags provided)
+  const fullyFlagged = !!(options.template && (options.apiKey || envVars.FIRECRAWL_API_KEY));
+
+  if (fullyFlagged || !process.stdin.isTTY) {
+    console.log(`  cd ${projectName} && ${template.devCommand}`);
+    console.log('');
     return;
   }
 
   const action = await select({
-    message: 'What would you like to do next?',
+    message: 'Next',
     choices: [
-      { name: 'Start development server', value: 'dev' },
-      { name: 'Just exit — I\'ll take it from here', value: 'exit' },
+      { name: `Start dev server  ${dim}${template.devCommand}${reset}`, value: 'dev' },
+      { name: 'Exit', value: 'exit' },
     ],
   });
 
   if (action === 'dev') {
     console.log('');
-    info(`Starting ${template.devCommand}...`);
-    console.log('');
     const [cmd, ...args] = template.devCommand.split(' ');
-    const child = spawn(cmd, args, {
-      cwd: projectDir,
-      stdio: 'inherit',
-      shell: true,
-    });
-    child.on('error', () => {
-      warn(`Failed to start dev server. Run manually: cd ${name} && ${template.devCommand}`);
-    });
+    spawn(cmd, args, { cwd: projectDir, stdio: 'inherit', shell: true });
   } else {
-    printNextSteps(name, template);
+    console.log(`  cd ${projectName} && ${template.devCommand}`);
+    console.log('');
   }
-}
-
-function printNextSteps(name: string, template: TemplateEntry): void {
-  console.log(`  ${dim}Next steps:${reset}`);
-  console.log(`    cd ${name}`);
-  console.log(`    ${template.devCommand}`);
-  console.log('');
 }
