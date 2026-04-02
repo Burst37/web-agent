@@ -12,12 +12,13 @@ const SKIP_DIRS = new Set([
 ]);
 
 const NEXTJS_COPY_DIRS = [
-  'agent-core', 'app', 'components', 'lib', 'styles', 'public',
+  'agent-core', 'app', 'components', 'lib', 'styles', 'public', 'utils',
 ];
 
 const NEXTJS_COPY_FILES = [
   'package.json', 'next.config.ts', 'tsconfig.json',
   'tailwind.config.ts', 'postcss.config.js', 'postcss.config.mjs',
+  'colors.json',
 ];
 
 function copyDirRecursive(src: string, dest: string): void {
