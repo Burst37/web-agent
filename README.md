@@ -63,8 +63,7 @@ All templates share the same [agent core](./agent-core/) and expose the same API
 |-----------|--------------|
 | [`agent-core/`](./agent-core/) | Core agent logic, orchestrator, skills, tools, [OpenAPI spec](./agent-core/openapi.yaml) |
 | [`agent-templates/`](./agent-templates/) | Server templates - [Next.js](./agent-templates/next/), [Express](./agent-templates/express/), [Hono](./agent-templates/hono/) |
-| [`agent-sdks/`](./agent-sdks/) | Auto-generated clients for 17 languages |
-| [`agent-examples/`](./agent-examples/) | Working examples for every SDK language |
+| [`agent-sdks/`](./agent-sdks/) | SDKs for 17 languages, each with working examples |
 | [`cli/`](./cli/) | CLI tool - `init`, `dev`, `deploy` |
 
 ## Architecture
