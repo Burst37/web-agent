@@ -1,52 +1,49 @@
-# Firecrawl Agent - Express Template
+# Express Template
 
-Standalone Express server wrapping `agent-core` with a single `POST /v1/run` endpoint.
+Lightweight API server with a single `POST /v1/run` endpoint.
 
-## Setup
+## Install
+
+```bash
+firecrawl-agent init my-agent -t express
+```
+
+Or manually:
 
 ```bash
 npm install
+npm run dev
 ```
 
-Create a `.env` file (or export the variables):
+## Environment variables
 
 ```
-FIRECRAWL_API_KEY=fc-...
-GOOGLE_GENERATIVE_AI_API_KEY=...   # default provider
-# ANTHROPIC_API_KEY=...            # optional
-# OPENAI_API_KEY=...               # optional
-# PORT=3000                        # optional
+FIRECRAWL_API_KEY=fc-...            # required
+ANTHROPIC_API_KEY=...               # at least one model provider
+OPENAI_API_KEY=...
+GOOGLE_GENERATIVE_AI_API_KEY=...
+MODEL_PROVIDER=google               # default provider (google, anthropic, openai)
+MODEL_ID=gemini-3-flash-preview     # default model
+PORT=3000
 ```
 
-## Run
-
-```bash
-npm run dev    # watch mode
-npm start      # production
-```
-
-## Endpoints
+## API
 
 ### POST /v1/run
 
-Run the agent. Supports streaming (SSE) and non-streaming responses.
-
-```json
-{
-  "prompt": "Get pricing for Vercel, Netlify, and Cloudflare Pages",
-  "stream": false,
-  "format": "json",
-  "schema": {},
-  "columns": [],
-  "urls": [],
-  "model": { "provider": "google", "model": "gemini-3-flash-preview" },
-  "maxSteps": 15,
-  "skills": []
-}
+```bash
+curl -X POST http://localhost:3000/v1/run \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "Get pricing for Vercel"}'
 ```
 
 Set `"stream": true` for Server-Sent Events.
 
-### GET /v1/skills
+**Body:** `prompt` (required), `stream`, `format` (`json`|`csv`|`markdown`), `schema`, `columns`, `urls`, `model`, `maxSteps`, `skills`.
 
-Returns available skills.
+## Deploy
+
+```bash
+firecrawl-agent deploy -p railway
+firecrawl-agent deploy -p docker
+```
