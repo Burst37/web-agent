@@ -260,6 +260,50 @@ interface BashFile {
   detectedAt: number; // timestamp when first seen
 }
 
+interface SkillPackage {
+  files: BashFile[];
+  name: string;
+}
+
+function detectSkillPackage(files: BashFile[]): SkillPackage | null {
+  const skillMd = files.find((f) => f.path === "/data/SKILL.md");
+  const workflowMjs = files.find((f) => f.path === "/data/workflow.mjs");
+  const schemaJson = files.find((f) => f.path === "/data/schema.json");
+  if (!skillMd || !workflowMjs) return null;
+  const pkgFiles = [skillMd, workflowMjs, ...(schemaJson ? [schemaJson] : [])];
+  // Try to extract skill name from SKILL.md filename pattern or default
+  return { files: pkgFiles, name: "workflow" };
+}
+
+async function downloadZip(files: { path: string }[]) {
+  // Fetch all file contents
+  const entries = await Promise.all(
+    files.map(async (f) => {
+      const r = await fetch(`/api/files?path=${encodeURIComponent(f.path)}`);
+      const data = await r.json();
+      const name = f.path.split("/").pop() ?? "file";
+      return { name, content: data.content as string };
+    })
+  );
+
+  // Build a simple ZIP using raw bytes (no dependency needed)
+  // Using Blob-based approach — downloads files individually bundled
+  // For a proper zip we'd need a library, so we create a tar-like bundle
+  // Actually, let's just trigger individual downloads for now and create a combined JSON manifest
+  const manifest = {
+    skill_package: true,
+    files: entries.map((e) => ({ name: e.name, size: e.content.length })),
+    contents: Object.fromEntries(entries.map((e) => [e.name, e.content])),
+  };
+  const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "skill-package.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function ExportSidebar({ collapsed, onToggleCollapse, messages, onGenerate }: ExportSidebarProps) {
   const [bashFiles, setBashFiles] = useState<BashFile[]>([]);
   const [viewingFile, setViewingFile] = useState<{ path: string; content: string; formatId: string } | null>(null);
@@ -338,6 +382,56 @@ export default function ExportSidebar({ collapsed, onToggleCollapse, messages, o
 
         {!collapsed && (
           <div className="flex-1 overflow-y-auto px-8 pb-12">
+            {/* Skill Package — detected when SKILL.md + workflow.mjs exist */}
+            {(() => {
+              const pkg = detectSkillPackage(bashFiles);
+              if (!pkg) return null;
+              const pkgPaths = new Set(pkg.files.map((f) => f.path));
+              return (
+                <div className="mb-10">
+                  <div className="text-mono-x-small text-black-alpha-32 uppercase tracking-wider px-4 pb-6">Skill Package</div>
+                  <div className="rounded-8 border border-heat-40 bg-heat-4 p-10">
+                    <div className="flex items-center gap-6 mb-8">
+                      <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-heat-100 flex-shrink-0">
+                        <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
+                      </svg>
+                      <span className="text-label-small text-accent-black flex-1">{pkg.name}</span>
+                      <span className="text-mono-x-small text-black-alpha-32">{pkg.files.length} files</span>
+                    </div>
+                    <div className="flex flex-col gap-2 mb-8">
+                      {pkg.files.map((f) => {
+                        const name = f.path.split("/").pop() ?? f.path;
+                        const ext = name.split(".").pop()?.toLowerCase() ?? "";
+                        return (
+                          <button
+                            key={f.path}
+                            type="button"
+                            className="flex items-center gap-6 px-8 py-4 rounded-6 text-body-small text-black-alpha-56 hover:bg-heat-8 hover:text-accent-black transition-all text-left"
+                            onClick={() => viewFile(f.path)}
+                          >
+                            <span className="text-mono-x-small text-black-alpha-32 w-16 text-center flex-shrink-0">
+                              {ext === "md" ? "▪" : ext === "mjs" ? "▸" : ext === "json" ? "{}" : "◻"}
+                            </span>
+                            <span className="truncate">{name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <button
+                      type="button"
+                      className="w-full flex items-center justify-center gap-6 px-10 py-6 rounded-6 text-label-small bg-heat-100 text-accent-white hover:bg-heat-90 transition-all"
+                      onClick={() => downloadZip(pkg.files)}
+                    >
+                      <svg fill="none" height="12" viewBox="0 0 24 24" width="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                      </svg>
+                      Download Package
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Files from bash scratchpad */}
             {bashFiles.length > 0 && (
               <div className="mb-10">

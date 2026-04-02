@@ -1568,6 +1568,10 @@ export default function AgentPage() {
           schema={config.schema}
           urls={config.urls}
           onRequestFormat={(format) => {
+            if (format === "Workflow") {
+              sendMessage({ text: `Load the "export-workflow" skill. Review all tool calls from this session and generate the full skill package: SKILL.md (agent instructions with self-healing), workflow.mjs (deterministic script with structured logging), and schema.json (expected output shape). Write all three to /data/ and return a summary.` });
+              return;
+            }
             const skillMap: Record<string, string> = { JSON: "export-json", CSV: "export-csv", Markdown: "export-report" };
             const skill = skillMap[format] ?? "export-json";
             sendMessage({ text: `Load the "${skill}" skill and then format all the collected data as ${format}. Follow the skill instructions. Stream the output inline.` });

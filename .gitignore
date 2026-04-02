@@ -8,3 +8,5 @@ next-env.d.ts
 data/
 tmp/
 __tests__/
+.DS_Store
+.playwright-mcp/

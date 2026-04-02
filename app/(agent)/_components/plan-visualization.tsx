@@ -248,6 +248,19 @@ function ScrapeResult({
             {scrapeQuery ? `"${scrapeQuery}"` : url}
           </div>
         </div>
+        {scrapeFormats && scrapeFormats.length > 0 && (
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {scrapeFormats.map((f) => (
+              <span key={f} className={cn(
+                "px-6 py-2 rounded-4 text-[10px] font-medium uppercase tracking-wider",
+                f === "json" ? "bg-amber-100 text-amber-700" :
+                f === "query" ? "bg-blue-100 text-blue-700" :
+                f === "markdown" ? "bg-gray-100 text-gray-600" :
+                "bg-gray-100 text-gray-500"
+              )}>{f}</span>
+            ))}
+          </div>
+        )}
         {domain && <Favicon domain={domain} />}
         {statusCode && statusCode >= 400 && (
           <span className="text-mono-x-small text-accent-crimson flex-shrink-0">{statusCode}</span>
@@ -349,6 +362,19 @@ function InteractCard({ item }: { item: TimelineItem }) {
               {item.scrapeQuery ? `"${item.scrapeQuery}"` : item.url}
             </div>
           </div>
+          {item.scrapeFormats && item.scrapeFormats.length > 0 && (
+            <div className="flex items-center gap-2 flex-shrink-0">
+              {item.scrapeFormats.map((f) => (
+                <span key={f} className={cn(
+                  "px-6 py-2 rounded-4 text-[10px] font-medium uppercase tracking-wider",
+                  f === "json" ? "bg-amber-100 text-amber-700" :
+                  f === "query" ? "bg-blue-100 text-blue-700" :
+                  f === "markdown" ? "bg-gray-100 text-gray-600" :
+                  "bg-gray-100 text-gray-500"
+                )}>{f}</span>
+              ))}
+            </div>
+          )}
           {domain && <Favicon domain={domain} />}
           {isRunning ? (
             <div className="w-5 h-5 rounded-full bg-heat-100 animate-pulse flex-shrink-0" />
@@ -1145,7 +1171,7 @@ function extractTimeline(messages: UIMessage[]): TimelineItem[] {
           }) : undefined;
           const scrapeQuery = Array.isArray(input.formats)
             ? (input.formats as unknown[]).find((f): f is { type: string; prompt: string } =>
-                typeof f === "object" && f !== null && (f as { type?: string }).type === "query"
+                typeof f === "object" && f !== null && "prompt" in (f as Record<string, unknown>) && typeof (f as { prompt?: unknown }).prompt === "string"
               )?.prompt
             : interactPrompt;
           items.push({

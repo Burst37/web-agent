@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import type { UIMessage } from "ai";
 import { cn } from "@/utils/cn";
 import StreamdownBlock from "@/components/shared/streamdown-block";
@@ -285,6 +285,150 @@ function CsvTable({ data }: { data: string }) {
   );
 }
 
+// --- Workflow Package Viewer ---
+
+const WORKFLOW_FILES = [
+  { path: "/data/SKILL.md", label: "SKILL.md", icon: "▪", desc: "Agent instructions + self-healing" },
+  { path: "/data/workflow.mjs", label: "workflow.mjs", icon: "▸", desc: "Deterministic script" },
+  { path: "/data/schema.json", label: "schema.json", icon: "{}", desc: "Expected output shape" },
+];
+
+function WorkflowPanel({ onClose }: { onClose: () => void }) {
+  const [files, setFiles] = useState<Record<string, string>>({});
+  const [active, setActive] = useState("/data/SKILL.md");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      const entries: Record<string, string> = {};
+      for (const f of WORKFLOW_FILES) {
+        try {
+          const r = await fetch(`/api/files?path=${encodeURIComponent(f.path)}`);
+          const data = await r.json();
+          if (data.content) entries[f.path] = data.content;
+        } catch { /* skip missing files */ }
+      }
+      if (!cancelled) { setFiles(entries); setLoading(false); }
+    }
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
+  const downloadAll = useCallback(async () => {
+    const manifest = {
+      skill_package: true,
+      files: Object.keys(files).map((p) => p.split("/").pop()),
+      contents: Object.fromEntries(Object.entries(files).map(([p, c]) => [p.split("/").pop()!, c])),
+    };
+    const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "skill-package.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [files]);
+
+  const downloadFile = useCallback((path: string) => {
+    const content = files[path];
+    if (!content) return;
+    const name = path.split("/").pop() ?? "file";
+    const blob = new Blob([content], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [files]);
+
+  const available = WORKFLOW_FILES.filter((f) => files[f.path]);
+
+  return (
+    <div className="h-full border-l border-border-faint bg-background-base flex flex-col flex-shrink-0 w-full md:w-[50%] transition-all duration-200 overflow-hidden">
+      {/* Header */}
+      <div className="px-14 py-10 border-b border-border-faint flex items-center gap-8">
+        <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-heat-100 flex-shrink-0">
+          <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
+        </svg>
+        <span className="text-label-medium text-accent-black">Skill Package</span>
+        <span className="text-mono-x-small text-black-alpha-32">{available.length} files</span>
+        <span className="flex-1" />
+        <button
+          type="button"
+          className="flex items-center gap-4 text-mono-x-small text-accent-white bg-heat-100 hover:bg-heat-90 px-10 py-4 rounded-6 transition-all"
+          onClick={downloadAll}
+        >
+          <svg fill="none" height="12" viewBox="0 0 24 24" width="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+          </svg>
+          Download All
+        </button>
+        <button
+          type="button"
+          className="p-4 rounded-4 text-black-alpha-24 hover:text-accent-black hover:bg-black-alpha-4 transition-all"
+          onClick={onClose}
+        >
+          <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+        </button>
+      </div>
+
+      {loading ? (
+        <div className="flex-1 flex items-center justify-center text-black-alpha-24 text-body-small">
+          Loading files...
+        </div>
+      ) : (
+        <>
+          {/* File tabs */}
+          <div className="border-b border-border-faint">
+            {available.map((f) => (
+              <button
+                key={f.path}
+                type="button"
+                className={cn(
+                  "flex items-center gap-8 px-14 py-10 text-left transition-all w-full",
+                  active === f.path
+                    ? "bg-heat-4 border-l-2 border-heat-100"
+                    : "hover:bg-black-alpha-2 border-l-2 border-transparent",
+                )}
+                onClick={() => setActive(f.path)}
+              >
+                <span className="text-mono-x-small text-black-alpha-40 w-16 text-center flex-shrink-0">{f.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <div className={cn("text-label-small", active === f.path ? "text-heat-100" : "text-accent-black")}>{f.label}</div>
+                  <div className="text-mono-x-small text-black-alpha-32">{f.desc}</div>
+                </div>
+                <button
+                  type="button"
+                  className="p-4 rounded-4 text-black-alpha-24 hover:text-accent-black hover:bg-black-alpha-4 transition-all opacity-0 group-hover:opacity-100"
+                  onClick={(e) => { e.stopPropagation(); downloadFile(f.path); }}
+                  title={`Download ${f.label}`}
+                >
+                  <svg fill="none" height="12" viewBox="0 0 24 24" width="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                  </svg>
+                </button>
+              </button>
+            ))}
+          </div>
+
+          {/* File content */}
+          <div className="flex-1 overflow-auto no-scrollbar">
+            {files[active] && active.endsWith(".json") ? (
+              <JsonViewer data={files[active]} />
+            ) : (
+              <pre className="text-[13px] text-accent-black whitespace-pre-wrap font-mono leading-[1.7] p-14">
+                {files[active] ?? "File not found"}
+              </pre>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 interface ArtifactPanelProps {
   messages: UIMessage[];
   isRunning: boolean;
@@ -326,6 +470,7 @@ print(response.json())`;
 
 export default function ArtifactPanel({ messages, isRunning, onRequestFormat, onClose, prompt, schema, urls }: ArtifactPanelProps) {
   const formatted = extractFormattedOutput(messages);
+  const [showWorkflow, setShowWorkflow] = useState(false);
 
   const [showCode, setShowCode] = useState(false);
   const [codeLang, setCodeLang] = useState<"curl" | "fetch" | "python">("curl");
@@ -354,6 +499,8 @@ export default function ArtifactPanel({ messages, isRunning, onRequestFormat, on
 
 
 
+  if (showWorkflow) return <WorkflowPanel onClose={() => setShowWorkflow(false)} />;
+
   if (!formatted) return null;
 
   const fmt = formatted.format;
@@ -368,7 +515,7 @@ export default function ArtifactPanel({ messages, isRunning, onRequestFormat, on
     : `${formatted.content.length} B`;
 
   return (
-    <div className="h-full border-l border-border-faint bg-background-base flex flex-col flex-shrink-0 w-[50%] transition-all duration-200 overflow-hidden">
+    <div className="h-full border-l border-border-faint bg-background-base flex flex-col flex-shrink-0 w-full md:w-[50%] transition-all duration-200 overflow-hidden">
       {/* Header */}
       <div className="px-14 py-10 border-b border-border-faint flex items-center gap-8">
         {isStreaming ? (
@@ -425,6 +572,16 @@ export default function ArtifactPanel({ messages, isRunning, onRequestFormat, on
                 <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
               </svg>
               Download
+            </button>
+            <button
+              type="button"
+              className="flex items-center gap-4 text-mono-x-small text-black-alpha-32 hover:text-accent-black transition-colors"
+              onClick={() => setShowWorkflow(true)}
+            >
+              <svg fill="none" height="12" viewBox="0 0 24 24" width="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
+              </svg>
+              Workflow
             </button>
           </>
         )}
