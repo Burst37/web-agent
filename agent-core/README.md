@@ -6,13 +6,13 @@ This is what all [templates](../agent-templates/) share. You can also use it dir
 
 ## Quick start
 
-**Via CLI** — scaffold a project that includes agent-core:
+**Via CLI** - scaffold a project that includes agent-core:
 
 ```bash
 firecrawl-agent init my-agent -t express
 ```
 
-**As a library** — import directly:
+**As a library** - import directly:
 
 ```typescript
 import { createAgent } from '@firecrawl/agent-core'

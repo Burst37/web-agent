@@ -1,6 +1,6 @@
 # Hono Template
 
-Fast, lightweight API server — ideal for edge and serverless deployments.
+Fast, lightweight API server - ideal for edge and serverless deployments.
 
 ## Install
 

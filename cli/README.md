@@ -31,7 +31,7 @@ firecrawl-agent init my-agent
 ? Template
 ❯ Next.js (Full UI)      Complete web app with chat UI, history, settings
   Express (API only)     Lightweight Node.js API server with /v1/run endpoint
-  Hono (Serverless)      Fast, lightweight API — ideal for edge and serverless
+  Hono (Serverless)      Fast, lightweight API - ideal for edge and serverless
 
 ✓ Next.js (Full UI) template scaffolded
 ✓ Created .env.local
@@ -60,7 +60,7 @@ firecrawl-agent init my-agent -t express --skip-install          # don't run npm
 |------|-------------|
 | `-t, --template <id>` | `next`, `express`, or `hono` |
 | `--api-key <key>` | Firecrawl API key |
-| `--key <provider=key>` | Provider key (repeatable) — `anthropic`, `openai`, `google`, `gateway` |
+| `--key <provider=key>` | Provider key (repeatable) - `anthropic`, `openai`, `google`, `gateway` |
 | `--from <source>` | External GitHub repo (`user/repo`) or local path |
 | `--skip-install` | Skip `npm install` |
 
