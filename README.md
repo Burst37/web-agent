@@ -48,43 +48,32 @@ npm run dev                         # http://localhost:3000
 ## Architecture
 
 ```mermaid
-graph TD
-    subgraph "Firecrawl Toolkit"
+graph BT
+    subgraph "firecrawl-aisdk"
         SEARCH[Search]
         SCRAPE[Scrape]
         INTERACT[Interact]
     end
 
     subgraph "Agent Core"
-        ORC[Orchestrator]
-        ORC --> SEARCH
-        ORC --> SCRAPE
-        ORC --> INTERACT
+        TOOLKIT[Firecrawl Toolkit] --> SEARCH
+        TOOLKIT --> SCRAPE
+        TOOLKIT --> INTERACT
+        ORC[Orchestrator] --> TOOLKIT
         ORC --> SKILLS[Skills]
-        ORC -->|Complex tasks| WORKERS[Parallel Workers]
-        WORKERS --> W1[Worker]
-        WORKERS --> W2[Worker]
-        WORKERS --> W3[Worker]
+        ORC --> WORKERS[Parallel Workers]
     end
 
-    subgraph "Templates"
+    subgraph "Run it anywhere"
         NEXT["Next.js — Full UI"]
-        EXPRESS["Express — API"]
+        EXPRESS["Express — API server"]
         HONO["Hono — Serverless"]
+        LIB["Library — direct import"]
     end
 
     NEXT --> ORC
     EXPRESS --> ORC
     HONO --> ORC
-
-    subgraph "Clients"
-        SDK["SDKs — 17 languages"]
-        CURL["curl / HTTP"]
-        LIB["Direct import"]
-    end
-
-    SDK -->|"POST /v1/run"| NEXT
-    CURL -->|"POST /v1/run"| EXPRESS
     LIB --> ORC
 ```
 
