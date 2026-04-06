@@ -1,19 +1,29 @@
 import { Command } from 'commander';
-import { select, password } from '@inquirer/prompts';
+import { select, password, input } from '@inquirer/prompts';
 import * as path from 'path';
 import * as fs from 'fs';
 import {
   getTemplates, getProviders, getTemplate,
   loadExternalManifest,
 } from '../utils/manifest';
-import type { TemplateEntry } from '../utils/manifest';
+import type { ProviderEntry, TemplateEntry } from '../utils/manifest';
 import { resolveFirecrawlApiKey } from '../utils/credentials';
 import { scaffoldProject } from '../utils/scaffold';
 import { printBanner, success, warn, info, dim, reset, green, bold } from '../utils/ui';
 import { spawn } from 'child_process';
 
+function resolveSpawnCommand(command: string): string {
+  if (process.platform === 'win32' && command === 'npm') {
+    return 'npm.cmd';
+  }
+
+  return command;
+}
+
 interface InitOptions {
   template?: string;
+  provider?: string;
+  model?: string;
   from?: string;
   apiKey?: string;
   key?: string[];
@@ -23,8 +33,10 @@ interface InitOptions {
 export function createInitCommand(): Command {
   return new Command('init')
     .description('Create a new Firecrawl Agent project')
-    .argument('[project-name]', 'Project directory name', 'my-firecrawl-agent')
+    .argument('[project-name]', 'Project directory name')
     .option('-t, --template <id>', 'Template (next, express, hono)')
+    .option('--provider <id>', 'Default model provider (anthropic, openai, google, custom-openai)')
+    .option('--model <id>', 'Default model ID')
     .option('--from <source>', 'External repo (user/repo) or local path with agent-manifest.json')
     .option('--api-key <key>', 'Firecrawl API key')
     .option('--key <provider=key>', 'Provider API key (repeatable, e.g. --key anthropic=sk-...)', collect, [])
@@ -33,6 +45,7 @@ export function createInitCommand(): Command {
 Examples:
   $ firecrawl-agent init                                    # interactive
   $ firecrawl-agent init my-app -t next                     # Next.js with full UI
+  $ firecrawl-agent init my-app -t next --provider openai   # choose the default provider
   $ firecrawl-agent init my-app -t express                  # Express API server
   $ firecrawl-agent init my-app -t hono                     # Hono serverless
   $ firecrawl-agent init my-app -t express --api-key fc-... # with Firecrawl key
@@ -40,7 +53,7 @@ Examples:
   $ firecrawl-agent init my-app --from user/repo            # from external repo
   $ firecrawl-agent init my-app --from ./local-templates    # from local path
 `)
-    .action(async (projectName: string, options: InitOptions) => {
+    .action(async (projectName: string | undefined, options: InitOptions) => {
       await handleInit(projectName, options);
     });
 }
@@ -48,6 +61,13 @@ Examples:
 function collect(val: string, acc: string[]): string[] {
   acc.push(val);
   return acc;
+}
+
+function getSelectedProvider(
+  providers: ProviderEntry[],
+  providerId?: string,
+): ProviderEntry | undefined {
+  return providers.find((provider) => provider.id === providerId);
 }
 
 function parseKeyFlags(keys: string[]): Record<string, string> {
@@ -70,8 +90,22 @@ function parseKeyFlags(keys: string[]): Record<string, string> {
   return map;
 }
 
-async function handleInit(projectName: string, options: InitOptions): Promise<void> {
+async function handleInit(rawName: string | undefined, options: InitOptions): Promise<void> {
   printBanner();
+
+  // --- Project name: arg > interactive prompt > default ---
+  let projectName: string;
+
+  if (rawName) {
+    projectName = rawName;
+  } else if (process.stdin.isTTY) {
+    projectName = (await input({
+      message: 'Project name',
+      default: 'my-firecrawl-agent',
+    })).trim() || 'my-firecrawl-agent';
+  } else {
+    projectName = 'my-firecrawl-agent';
+  }
 
   // Load external manifest if --from is provided
   if (options.from) {
@@ -84,6 +118,8 @@ async function handleInit(projectName: string, options: InitOptions): Promise<vo
     }
     console.log('');
   }
+
+  const availableProviders = getProviders();
 
   // --- Template selection (only interactive prompt if not passed via flag) ---
   const templates = getTemplates();
@@ -107,9 +143,71 @@ async function handleInit(projectName: string, options: InitOptions): Promise<vo
     template = getTemplate(templateId)!;
   }
 
+  let selectedProvider = getSelectedProvider(availableProviders, options.provider);
+  if (options.provider && !selectedProvider) {
+    warn(`Unknown provider "${options.provider}". Available: ${availableProviders.map((p) => p.id).join(', ')}`);
+    process.exit(1);
+  }
+
+  if (!selectedProvider) {
+    if (process.stdin.isTTY) {
+      const providerId = await select({
+        message: 'Default model provider',
+        choices: availableProviders
+          .filter((p) => p.models && p.models.length > 0)
+          .map((provider) => ({
+            name: `${provider.name}  ${dim}${provider.models[0].name}${reset}`,
+            value: provider.id,
+          })),
+      });
+      selectedProvider = getSelectedProvider(availableProviders, providerId)!;
+    } else {
+      selectedProvider = getSelectedProvider(availableProviders, 'google') ?? availableProviders[0];
+    }
+  }
+
+  // --- Model selection ---
+  let selectedModelId: string;
+
+  if (options.model) {
+    selectedModelId = options.model;
+  } else if (selectedProvider.id === 'custom-openai') {
+    // Custom provider: let user type any model ID
+    selectedModelId = (await input({
+      message: 'Model ID',
+      default: 'gpt-4o',
+    })).trim();
+  } else if (selectedProvider.models.length > 1 && process.stdin.isTTY) {
+    selectedModelId = await select({
+      message: 'Default model',
+      choices: selectedProvider.models.map((m) => ({
+        name: m.name,
+        value: m.id,
+      })),
+    });
+  } else {
+    selectedModelId = selectedProvider.models[0]?.id ?? 'gpt-4o';
+  }
+
+  // --- Custom OpenAI endpoint ---
+  let customEndpoint: string | undefined;
+  if (selectedProvider.endpointEnvVar && process.stdin.isTTY) {
+    customEndpoint = (await input({
+      message: `Base URL ${dim}(OpenAI-compatible endpoint)${reset}`,
+      default: 'https://api.openai.com/v1',
+    })).trim() || undefined;
+  }
+
   // --- Collect all env vars silently ---
   const envVars: Record<string, string> = {};
-  const missing: string[] = [];
+  const missing = new Set<string>();
+
+  envVars.MODEL_PROVIDER = selectedProvider.id;
+  envVars.MODEL_ID = selectedModelId;
+
+  if (selectedProvider.endpointEnvVar && customEndpoint) {
+    envVars[selectedProvider.endpointEnvVar] = customEndpoint;
+  }
 
   // Firecrawl API key: flag > env > credentials > prompt
   if (options.apiKey) {
@@ -126,14 +224,13 @@ async function handleInit(projectName: string, options: InitOptions): Promise<vo
   Object.assign(envVars, flagKeys);
 
   // Auto-detect remaining provider keys from environment
-  const providers = getProviders();
-  for (const provider of providers) {
+  for (const provider of availableProviders) {
     if (!envVars[provider.envVar] && process.env[provider.envVar]) {
       envVars[provider.envVar] = process.env[provider.envVar]!;
     }
   }
 
-  // Check if Firecrawl key is still missing — only thing we prompt for
+  // Prompt for missing required keys when running interactively
   if (!envVars.FIRECRAWL_API_KEY) {
     const key = await password({
       message: `Firecrawl API key ${dim}(https://firecrawl.dev/app/api-keys)${reset}`,
@@ -141,23 +238,38 @@ async function handleInit(projectName: string, options: InitOptions): Promise<vo
     if (key) {
       envVars.FIRECRAWL_API_KEY = key;
     } else {
-      missing.push('FIRECRAWL_API_KEY');
+      missing.add('FIRECRAWL_API_KEY');
+    }
+  }
+
+  if (!envVars[selectedProvider.envVar] && process.stdin.isTTY) {
+    const key = await password({
+      message: `${selectedProvider.name} API key ${dim}(${selectedProvider.hint})${reset}`,
+    });
+    if (key) {
+      envVars[selectedProvider.envVar] = key;
+    } else {
+      missing.add(selectedProvider.envVar);
     }
   }
 
   // Track what's missing for the summary
   for (const envVar of template.optionalEnvVars) {
-    if (!envVars[envVar]) missing.push(envVar);
+    if (!envVars[envVar]) missing.add(envVar);
   }
 
   // --- Scaffold ---
   const projectDir = path.resolve(process.cwd(), projectName);
+  console.log('');
+  info(`Creating a new Firecrawl Agent app in ${projectDir}`);
   console.log('');
 
   await scaffoldProject({
     projectDir,
     template,
     envVars,
+    selectedProvider: selectedProvider.id,
+    defaultModelId: envVars.MODEL_ID,
     skipInstall: options.skipInstall,
   });
 
@@ -167,12 +279,13 @@ async function handleInit(projectName: string, options: InitOptions): Promise<vo
   console.log('');
 
   // Show detected keys
-  const detected = Object.keys(envVars).filter((k) => envVars[k]);
+  const detected = Object.keys(envVars).filter((k) => /_API_KEY$/.test(k) && envVars[k]);
   if (detected.length > 0) {
     info(`Keys: ${detected.join(', ')}`);
   }
-  if (missing.length > 0) {
-    info(`Missing: ${missing.join(', ')} ${dim}(add to .env later)${reset}`);
+  info(`Default provider: ${selectedProvider.name} (${envVars.MODEL_ID})`);
+  if (missing.size > 0) {
+    info(`Missing: ${Array.from(missing).join(', ')} ${dim}(add to .env later)${reset}`);
   }
   console.log('');
 
@@ -197,7 +310,7 @@ async function handleInit(projectName: string, options: InitOptions): Promise<vo
   if (action === 'dev') {
     console.log('');
     const [cmd, ...args] = template.devCommand.split(' ');
-    spawn(cmd, args, { cwd: projectDir, stdio: 'inherit', shell: true });
+    spawn(resolveSpawnCommand(cmd), args, { cwd: projectDir, stdio: 'inherit' });
   } else {
     console.log(`  cd ${projectName} && ${template.devCommand}`);
     console.log('');

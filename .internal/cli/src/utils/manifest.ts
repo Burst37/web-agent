@@ -15,11 +15,18 @@ export interface TemplateEntry {
   deploy: string[];
 }
 
+export interface ModelEntry {
+  id: string;
+  name: string;
+}
+
 export interface ProviderEntry {
   id: string;
   name: string;
   envVar: string;
   hint: string;
+  models: ModelEntry[];
+  endpointEnvVar?: string;
 }
 
 export interface Manifest {

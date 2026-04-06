@@ -3,9 +3,9 @@
 // Edit this file to change which models power the orchestrator,
 // sub-agents, and background tasks.
 
-import type { ModelConfig } from "@agent-core";
+import type { ModelConfig } from "@/agent-core";
 
-type ModelRef = Pick<ModelConfig, "provider" | "model">;
+type ModelRef = Pick<ModelConfig, "provider" | "model" | "baseURL">;
 
 export const config = {
 
@@ -30,6 +30,13 @@ export const config = {
   // subAgent:     { provider: "openai", model: "gpt-5.4" } satisfies ModelRef,
   // background:   { provider: "openai", model: "gpt-5.4" } satisfies ModelRef,
 
+  // ═══════════════════════════════════════════
+  // Custom OpenAI-compatible
+  // ═══════════════════════════════════════════
+  // orchestrator: { provider: "custom-openai", model: "gpt-4.1", baseURL: "https://openrouter.ai/api/v1" } satisfies ModelRef,
+  // subAgent:     { provider: "custom-openai", model: "gpt-4.1", baseURL: "https://openrouter.ai/api/v1" } satisfies ModelRef,
+  // background:   { provider: "custom-openai", model: "gpt-4.1", baseURL: "https://openrouter.ai/api/v1" } satisfies ModelRef,
+
   // ─── Parallel workers ───
   maxWorkers: 6,               // Max concurrent worker agents
   workerMaxSteps: 10,          // Max steps per worker
@@ -43,6 +50,17 @@ export const config = {
     skillGeneration: null as ModelRef | null,   // SKILL.md generation from transcripts
     query: null as ModelRef | null,            // /api/query endpoint default
     extract: null as ModelRef | null,          // /api/extract endpoint default
+  },
+
+  // ─── Experimental features ───
+  experimental: {
+    customOpenAI: true,     // Expose a configurable OpenAI-compatible provider in Settings
+    generateSkillMd: true,  // Show the SKILL.md generator UI + route
+  },
+
+  // ─── Conversation history ───
+  history: {
+    enabled: false, // When false, disables SQLite-backed conversation history and hides history UI
   },
 };
 
@@ -81,4 +99,12 @@ export function estimateCost(inputTokens: number, outputTokens: number, model?: 
 
 export function getTaskModel(task: keyof typeof config.tasks): ModelRef {
   return config.tasks[task] ?? config.background;
+}
+
+export function getExperimentalFeatures() {
+  return config.experimental;
+}
+
+export function getHistoryConfig() {
+  return config.history;
 }

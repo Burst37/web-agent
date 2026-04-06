@@ -3,14 +3,14 @@
 import { useState, useMemo, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import type { AgentConfig, ModelConfig } from "@agent-core";
+import type { AgentConfig, ModelConfig } from "@/agent-core-types";
 import { AVAILABLE_MODELS, PROVIDER_META, type Provider } from "@agent/_lib/config/models";
 import { useACPChat } from "./_hooks/use-acp-chat";
 import ProviderModelIcon from "./_components/provider-icon";
 import AgentInput from "./_components/agent-input";
 import PlanVisualization from "./_components/plan-visualization";
 import SettingsPanel from "./_components/settings-panel";
-import type { UploadedFile } from "@agent-core";
+import type { UploadedFile } from "@/agent-core-types";
 import HistoryPanel from "./_components/history-panel";
 import StreamdownBlock from "@/components/shared/streamdown-block";
 import Sidebar from "./_components/sidebar";
@@ -30,7 +30,7 @@ function HeaderLinks() {
   return (
     <div className="flex items-center gap-6">
       <a
-        href="https://github.com/mendableai/firecrawl-agent"
+        href="https://github.com/firecrawl/firecrawl-agent"
         target="_blank"
         rel="noopener noreferrer"
         className="p-6 rounded-8 text-black-alpha-40 bg-black-alpha-4 hover:bg-black-alpha-8 hover:text-accent-black transition-all"
@@ -41,9 +41,98 @@ function HeaderLinks() {
   );
 }
 
-import { getOrchestratorModel } from "@agent/_config";
+import { getOrchestratorModel, getExperimentalFeatures, getHistoryConfig } from "@agent/_config";
 
 const defaultModel: ModelConfig = getOrchestratorModel();
+const experimentalFeatures = getExperimentalFeatures();
+const historyConfig = getHistoryConfig();
+const MODEL_PREFERENCE_STORAGE_KEY = "firecrawl-agent:last-model";
+
+type CachedModelPreference = Pick<ModelConfig, "provider" | "model" | "baseURL" | "bin">;
+
+const PROVIDER_KEY_IDS: Partial<Record<ModelConfig["provider"], string>> = {
+  firecrawl: "firecrawl",
+  anthropic: "anthropic",
+  openai: "openai",
+  google: "google",
+  gateway: "gateway",
+  "custom-openai": "customOpenAI",
+};
+
+function sanitizeModelPreference(model: ModelConfig): CachedModelPreference {
+  return {
+    provider: model.provider,
+    model: model.model,
+    ...(model.baseURL ? { baseURL: model.baseURL } : {}),
+    ...(model.bin ? { bin: model.bin } : {}),
+  };
+}
+
+function restoreModelPreference(raw: string | null): ModelConfig | null {
+  if (!raw) return null;
+
+  try {
+    const parsed = JSON.parse(raw) as Partial<CachedModelPreference>;
+    if (typeof parsed.provider !== "string" || typeof parsed.model !== "string") {
+      return null;
+    }
+
+    const provider = parsed.provider as ModelConfig["provider"];
+    if (!Object.prototype.hasOwnProperty.call(PROVIDER_META, provider)) {
+      return null;
+    }
+
+    const knownModels = AVAILABLE_MODELS[provider as Provider] ?? [];
+    const normalizedModel =
+      provider === "custom-openai" || provider === "acp"
+        ? parsed.model.trim()
+        : (knownModels.some((entry) => entry.id === parsed.model)
+            ? parsed.model
+            : (knownModels[0]?.id ?? parsed.model)).trim();
+
+    if (!normalizedModel) return null;
+
+    return {
+      provider,
+      model: normalizedModel,
+      ...(typeof parsed.baseURL === "string" && parsed.baseURL.trim()
+        ? { baseURL: parsed.baseURL.trim() }
+        : {}),
+      ...(typeof parsed.bin === "string" && parsed.bin.trim()
+        ? { bin: parsed.bin.trim() }
+        : {}),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function isPreferredModelUsable(
+  model: ModelConfig,
+  configuredProviders: Set<string>,
+  acpAgents: { bin: string }[],
+): boolean {
+  if (model.provider === "acp") {
+    return model.bin
+      ? acpAgents.some((agent) => agent.bin === model.bin)
+      : acpAgents.length > 0;
+  }
+
+  const providerKeyId = PROVIDER_KEY_IDS[model.provider];
+  return providerKeyId ? configuredProviders.has(providerKeyId) : false;
+}
+
+function resolveInitialModel(
+  preferredModel: ModelConfig | null,
+  configuredProviders: Set<string>,
+  acpAgents: { bin: string }[],
+): ModelConfig {
+  if (preferredModel && isPreferredModelUsable(preferredModel, configuredProviders, acpAgents)) {
+    return preferredModel;
+  }
+
+  return defaultModel;
+}
 
 const defaultConfig: AgentConfig = {
   prompt: "",
@@ -443,9 +532,11 @@ function ModelDropdown({
     return () => document.removeEventListener("mousedown", handler);
   }, [onClose]);
 
-  const providerKeys = (Object.keys(AVAILABLE_MODELS) as string[]).filter(
-    (p) => p !== "acp" && (!configuredProviders || configuredProviders.size === 0 || configuredProviders.has(p))
-  );
+  const providerKeys = (Object.keys(AVAILABLE_MODELS) as string[]).filter((providerId) => {
+    if (providerId === "acp") return false;
+    const providerKeyId = PROVIDER_KEY_IDS[providerId as ModelConfig["provider"]];
+    return providerKeyId ? configuredProviders?.has(providerKeyId) ?? false : false;
+  });
 
   return (
     <div
@@ -490,6 +581,11 @@ function ModelDropdown({
           </div>
         );
       })}
+      {providerKeys.length === 0 && (!acpAgents || acpAgents.length === 0) && (
+        <div className="px-12 py-14 text-body-small text-black-alpha-40">
+          No configured model providers detected yet.
+        </div>
+      )}
       {acpAgents && acpAgents.length > 0 && (
         <div>
           <div className="flex items-center gap-6 text-label-x-small text-black-alpha-40 px-10 pt-6 pb-1">
@@ -528,6 +624,8 @@ function ModelDropdown({
 
 export default function AgentPage() {
   const [config, setConfig] = useState<AgentConfig>(defaultConfig);
+  const [restoredModelPreference, setRestoredModelPreference] = useState<ModelConfig | null>(null);
+  const [modelPreferenceLoaded, setModelPreferenceLoaded] = useState(false);
   const typingPlaceholder = useTypewriter(PLACEHOLDER_PHRASES);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [followUp, setFollowUp] = useState("");
@@ -541,13 +639,49 @@ export default function AgentPage() {
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionStart, setMentionStart] = useState(0);
 
-  const [showSaveSkill, setShowSaveSkill] = useState(false);
-  const [skillName, setSkillName] = useState("");
-  const [savingSkill, setSavingSkill] = useState(false);
-  const [savedSkillPath, setSavedSkillPath] = useState<string | null>(null);
-  const [generatedSkillContent, setGeneratedSkillContent] = useState<string | null>(null);
+  const [docGeneratorKind, setDocGeneratorKind] = useState<"skill" | "workflow" | null>(null);
+  const [docName, setDocName] = useState("");
+  const [generatingDoc, setGeneratingDoc] = useState(false);
+  const [generatedDocPath, setGeneratedDocPath] = useState<string | null>(null);
+  const [generatedDocContent, setGeneratedDocContent] = useState<string | null>(null);
+  const [generatedDocLabel, setGeneratedDocLabel] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [artifactOpen, setArtifactOpen] = useState(false);
+  const [acpAgents, setAcpAgents] = useState<{ name: string; bin: string; displayName: string; available: boolean }[]>([]);
+  const [configuredProviders, setConfiguredProviders] = useState<Set<string>>(new Set());
+  const [providerConfigLoaded, setProviderConfigLoaded] = useState(false);
+  const [acpAvailabilityLoaded, setAcpAvailabilityLoaded] = useState(false);
+
+  useEffect(() => {
+    setRestoredModelPreference(
+      restoreModelPreference(window.localStorage.getItem(MODEL_PREFERENCE_STORAGE_KEY)),
+    );
+  }, []);
+
+  useEffect(() => {
+    if (modelPreferenceLoaded || !providerConfigLoaded || !acpAvailabilityLoaded) return;
+
+    setConfig((prev) => ({
+      ...prev,
+      model: resolveInitialModel(restoredModelPreference, configuredProviders, acpAgents),
+    }));
+    setModelPreferenceLoaded(true);
+  }, [
+    acpAgents,
+    acpAvailabilityLoaded,
+    configuredProviders,
+    modelPreferenceLoaded,
+    providerConfigLoaded,
+    restoredModelPreference,
+  ]);
+
+  useEffect(() => {
+    if (!modelPreferenceLoaded) return;
+    window.localStorage.setItem(
+      MODEL_PREFERENCE_STORAGE_KEY,
+      JSON.stringify(sanitizeModelPreference(config.model)),
+    );
+  }, [config.model, modelPreferenceLoaded]);
   const [planMode, setPlanMode] = useState(false);
   const [planText, setPlanText] = useState<string | null>(null);
   const [planLoading, setPlanLoading] = useState(false);
@@ -559,9 +693,6 @@ export default function AgentPage() {
   const [sparkError, setSparkError] = useState<string | null>(null);
 
 
-  const [acpAgents, setAcpAgents] = useState<{ name: string; bin: string; displayName: string; available: boolean }[]>([]);
-  const [configuredProviders, setConfiguredProviders] = useState<Set<string>>(new Set());
-
   useEffect(() => {
     fetch("/api/skills")
       .then((r) => r.json())
@@ -570,7 +701,8 @@ export default function AgentPage() {
     fetch("/api/acp/agents")
       .then((r) => r.json())
       .then((agents) => setAcpAgents(agents.filter((a: { available: boolean }) => a.available)))
-      .catch(() => setAcpAgents([]));
+      .catch(() => setAcpAgents([]))
+      .finally(() => setAcpAvailabilityLoaded(true));
     fetch("/api/config")
       .then((r) => r.json())
       .then((data: { keys: Record<string, { configured: boolean }> }) => {
@@ -580,7 +712,8 @@ export default function AgentPage() {
         }
         setConfiguredProviders(configured);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setProviderConfigLoaded(true));
   }, []);
 
   const handleFileUpload = (file: File) => {
@@ -751,9 +884,9 @@ export default function AgentPage() {
     prevHadArtifact.current = hasFormatOutput;
   }, [messages]);
 
-  const handleSaveSkill = async () => {
-    if (!skillName.trim() || savingSkill) return;
-    setSavingSkill(true);
+  const handleGenerateDoc = async (kind: "skill" | "workflow") => {
+    if (!docName.trim() || generatingDoc) return;
+    setGeneratingDoc(true);
 
     // Extract a flat list of messages for the API
     const flatMessages = messages.flatMap((msg) =>
@@ -775,11 +908,11 @@ export default function AgentPage() {
     );
 
     try {
-      const res = await fetch("/api/skills/generate", {
+      const res = await fetch(kind === "skill" ? "/api/skills/generate" : "/api/workflows/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: skillName.trim(),
+          name: docName.trim(),
           messages: flatMessages,
           prompt: config.prompt,
         }),
@@ -792,12 +925,15 @@ export default function AgentPage() {
       }
       const data = await res.json();
       if (data.error) throw new Error(data.error);
-      setSavedSkillPath(data.path);
-      setGeneratedSkillContent(data.content ?? null);
+      setGeneratedDocPath(data.path);
+      setGeneratedDocContent(data.content ?? null);
+      setGeneratedDocLabel("SKILL.md");
+      setDocGeneratorKind(null);
+      setDocName("");
     } catch (err) {
-      alert(`Failed to save skill: ${err instanceof Error ? err.message : "Unknown error"}`);
+      alert(`Failed to generate SKILL.md: ${err instanceof Error ? err.message : "Unknown error"}`);
     } finally {
-      setSavingSkill(false);
+      setGeneratingDoc(false);
     }
   };
 
@@ -863,17 +999,19 @@ export default function AgentPage() {
     setPlanText(null);
     setPlanEditText("");
     const id = `conv-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    setConversationId(id);
+    setConversationId(historyConfig.enabled ? id : null);
     setHasSubmitted(true);
-    fetch("/api/conversations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id,
-        title: config.prompt.slice(0, 100),
-        config,
-      }),
-    });
+    if (historyConfig.enabled) {
+      fetch("/api/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id,
+          title: config.prompt.slice(0, 100),
+          config,
+        }),
+      });
+    }
     sendMessage({ text: promptWithPlan });
   };
 
@@ -1221,7 +1359,6 @@ export default function AgentPage() {
               "Extract the top 20 products from amazon.com/s?k=mechanical+keyboards with prices and ratings",
               "Search for the 5 best AI code editors in 2025, scrape each homepage, and compare their features",
               "Scrape news.ycombinator.com front page, then scrape the top 5 article links in parallel",
-              "Go to reddit.com/r/selfhosted/top?t=month, interact to load all posts, extract titles and scores",
               "Research Anthropic, OpenAI, and Google DeepMind — scrape each site in parallel, extract team size, funding, and key products",
             ].map((prompt) => (
               <button
@@ -1233,13 +1370,15 @@ export default function AgentPage() {
                   setConfig(updated);
                   // Run directly with the updated config to avoid stale state
                   const id = `conv-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-                  setConversationId(id);
+                  setConversationId(historyConfig.enabled ? id : null);
                   setHasSubmitted(true);
-                  fetch("/api/conversations", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ id, title: prompt.slice(0, 100), config: updated }),
-                  });
+                  if (historyConfig.enabled) {
+                    fetch("/api/conversations", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ id, title: prompt.slice(0, 100), config: updated }),
+                    });
+                  }
                   sendMessage({ text: prompt });
                 }}
               >
@@ -1254,6 +1393,7 @@ export default function AgentPage() {
         {/* Recent conversations */}
         <div className="w-full max-w-640 pb-60">
           <HistoryPanel
+            enabled={historyConfig.enabled}
             onSelect={(id, title) => setConfig({ ...config, prompt: title })}
             currentId={conversationId ?? undefined}
           />
@@ -1302,6 +1442,7 @@ export default function AgentPage() {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar
           currentId={conversationId ?? undefined}
+          historyEnabled={historyConfig.enabled}
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
           onSelect={(id, title) => {
@@ -1437,52 +1578,53 @@ export default function AgentPage() {
             )}
 
             {/* Follow-up input */}
-            <div
-              className={cn("bg-accent-white rounded-12 overflow-hidden transition-opacity", isRunning && "opacity-50 pointer-events-none")}
-              style={{
-                boxShadow:
-                  "0px 2px 12px -2px rgba(0,0,0,0.04), 0px 0px 0px 1px rgba(0,0,0,0.06)",
-              }}
-            >
-              <div className="flex items-center gap-8 px-16 py-12">
-                <input
-                  className="flex-1 bg-transparent text-body-medium text-accent-black placeholder:text-black-alpha-32 focus:outline-none"
-                  placeholder="Ask a follow-up..."
-                  value={followUp}
-                  disabled={isRunning}
-                  onChange={(e) => setFollowUp(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && followUp.trim() && !isRunning) {
-                      e.preventDefault();
-                      setSuggestions([]);
-                      sendMessage({ text: followUp });
-                      setFollowUp("");
-                    }
-                  }}
-                />
-                {followUp.trim() && (
-                  <button
-                    type="button"
-                    className="bg-heat-100 hover:bg-[color:var(--heat-90)] text-accent-white rounded-8 p-6 transition-all active:scale-95"
-                    onClick={() => {
-                      setSuggestions([]);
-                      sendMessage({ text: followUp });
-                      setFollowUp("");
+            {!isRunning && (
+              <div
+                className="bg-accent-white rounded-12 overflow-hidden transition-opacity"
+                style={{
+                  boxShadow:
+                    "0px 2px 12px -2px rgba(0,0,0,0.04), 0px 0px 0px 1px rgba(0,0,0,0.06)",
+                }}
+              >
+                <div className="flex items-center gap-8 px-16 py-12">
+                  <input
+                    className="flex-1 bg-transparent text-body-medium text-accent-black placeholder:text-black-alpha-32 focus:outline-none"
+                    placeholder="Ask another question..."
+                    value={followUp}
+                    onChange={(e) => setFollowUp(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && followUp.trim()) {
+                        e.preventDefault();
+                        setSuggestions([]);
+                        sendMessage({ text: followUp });
+                        setFollowUp("");
+                      }
                     }}
-                  >
-                    <svg fill="none" height="16" viewBox="0 0 20 20" width="16">
-                      <path
-                        d="M3.125 10H16.875M11.6667 4.79163L16.875 9.99994L11.6667 15.2083"
-                        stroke="currentColor"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="1.5"
-                      />
-                    </svg>
-                  </button>
-                )}
+                  />
+                  {followUp.trim() && (
+                    <button
+                      type="button"
+                      className="bg-heat-100 hover:bg-[color:var(--heat-90)] text-accent-white rounded-8 p-6 transition-all active:scale-95"
+                      onClick={() => {
+                        setSuggestions([]);
+                        sendMessage({ text: followUp });
+                        setFollowUp("");
+                      }}
+                    >
+                      <svg fill="none" height="16" viewBox="0 0 20 20" width="16">
+                        <path
+                          d="M3.125 10H16.875M11.6667 4.79163L16.875 9.99994L11.6667 15.2083"
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="1.5"
+                        />
+                      </svg>
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Suggestions */}
             {!isRunning && suggestions.length > 0 && (
@@ -1554,6 +1696,67 @@ export default function AgentPage() {
                 })}
               </div>
             )}
+
+            {!isRunning && (experimentalFeatures.generateSkillMd || experimentalFeatures.generateWorkflowMd) && (
+              <div className="flex items-center justify-end gap-8 flex-wrap mt-12">
+                {experimentalFeatures.generateSkillMd && (
+                  <button
+                    type="button"
+                    className="px-12 py-8 rounded-12 text-label-small border border-black-alpha-8 hover:border-black-alpha-16 hover:bg-black-alpha-4 transition-all"
+                    onClick={() => {
+                      setDocGeneratorKind("skill");
+                      if (!docName) setDocName("session-skill");
+                    }}
+                  >
+                    Generate SKILL.md
+                  </button>
+                )}
+              </div>
+            )}
+
+            {docGeneratorKind && !isRunning && (
+              <div className="mt-12 rounded-16 border border-black-alpha-8 bg-accent-white p-16">
+                <div className="flex items-center justify-between gap-12 mb-10">
+                  <div>
+                    <div className="text-label-medium text-accent-black">Generate SKILL.md</div>
+                    <div className="text-body-small text-black-alpha-32">Creates a reusable skill from what worked in this session.</div>
+                  </div>
+                  <button type="button" className="text-label-small text-black-alpha-32 hover:text-accent-black" onClick={() => setDocGeneratorKind(null)}>Cancel</button>
+                </div>
+                <div className="flex items-center gap-10">
+                  <input
+                    className="flex-1 bg-background-base border border-black-alpha-8 rounded-12 px-16 py-12 text-body-medium placeholder:text-black-alpha-20 focus:border-heat-100 focus:outline-none"
+                    placeholder="skill name"
+                    value={docName}
+                    onChange={(e) => setDocName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleGenerateDoc(docGeneratorKind);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    disabled={!docName.trim() || generatingDoc}
+                    className={cn(
+                      "px-16 py-10 rounded-12 text-label-small transition-all",
+                      docName.trim() && !generatingDoc ? "bg-accent-black text-accent-white hover:bg-black-alpha-80" : "bg-black-alpha-4 text-black-alpha-24 cursor-not-allowed"
+                    )}
+                    onClick={() => handleGenerateDoc(docGeneratorKind)}
+                  >
+                    {generatingDoc ? "Generating..." : "Generate"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {generatedDocPath && generatedDocLabel && (
+              <div className="mt-12 rounded-16 border border-black-alpha-8 bg-black-alpha-2 p-16">
+                <div className="text-label-medium text-accent-black">Generated {generatedDocLabel}</div>
+                <div className="mt-4 text-mono-x-small text-black-alpha-32 break-all">{generatedDocPath}</div>
+                {generatedDocContent && (
+                  <pre className="mt-10 text-mono-x-small text-black-alpha-48 whitespace-pre-wrap max-h-200 overflow-auto">{generatedDocContent}</pre>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -1568,10 +1771,6 @@ export default function AgentPage() {
           schema={config.schema}
           urls={config.urls}
           onRequestFormat={(format) => {
-            if (format === "Workflow") {
-              sendMessage({ text: `Load the "export-workflow" skill. Review all tool calls from this session and generate the full skill package: SKILL.md (agent instructions with self-healing), workflow.mjs (deterministic script with structured logging), and schema.json (expected output shape). Write all three to /data/ and return a summary.` });
-              return;
-            }
             const skillMap: Record<string, string> = { JSON: "export-json", CSV: "export-csv", Markdown: "export-report" };
             const skill = skillMap[format] ?? "export-json";
             sendMessage({ text: `Load the "${skill}" skill and then format all the collected data as ${format}. Follow the skill instructions. Stream the output inline.` });

@@ -267,12 +267,8 @@ interface SkillPackage {
 
 function detectSkillPackage(files: BashFile[]): SkillPackage | null {
   const skillMd = files.find((f) => f.path === "/data/SKILL.md");
-  const workflowMjs = files.find((f) => f.path === "/data/workflow.mjs");
-  const schemaJson = files.find((f) => f.path === "/data/schema.json");
-  if (!skillMd || !workflowMjs) return null;
-  const pkgFiles = [skillMd, workflowMjs, ...(schemaJson ? [schemaJson] : [])];
-  // Try to extract skill name from SKILL.md filename pattern or default
-  return { files: pkgFiles, name: "workflow" };
+  if (!skillMd) return null;
+  return { files: [skillMd], name: "skill" };
 }
 
 async function downloadZip(files: { path: string }[]) {

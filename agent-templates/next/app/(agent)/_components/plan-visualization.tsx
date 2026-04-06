@@ -248,18 +248,8 @@ function ScrapeResult({
             {scrapeQuery ? `"${scrapeQuery}"` : url}
           </div>
         </div>
-        {scrapeFormats && scrapeFormats.length > 0 && (
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {scrapeFormats.map((f) => (
-              <span key={f} className={cn(
-                "px-6 py-2 rounded-4 text-[10px] font-medium uppercase tracking-wider",
-                f === "json" ? "bg-amber-100 text-amber-700" :
-                f === "query" ? "bg-blue-100 text-blue-700" :
-                f === "markdown" ? "bg-gray-100 text-gray-600" :
-                "bg-gray-100 text-gray-500"
-              )}>{f}</span>
-            ))}
-          </div>
+        {scrapeQuery && (
+          <span className="px-6 py-2 rounded-4 text-[10px] font-medium uppercase tracking-wider bg-gray-100 text-gray-500 flex-shrink-0">query</span>
         )}
         {domain && <Favicon domain={domain} />}
         {statusCode && statusCode >= 400 && (
@@ -340,6 +330,20 @@ function InteractCard({ item }: { item: TimelineItem }) {
 
   const contentCollapsed = userCollapsed;
   const domain = item.url ? getDomain(item.url) : null;
+  const title = item.pageTitle || domain || item.interactPrompt || item.url || "Interactive browser session";
+  const subtitle = item.interactPrompt && item.interactPrompt !== item.url
+    ? item.interactPrompt
+    : item.url;
+
+  useEffect(() => {
+    if (isRunning) {
+      setUserCollapsed(false);
+      return;
+    }
+
+    setUserCollapsed(true);
+    setExpanded(false);
+  }, [isRunning]);
 
   return (
     <>
@@ -356,24 +360,14 @@ function InteractCard({ item }: { item: TimelineItem }) {
           <EndpointBadge type="interact" />
           <div className="flex-1 min-w-0">
             <div className="text-label-medium text-accent-black truncate">
-              {item.pageTitle || (domain ?? item.url)}
+              {title}
             </div>
             <div className="text-body-small text-black-alpha-40 truncate">
-              {item.scrapeQuery ? `"${item.scrapeQuery}"` : item.url}
+              {item.scrapeQuery ? `"${item.scrapeQuery}"` : subtitle}
             </div>
           </div>
-          {item.scrapeFormats && item.scrapeFormats.length > 0 && (
-            <div className="flex items-center gap-2 flex-shrink-0">
-              {item.scrapeFormats.map((f) => (
-                <span key={f} className={cn(
-                  "px-6 py-2 rounded-4 text-[10px] font-medium uppercase tracking-wider",
-                  f === "json" ? "bg-amber-100 text-amber-700" :
-                  f === "query" ? "bg-blue-100 text-blue-700" :
-                  f === "markdown" ? "bg-gray-100 text-gray-600" :
-                  "bg-gray-100 text-gray-500"
-                )}>{f}</span>
-              ))}
-            </div>
+          {item.scrapeQuery && (
+            <span className="px-6 py-2 rounded-4 text-[10px] font-medium uppercase tracking-wider bg-gray-100 text-gray-500 flex-shrink-0">query</span>
           )}
           {domain && <Favicon domain={domain} />}
           {isRunning ? (
@@ -402,6 +396,25 @@ function InteractCard({ item }: { item: TimelineItem }) {
                 style={{ height: 350 }}
                 title="Live browser view"
               />
+            </div>
+          )}
+
+          {isRunning && (
+            <div className="mx-14 my-10 rounded-10 border border-accent-iris/20 bg-accent-iris/6 px-12 py-10">
+              <div className="flex items-center gap-8">
+                <div className="min-w-0 flex-1">
+                  <div className="text-label-medium text-accent-black">Browser automation in progress</div>
+                  <div className="text-body-small text-black-alpha-40 truncate">
+                    {item.interactPrompt || (domain ? `Working on ${domain}` : item.url || "Starting interactive session")}
+                  </div>
+                </div>
+                <span className="text-mono-x-small text-accent-iris bg-accent-iris/10 px-6 py-2 rounded-6">live</span>
+              </div>
+              {!item.liveViewUrl && (
+                <div className="mt-8 text-body-small text-black-alpha-32">
+                  Launching browser session… live view will appear here once the session is attached.
+                </div>
+              )}
             </div>
           )}
 
@@ -478,6 +491,25 @@ function SubAgentCard({ item }: { item: TimelineItem }) {
         } else if (tc.toolName === "interact") {
           const prompt = (tc.input as Record<string, unknown>).prompt ?? (tc.input as Record<string, unknown>).url;
           result.push({ type: "interact", label: `Interact: ${prompt}`, credits });
+        } else if (tc.toolName === "spawnAgents" || tc.toolName === "spawnWorkers") {
+          const tasks = Array.isArray((tc.input as Record<string, unknown>).tasks)
+            ? ((tc.input as Record<string, unknown>).tasks as Array<Record<string, unknown>>)
+            : [];
+          const completed = typeof out?.completed === "number" ? out.completed as number : undefined;
+          const failed = typeof out?.failed === "number" ? out.failed as number : 0;
+          const taskNames = tasks
+            .map((task) => String(task.id ?? "").trim())
+            .filter(Boolean)
+            .slice(0, 4);
+          result.push({
+            type: "workers",
+            label: `Parallel workers: ${tasks.length || taskNames.length} task${(tasks.length || taskNames.length) === 1 ? "" : "s"}`,
+            detail: [
+              taskNames.length > 0 ? taskNames.join(", ") : undefined,
+              completed !== undefined ? `${completed} completed` : undefined,
+              failed > 0 ? `${failed} failed` : undefined,
+            ].filter(Boolean).join(" · "),
+          });
         } else if (tc.toolName === "bashExec" || tc.toolName === "bash_exec") {
           result.push({ type: "bash", label: `$ ${(tc.input as Record<string, unknown>).command}` });
         } else {
@@ -560,12 +592,13 @@ function SubAgentCard({ item }: { item: TimelineItem }) {
                           si.type === "search" ? "text-heat-100 bg-heat-4" :
                           si.type === "scrape" ? "text-accent-forest bg-accent-forest/8" :
                           si.type === "interact" ? "text-accent-amethyst bg-accent-amethyst/8" :
+                          si.type === "workers" ? "text-accent-iris bg-accent-iris/8" :
                           si.type === "bash" ? "text-black-alpha-48 bg-black-alpha-4" :
                           "text-black-alpha-40 bg-black-alpha-4"
                         )}>
                           {si.type}
                         </span>
-                        <span className="text-body-small text-black-alpha-56">{si.label.replace(/^(Search|Scrape|Interact|bash):\s*/i, "")}</span>
+                        <span className="text-body-small text-black-alpha-56">{si.label.replace(/^(Search|Scrape|Interact|bash|Parallel workers):\s*/i, "")}</span>
                       </>
                     )}
                   </div>
@@ -1031,6 +1064,7 @@ interface TimelineItem {
   statusCode?: number;
   liveViewUrl?: string;
   interactOutput?: string;
+  interactPrompt?: string;
   // bash
   command?: string;
   stdout?: string;
@@ -1186,6 +1220,7 @@ function extractTimeline(messages: UIMessage[]): TimelineItem[] {
             statusCode,
             liveViewUrl: liveViewUrl ? String(liveViewUrl) : undefined,
             interactOutput: interactOutput,
+            interactPrompt,
             status,
           });
         } else if (toolName === "bashExec" || toolName === "bash_exec") {
@@ -1262,7 +1297,7 @@ function extractTimeline(messages: UIMessage[]): TimelineItem[] {
   const knownLiveViewUrls = new Map<string, string>();
   let lastKnownLiveViewUrl: string | undefined;
   for (const item of items) {
-    if (item.type === "interact" && item.liveViewUrl && item.status === "complete") {
+    if (item.type === "interact" && item.liveViewUrl) {
       const domain = item.url ? getDomain(item.url) : null;
       if (domain) knownLiveViewUrls.set(domain, item.liveViewUrl);
       lastKnownLiveViewUrl = item.liveViewUrl;
@@ -1433,13 +1468,13 @@ export default function PlanVisualization({
 
         // Workers panel handles its own running state — skip here
         if (lastRunning?.type === "workers") return null;
+        if (lastRunning?.type === "interact") return null;
 
         // Regular tool running — show as a card tile
         let title = "Thinking";
         let subtitle = "";
         if (lastRunning?.type === "search") { title = "Searching"; subtitle = lastRunning.text?.slice(0, 80) ?? ""; }
         else if (lastRunning?.type === "scrape") { title = "Scraping"; subtitle = lastRunning.url ? new URL(lastRunning.url).hostname : ""; }
-        else if (lastRunning?.type === "interact") { title = "Interacting"; subtitle = lastRunning.url ? new URL(lastRunning.url).hostname : ""; }
         else if (lastRunning?.type === "bash") { const b = describeBashAction(lastRunning.command ?? ""); title = b.label; subtitle = b.detail ?? ""; }
         else if (lastRunning?.type === "skill") { title = "Loading skill"; subtitle = lastRunning.skillName ?? ""; }
         else if (lastRunning?.type === "subagent") { title = "Running sub-agent"; subtitle = lastRunning.skillName ?? ""; }

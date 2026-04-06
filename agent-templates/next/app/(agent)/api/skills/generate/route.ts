@@ -1,22 +1,16 @@
-import { generateText } from "ai";
+import { streamText } from "ai";
 import fs from "fs/promises";
 import path from "path";
-import { getTaskModel } from "@agent/_config";
-import { resolveModel } from "@agent-core";
-import { getProviderKey } from "@agent/_lib/config/keys";
+import { getTaskModel, getExperimentalFeatures } from "@agent/_config";
+import { resolveModel } from "@/agent-core";
+import { getProviderApiKeys, hydrateModelConfig } from "@agent/_lib/config/keys";
 
 const SKILLS_DIR = path.join(process.cwd(), "agent-core", "src", "skills", "definitions");
 
-function getApiKeys() {
-  const keys: Record<string, string> = {};
-  for (const p of ["anthropic", "openai", "google", "gateway"] as const) {
-    const k = getProviderKey(p);
-    if (k) keys[p] = k;
-  }
-  return keys;
-}
-
 export async function POST(req: Request) {
+  if (!getExperimentalFeatures().generateSkillMd) {
+    return Response.json({ error: "SKILL.md generation is disabled in app/(agent)/_config.ts" }, { status: 404 });
+  }
 
   let body: { name: string; messages: unknown[]; prompt: string };
   try {
@@ -51,55 +45,53 @@ export async function POST(req: Request) {
     .join("\n");
 
   try {
-    const model = await resolveModel(getTaskModel("skillGeneration"), getApiKeys());
+    const model = await resolveModel(hydrateModelConfig(getTaskModel("skillGeneration")), getProviderApiKeys());
 
-    const { text: skillContent } = await generateText({
+    const result = streamText({
       model,
-      system: `You generate SKILL.md files that capture procedural web knowledge -- the HOW of accomplishing a task on the web. Skills are agent-agnostic and tool-agnostic. They describe the process, not the implementation.
+      system: `You generate SKILL.md files that capture procedural web knowledge — the exact steps that WORKED to accomplish a task. Skills are reusable instructions that an agent can follow to repeat the same process.
 
-Given a session transcript, distill what was LEARNED about how to accomplish this type of task on the web. Focus on:
-- What pages/sites to visit and why
-- What data lives where and how it's structured
-- What interactions are needed (clicking tabs, expanding sections, pagination)
-- What patterns work and what doesn't
-- How to verify the data is correct
-- How to handle edge cases
+Given a session transcript, analyze what the agent did that SUCCEEDED and distill it into a repeatable procedure. Focus on:
+- The exact sequence of actions that produced results
+- Which sites/pages had the data and how it was accessed
+- What interactions were needed (clicks, pagination, expanding sections)
+- What worked vs what failed (skip the failures, document the winning path)
+- How to verify completeness
 
 Produce a SKILL.md with this format:
 
 ---
 name: skill-name
-description: One-line description of what this skill teaches
+description: One-line description of what this skill does
 ---
 
 # Skill Title
 
-## What This Skill Teaches
-One paragraph explaining the procedural knowledge captured here.
+## What This Skill Does
+One paragraph explaining the procedure this skill captures.
 
 ## Where to Find the Data
 - Which sites/pages contain the relevant information
-- URL patterns, sitemaps, or search strategies that work
-- What sections of a page to focus on
+- URL patterns or search strategies that worked
+- What sections of a page to target
 
-## Step-by-Step Process
+## Procedure
 1. First step...
 2. Second step...
-(Imperative mood. Describe the process, not specific tool calls.)
+(Imperative mood. Describe exactly what to do, based on what worked in the session.)
 
-## Data Structure
-What fields/data points to extract and how they relate to each other.
+## Data to Extract
+What fields/data points to collect and their expected format.
 
-## Gotchas & Edge Cases
-- Things that look like data but aren't
-- Pages that require interaction vs static scraping
-- Rate limits, paywalls, or anti-bot measures observed
+## Gotchas
+- Pages that need interaction vs static scraping
+- Rate limits or anti-bot measures observed
 - Fallback approaches when the primary method fails
 
 ## Verification
 How to validate that the extracted data is correct and complete.
 
-## Example Tasks
+## Example Prompts
 - "example prompt 1"
 - "example prompt 2"
 
@@ -108,15 +100,45 @@ Output ONLY the SKILL.md content. No extra commentary.`,
       maxOutputTokens: 2000,
     });
 
-    // Save to disk
-    const skillDir = path.join(SKILLS_DIR, slug);
-    await fs.mkdir(skillDir, { recursive: true });
-    await fs.writeFile(path.join(skillDir, "SKILL.md"), skillContent, "utf-8");
+    const encoder = new TextEncoder();
+    let fullContent = "";
 
-    return Response.json({
-      name: slug,
-      path: `agent-core/src/skills/definitions/${slug}/SKILL.md`,
-      content: skillContent,
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of result.textStream) {
+            fullContent += chunk;
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "delta", text: chunk })}\n\n`));
+          }
+
+          // Save to disk
+          const skillDir = path.join(SKILLS_DIR, slug);
+          await fs.mkdir(skillDir, { recursive: true });
+          await fs.writeFile(path.join(skillDir, "SKILL.md"), fullContent, "utf-8");
+
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+            type: "done",
+            name: slug,
+            path: `agent-core/src/skills/definitions/${slug}/SKILL.md`,
+            content: fullContent,
+          })}\n\n`));
+        } catch (err) {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({
+            type: "error",
+            error: err instanceof Error ? err.message : String(err),
+          })}\n\n`));
+        } finally {
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";

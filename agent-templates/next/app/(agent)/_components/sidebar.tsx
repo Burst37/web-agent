@@ -38,7 +38,7 @@ function TrashIcon() {
   );
 }
 
-const SKILL_FILES = ["SKILL.md", "workflow.mjs", "schema.json"];
+const SKILL_FILES = ["SKILL.md"];
 
 function SkillPackageSection() {
   const [files, setFiles] = useState<{ path: string; size: number }[]>([]);
@@ -94,10 +94,9 @@ function SkillPackageSection() {
     URL.revokeObjectURL(url);
   }, [files]);
 
-  // Need at least SKILL.md + workflow.mjs
+  // Need at least SKILL.md
   const hasSkillMd = files.some((f) => f.path === "/data/SKILL.md");
-  const hasWorkflow = files.some((f) => f.path === "/data/workflow.mjs");
-  if (!hasSkillMd || !hasWorkflow) return null;
+  if (!hasSkillMd) return null;
 
   return (
     <div className="px-8 pb-12 border-t border-border-faint pt-8">
@@ -168,18 +167,24 @@ export default function Sidebar({
   currentId,
   onSelect,
   onNew,
+  historyEnabled = true,
   collapsed = false,
   onToggleCollapse,
 }: {
   currentId?: string;
   onSelect: (id: string, title: string) => void;
   onNew: () => void;
+  historyEnabled?: boolean;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
 }) {
   const [conversations, setConversations] = useState<ConversationEntry[]>([]);
 
   const refresh = () => {
+    if (!historyEnabled) {
+      setConversations([]);
+      return;
+    }
     fetch("/api/conversations")
       .then((r) => r.json())
       .then(setConversations)
@@ -187,10 +192,11 @@ export default function Sidebar({
   };
 
   useEffect(() => {
+    if (!historyEnabled) return;
     refresh();
     const interval = setInterval(refresh, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [historyEnabled]);
 
   const deleteConversation = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -231,7 +237,7 @@ export default function Sidebar({
       </div>
 
       {/* Conversation list */}
-      {!collapsed && (
+      {!collapsed && historyEnabled && (
         <div className="flex-1 overflow-y-auto px-8 pb-12">
           {conversations.length === 0 && (
             <div className="px-12 py-20 text-body-small text-black-alpha-24 text-center">
@@ -275,7 +281,7 @@ export default function Sidebar({
         </div>
       )}
 
-      {/* Skill Packages — shown when /data/ has SKILL.md + workflow.mjs */}
+      {/* Skill — shown when /data/ has SKILL.md */}
       {!collapsed && <SkillPackageSection />}
     </div>
   );

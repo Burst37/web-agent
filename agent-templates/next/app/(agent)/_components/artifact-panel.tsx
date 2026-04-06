@@ -285,86 +285,135 @@ function CsvTable({ data }: { data: string }) {
   );
 }
 
-// --- Workflow Package Viewer ---
+// --- Save as Skill Panel ---
 
-const WORKFLOW_FILES = [
-  { path: "/data/SKILL.md", label: "SKILL.md", icon: "▪", desc: "Agent instructions + self-healing" },
-  { path: "/data/workflow.mjs", label: "workflow.mjs", icon: "▸", desc: "Deterministic script" },
-  { path: "/data/schema.json", label: "schema.json", icon: "{}", desc: "Expected output shape" },
-];
+interface SkillPanelProps {
+  messages: UIMessage[];
+  prompt?: string;
+  onClose: () => void;
+}
 
-function WorkflowPanel({ onClose }: { onClose: () => void }) {
-  const [files, setFiles] = useState<Record<string, string>>({});
-  const [active, setActive] = useState("/data/SKILL.md");
-  const [loading, setLoading] = useState(true);
+function SkillPanel({ messages, prompt, onClose }: SkillPanelProps) {
+  const [skillName, setSkillName] = useState(() => {
+    const slug = (prompt ?? "skill")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 40);
+    return slug || "my-skill";
+  });
+  const [content, setContent] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [savedPath, setSavedPath] = useState<string | null>(null);
+  const contentRef = useRef<HTMLPreElement>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      const entries: Record<string, string> = {};
-      for (const f of WORKFLOW_FILES) {
-        try {
-          const r = await fetch(`/api/files?path=${encodeURIComponent(f.path)}`);
-          const data = await r.json();
-          if (data.content) entries[f.path] = data.content;
-        } catch { /* skip missing files */ }
+  const generate = useCallback(async () => {
+    setGenerating(true);
+    setContent("");
+    setDone(false);
+    setError(null);
+
+    // Build transcript from messages
+    const transcript: { role?: string; text?: string; toolName?: string; input?: unknown; output?: unknown }[] = [];
+    for (const msg of messages) {
+      for (const part of msg.parts) {
+        const p = part as Record<string, unknown>;
+        if (part.type === "text" && p.text) {
+          transcript.push({ role: msg.role, text: p.text as string });
+        } else if (part.type === "tool-invocation" || (part.type as string)?.startsWith("tool-")) {
+          transcript.push({
+            toolName: (p.toolName ?? "") as string,
+            input: p.input ?? p.args,
+            output: p.output ?? p.result,
+          });
+        }
       }
-      if (!cancelled) { setFiles(entries); setLoading(false); }
     }
-    load();
-    return () => { cancelled = true; };
-  }, []);
 
-  const downloadAll = useCallback(async () => {
-    const manifest = {
-      skill_package: true,
-      files: Object.keys(files).map((p) => p.split("/").pop()),
-      contents: Object.fromEntries(Object.entries(files).map(([p, c]) => [p.split("/").pop()!, c])),
-    };
-    const blob = new Blob([JSON.stringify(manifest, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "skill-package.json";
-    a.click();
-    URL.revokeObjectURL(url);
-  }, [files]);
+    try {
+      const res = await fetch("/api/skills/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: skillName, messages: transcript, prompt: prompt ?? "" }),
+      });
 
-  const downloadFile = useCallback((path: string) => {
-    const content = files[path];
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: "Request failed" }));
+        setError(data.error ?? "Request failed");
+        setGenerating(false);
+        return;
+      }
+
+      const reader = res.body?.getReader();
+      if (!reader) { setError("No response stream"); setGenerating(false); return; }
+
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let accumulated = "";
+
+      while (true) {
+        const { done: streamDone, value } = await reader.read();
+        if (streamDone) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          try {
+            const event = JSON.parse(line.slice(6));
+            if (event.type === "delta") {
+              accumulated += event.text;
+              setContent(accumulated);
+              contentRef.current?.scrollTo(0, contentRef.current.scrollHeight);
+            } else if (event.type === "done") {
+              setSavedPath(event.path);
+              setDone(true);
+            } else if (event.type === "error") {
+              setError(event.error);
+            }
+          } catch { /* skip malformed events */ }
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setGenerating(false);
+    }
+  }, [messages, prompt, skillName]);
+
+  const downloadSkill = useCallback(() => {
     if (!content) return;
-    const name = path.split("/").pop() ?? "file";
-    const blob = new Blob([content], { type: "text/plain" });
+    const blob = new Blob([content], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = name;
+    a.download = "SKILL.md";
     a.click();
     URL.revokeObjectURL(url);
-  }, [files]);
-
-  const available = WORKFLOW_FILES.filter((f) => files[f.path]);
+  }, [content]);
 
   return (
     <div className="h-full border-l border-border-faint bg-background-base flex flex-col flex-shrink-0 w-full md:w-[50%] transition-all duration-200 overflow-hidden">
       {/* Header */}
       <div className="px-14 py-10 border-b border-border-faint flex items-center gap-8">
-        <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-heat-100 flex-shrink-0">
-          <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
-        </svg>
-        <span className="text-label-medium text-accent-black">Skill Package</span>
-        <span className="text-mono-x-small text-black-alpha-32">{available.length} files</span>
+        <span className="text-label-medium text-accent-black">Save as Skill</span>
         <span className="flex-1" />
-        <button
-          type="button"
-          className="flex items-center gap-4 text-mono-x-small text-accent-white bg-heat-100 hover:bg-heat-90 px-10 py-4 rounded-6 transition-all"
-          onClick={downloadAll}
-        >
-          <svg fill="none" height="12" viewBox="0 0 24 24" width="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
-          </svg>
-          Download All
-        </button>
+        {content && (
+          <button
+            type="button"
+            className="flex items-center gap-4 text-mono-x-small text-black-alpha-32 hover:text-accent-black transition-colors"
+            onClick={downloadSkill}
+          >
+            <svg fill="none" height="12" viewBox="0 0 24 24" width="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+            </svg>
+            Download
+          </button>
+        )}
         <button
           type="button"
           className="p-4 rounded-4 text-black-alpha-24 hover:text-accent-black hover:bg-black-alpha-4 transition-all"
@@ -374,56 +423,76 @@ function WorkflowPanel({ onClose }: { onClose: () => void }) {
         </button>
       </div>
 
-      {loading ? (
-        <div className="flex-1 flex items-center justify-center text-black-alpha-24 text-body-small">
-          Loading files...
-        </div>
-      ) : (
-        <>
-          {/* File tabs */}
-          <div className="border-b border-border-faint">
-            {available.map((f) => (
-              <button
-                key={f.path}
-                type="button"
-                className={cn(
-                  "flex items-center gap-8 px-14 py-10 text-left transition-all w-full",
-                  active === f.path
-                    ? "bg-heat-4 border-l-2 border-heat-100"
-                    : "hover:bg-black-alpha-2 border-l-2 border-transparent",
-                )}
-                onClick={() => setActive(f.path)}
-              >
-                <span className="text-mono-x-small text-black-alpha-40 w-16 text-center flex-shrink-0">{f.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <div className={cn("text-label-small", active === f.path ? "text-heat-100" : "text-accent-black")}>{f.label}</div>
-                  <div className="text-mono-x-small text-black-alpha-32">{f.desc}</div>
-                </div>
-                <button
-                  type="button"
-                  className="p-4 rounded-4 text-black-alpha-24 hover:text-accent-black hover:bg-black-alpha-4 transition-all opacity-0 group-hover:opacity-100"
-                  onClick={(e) => { e.stopPropagation(); downloadFile(f.path); }}
-                  title={`Download ${f.label}`}
-                >
-                  <svg fill="none" height="12" viewBox="0 0 24 24" width="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
-                  </svg>
-                </button>
-              </button>
-            ))}
+      {!content && !generating && (
+        <div className="flex-1 flex flex-col items-center justify-center px-20 gap-16">
+          {/* Info card */}
+          <div className="rounded-10 border border-border-faint bg-black-alpha-2 px-16 py-14 max-w-[320px]">
+            <div className="flex items-start gap-8">
+              <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-black-alpha-32 flex-shrink-0 mt-1">
+                <circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" />
+              </svg>
+              <p className="text-body-small text-black-alpha-48 leading-relaxed">
+                Have a conversation until you get the result you want. The agent will then analyze what worked and generate a reusable skill you can run again.
+              </p>
+            </div>
           </div>
 
-          {/* File content */}
-          <div className="flex-1 overflow-auto no-scrollbar">
-            {files[active] && active.endsWith(".json") ? (
-              <JsonViewer data={files[active]} />
-            ) : (
-              <pre className="text-[13px] text-accent-black whitespace-pre-wrap font-mono leading-[1.7] p-14">
-                {files[active] ?? "File not found"}
-              </pre>
-            )}
+          {/* Name input + generate */}
+          <div className="flex flex-col gap-10 w-full max-w-[320px]">
+            <input
+              type="text"
+              value={skillName}
+              onChange={(e) => setSkillName(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))}
+              placeholder="skill-name"
+              className="w-full px-12 py-8 rounded-8 border border-border-faint bg-accent-white text-body-small text-accent-black placeholder:text-black-alpha-24 focus:outline-none focus:border-black-alpha-16"
+            />
+            <button
+              type="button"
+              className="w-full flex items-center justify-center gap-6 px-12 py-8 rounded-8 text-label-small bg-accent-black text-accent-white hover:bg-black-alpha-80 transition-all"
+              onClick={generate}
+            >
+              Generate Skill
+            </button>
           </div>
-        </>
+
+          {error && (
+            <div className="text-body-small text-red-600 max-w-[320px] text-center">{error}</div>
+          )}
+        </div>
+      )}
+
+      {(content || generating) && (
+        <div className="flex-1 overflow-auto no-scrollbar" ref={contentRef}>
+          {generating && !content && (
+            <div className="flex items-center justify-center py-20 text-body-small text-black-alpha-32">
+              <span className="inline-block w-4 h-4 rounded-full bg-accent-black animate-pulse mr-8" />
+              Analyzing conversation...
+            </div>
+          )}
+          <pre className="text-[13px] text-accent-black whitespace-pre-wrap font-mono leading-[1.7] p-14">
+            {content}
+            {generating && <span className="inline-block w-1 h-[16px] bg-accent-black animate-pulse ml-1 align-middle" />}
+          </pre>
+        </div>
+      )}
+
+      {done && savedPath && (
+        <div className="px-14 py-10 border-t border-border-faint bg-black-alpha-2 flex items-center gap-8">
+          <svg fill="none" height="14" viewBox="0 0 24 24" width="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-600 flex-shrink-0">
+            <path d="M20 6L9 17l-5-5" />
+          </svg>
+          <span className="text-body-small text-black-alpha-48 flex-1 truncate">Saved to {savedPath}</span>
+          <button
+            type="button"
+            className="flex items-center gap-4 text-mono-x-small text-accent-white bg-accent-black hover:bg-black-alpha-80 px-10 py-4 rounded-6 transition-all"
+            onClick={downloadSkill}
+          >
+            <svg fill="none" height="12" viewBox="0 0 24 24" width="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" />
+            </svg>
+            Download SKILL.md
+          </button>
+        </div>
       )}
     </div>
   );
@@ -470,7 +539,7 @@ print(response.json())`;
 
 export default function ArtifactPanel({ messages, isRunning, onRequestFormat, onClose, prompt, schema, urls }: ArtifactPanelProps) {
   const formatted = extractFormattedOutput(messages);
-  const [showWorkflow, setShowWorkflow] = useState(false);
+  const [showSkill, setShowSkill] = useState(false);
 
   const [showCode, setShowCode] = useState(false);
   const [codeLang, setCodeLang] = useState<"curl" | "fetch" | "python">("curl");
@@ -499,7 +568,7 @@ export default function ArtifactPanel({ messages, isRunning, onRequestFormat, on
 
 
 
-  if (showWorkflow) return <WorkflowPanel onClose={() => setShowWorkflow(false)} />;
+  if (showSkill) return <SkillPanel messages={messages} prompt={prompt} onClose={() => setShowSkill(false)} />;
 
   if (!formatted) return null;
 
@@ -576,12 +645,12 @@ export default function ArtifactPanel({ messages, isRunning, onRequestFormat, on
             <button
               type="button"
               className="flex items-center gap-4 text-mono-x-small text-black-alpha-32 hover:text-accent-black transition-colors"
-              onClick={() => setShowWorkflow(true)}
+              onClick={() => setShowSkill(true)}
             >
               <svg fill="none" height="12" viewBox="0 0 24 24" width="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />
+                <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" />
               </svg>
-              Workflow
+              Save as Skill
             </button>
           </>
         )}
