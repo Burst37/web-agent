@@ -76,9 +76,26 @@ export interface AgentConfig {
 
 // --- Agent Core public API types ---
 
+export interface FirecrawlToolsConfig {
+  /** Defaults for search, or false to disable */
+  search?: Record<string, unknown> | false;
+  /** Defaults for scrape, or false to disable */
+  scrape?: Record<string, unknown> | false;
+  /** Defaults for interact, or false to disable */
+  interact?: Record<string, unknown> | false;
+  /** Include map tool */
+  map?: boolean;
+  /** Include crawl tool */
+  crawl?: boolean;
+  /** Max approximate tokens for tool responses */
+  maxResponseTokens?: number;
+}
+
 export interface CreateAgentOptions {
   /** Firecrawl API key — used to build the default toolkit */
   firecrawlApiKey: string;
+  /** Configure which Firecrawl tools are enabled and their defaults */
+  firecrawlOptions?: FirecrawlToolsConfig;
   /** Override the default Firecrawl toolkit with a custom one */
   toolkit?: Toolkit;
   model: ModelConfig;

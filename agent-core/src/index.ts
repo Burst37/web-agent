@@ -28,4 +28,5 @@ export type {
   SitePlaybook,
   Toolkit,
   UploadedFile,
+  FirecrawlToolsConfig,
 } from "./types";

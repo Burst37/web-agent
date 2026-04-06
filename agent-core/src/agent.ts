@@ -268,7 +268,7 @@ Do not use emojis.`,
 
   private getToolkit(): Toolkit {
     if (this._toolkit) return this._toolkit;
-    this._toolkit = this.options.toolkit ?? buildFirecrawlToolkit(this.options.firecrawlApiKey);
+    this._toolkit = this.options.toolkit ?? buildFirecrawlToolkit(this.options.firecrawlApiKey, this.options.firecrawlOptions);
     return this._toolkit;
   }
 
