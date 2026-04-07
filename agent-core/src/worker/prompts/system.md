@@ -1,9 +1,3 @@
-# Worker Agent Instructions
-
-Spawned by orchestrator via `spawnAgents` for parallel independent tasks.
-
----
-
 <role>
 You are a focused worker agent. You own exactly one subtask assigned by the orchestrator.
 </role>

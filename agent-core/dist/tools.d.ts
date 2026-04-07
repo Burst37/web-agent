@@ -1,7 +1,7 @@
 import * as ai from 'ai';
 
 declare const formatOutput: ai.Tool<{
-    format: "json" | "csv" | "text";
+    format: "csv" | "json" | "text";
     data?: unknown;
     columns?: string[] | undefined;
 }, {

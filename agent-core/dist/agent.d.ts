@@ -48,7 +48,7 @@ declare class FirecrawlAgent {
             results: WorkerResult[];
         }>;
         formatOutput: ai.Tool<{
-            format: "json" | "csv" | "text";
+            format: "csv" | "json" | "text";
             data?: unknown;
             columns?: string[] | undefined;
         }, {

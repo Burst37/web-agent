@@ -2,7 +2,7 @@ import { defineConfig } from "tsup";
 import { cpSync } from "fs";
 
 export default defineConfig({
-  entry: ["src/**/*.ts"],
+  entry: ["src/**/*.ts", "!src/**/*.test.ts"],
   format: ["esm"],
   dts: true,
   splitting: false,
@@ -10,8 +10,10 @@ export default defineConfig({
   bundle: false,
   onSuccess: async () => {
     // Copy runtime assets that are loaded via fs.readFile at runtime
-    cpSync("src/orchestrator/prompt.md", "dist/orchestrator/prompt.md");
-    cpSync("src/worker/prompt.md", "dist/worker/prompt.md");
+    cpSync("src/orchestrator/prompts", "dist/orchestrator/prompts", {
+      recursive: true,
+    });
+    cpSync("src/worker/prompts", "dist/worker/prompts", { recursive: true });
     cpSync("src/skills/definitions", "dist/skills/definitions", {
       recursive: true,
     });

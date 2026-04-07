@@ -10,7 +10,6 @@ interface OrchestratorOptions {
     skillsDir?: string;
     maxWorkers?: number;
     workerMaxSteps?: number;
-    /** Model used to summarize context when approaching token limits. Defaults to the orchestrator model. */
     compactionModel?: ModelConfig;
 }
 declare function createOrchestrator(options: OrchestratorOptions): Promise<ToolLoopAgent<never, {
@@ -26,7 +25,7 @@ declare function createOrchestrator(options: OrchestratorOptions): Promise<ToolL
         results: WorkerResult[];
     }>;
     formatOutput: ai.Tool<{
-        format: "json" | "csv" | "text";
+        format: "csv" | "json" | "text";
         data?: unknown;
         columns?: string[] | undefined;
     }, {
