@@ -19,8 +19,8 @@
     },
     {
       "id": "express",
-      "name": "Express (API only)",
-      "description": "Lightweight Node.js API server with /v1/run endpoint",
+      "name": "Express",
+      "description": "API server + library — REST endpoints and direct agent-core usage",
       "path": "agent-templates/express",
       "requiredEnvVars": ["FIRECRAWL_API_KEY"],
       "optionalEnvVars": [
@@ -34,8 +34,8 @@
     },
     {
       "id": "hono",
-      "name": "Hono (Serverless)",
-      "description": "Fast, lightweight API — ideal for edge and serverless",
+      "name": "Hono",
+      "description": "Serverless API + library — edge-ready endpoints and direct agent-core usage",
       "path": "agent-templates/hono",
       "requiredEnvVars": ["FIRECRAWL_API_KEY"],
       "optionalEnvVars": [
