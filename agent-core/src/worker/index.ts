@@ -58,10 +58,13 @@ export function createWorkerTool(
   const { maxWorkers = 6, workerMaxSteps = 10 } = options;
 
   const skillTools = createSkillTools(skills);
-  const workerTools = { ...toolkit.tools, ...skillTools, formatOutput, bashExec };
+  // Workers get search + scrape only (no interact — browser sessions are too heavy for parallel workers)
+  const filteredTools = toolkit.createFiltered
+    ? { ...toolkit.createFiltered(["search", "scrape"]), ...skillTools, formatOutput, bashExec }
+    : { ...toolkit.tools, ...skillTools, formatOutput, bashExec };
 
   return tool({
-    description: `Spawn parallel worker agents to handle independent tasks concurrently. Each worker gets its own isolated context and full toolkit (search, scrape, interact, bash). Workers return only a concise summary — the orchestrator context stays clean. Use this when you have 2+ independent data collection tasks.`,
+    description: `Spawn parallel worker agents to handle independent tasks concurrently. Each worker gets its own isolated context with search, scrape, and bash tools. Workers return only a concise summary — the orchestrator context stays clean. Use this when you have 2+ independent data collection tasks. NOTE: Workers cannot use interact (browser sessions). If a task requires interact, handle it in the orchestrator instead of delegating.`,
     inputSchema: z.object({
       tasks: z
         .array(
@@ -103,7 +106,7 @@ export function createWorkerTool(
             const worker = new ToolLoopAgent({
               model,
               instructions: workerInstructions,
-              tools: workerTools,
+              tools: filteredTools,
               stopWhen: stepCountIs(workerMaxSteps),
             });
 
