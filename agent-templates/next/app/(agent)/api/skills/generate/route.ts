@@ -51,7 +51,7 @@ export async function POST(req: Request) {
 
 CRITICAL RULES:
 1. **ONE skill, entire procedure.** Combine ALL steps from the session into a single skill. Do NOT split into sub-skills or multiple procedures. The skill must capture the complete workflow from start to finish, including any parallel sub-agent work.
-2. **Every skill MUST use Firecrawl tools.** The procedure MUST include Firecrawl tool calls (search, scrape, interact, map, crawl, extract). A skill without Firecrawl tools is useless — the whole point is to capture a web data collection procedure powered by Firecrawl.
+2. **Every skill MUST use Firecrawl tools.** The procedure MUST include Firecrawl tool calls (search, scrape, interact). A skill without Firecrawl tools is useless — the whole point is to capture a web data collection procedure powered by Firecrawl.
 3. **Generalize.** If the session scraped "AAPL" from Yahoo Finance, the skill must work for ANY ticker. Use parameters like {TICKER}, {COMPANY}, {URL}. The skill name must be generic (e.g. "yahoo-finance-financials" not "aapl-financials").
 4. **Match the actual method.** If the agent used \`scrape\` with a \`query\` parameter, say that. If it used \`interact\` with clicks, say that. NEVER describe a method that wasn't used in the transcript.
 5. **Focus on procedure, not data.** The data is fleeting. The method is what matters. Document HOW the agent got the data, not WHAT the data was.
