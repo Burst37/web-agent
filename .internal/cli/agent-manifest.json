@@ -4,7 +4,7 @@
     {
       "id": "next",
       "name": "Next.js (Full UI)",
-      "description": "Complete web app with chat UI, conversation history, settings panel",
+      "description": "Web app with chat UI, settings, and extensible agent-core",
       "path": "agent-templates/next",
       "requiredEnvVars": ["FIRECRAWL_API_KEY"],
       "optionalEnvVars": [
@@ -20,7 +20,7 @@
     {
       "id": "express",
       "name": "Express",
-      "description": "API server + library — REST endpoints and direct agent-core usage",
+      "description": "REST API server with extensible agent-core and library examples",
       "path": "agent-templates/express",
       "requiredEnvVars": ["FIRECRAWL_API_KEY"],
       "optionalEnvVars": [
@@ -35,7 +35,7 @@
     {
       "id": "hono",
       "name": "Hono",
-      "description": "Serverless API + library — edge-ready endpoints and direct agent-core usage",
+      "description": "Serverless API with extensible agent-core and library examples",
       "path": "agent-templates/hono",
       "requiredEnvVars": ["FIRECRAWL_API_KEY"],
       "optionalEnvVars": [
@@ -50,7 +50,7 @@
     {
       "id": "library",
       "name": "Library",
-      "description": "Just agent-core — use in scripts, services, or your own app",
+      "description": "Extensible agent-core for scripts, services, or your own app",
       "path": "agent-templates/library",
       "requiredEnvVars": ["FIRECRAWL_API_KEY"],
       "optionalEnvVars": [
