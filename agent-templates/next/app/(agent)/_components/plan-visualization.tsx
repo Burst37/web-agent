@@ -511,7 +511,20 @@ function SubAgentCard({ item }: { item: TimelineItem }) {
             ].filter(Boolean).join(" · "),
           });
         } else if (tc.toolName === "bashExec" || tc.toolName === "bash_exec") {
-          result.push({ type: "bash", label: `$ ${(tc.input as Record<string, unknown>).command}` });
+          const cmd = String((tc.input as Record<string, unknown>).command ?? "");
+          const bashLabel = (cmd.startsWith("cat <<") || cmd.includes("> /data/"))
+            ? "Saving results..."
+            : cmd.split("\n")[0].slice(0, 60) || "Running command...";
+          result.push({ type: "bash", label: `$ ${bashLabel}` });
+        } else if (tc.toolName === "map") {
+          const mapUrl = String((tc.input as Record<string, unknown>).url ?? "").replace(/^https?:\/\//, "");
+          result.push({ type: "other", label: `Map: ${mapUrl}` });
+        } else if (tc.toolName === "extract") {
+          const extractUrl = String((tc.input as Record<string, unknown>).url ?? (tc.input as Record<string, unknown>).urls ?? "").replace(/^https?:\/\//, "").slice(0, 80);
+          result.push({ type: "other", label: `Extract: ${extractUrl}` });
+        } else if (tc.toolName === "formatOutput") {
+          const fmt = (tc.input as Record<string, unknown>).format ?? "output";
+          result.push({ type: "other", label: `Formatting as ${fmt}` });
         } else {
           result.push({ type: "other", label: tc.toolName });
         }
@@ -741,6 +754,44 @@ interface WorkerLiveProgress {
   stepLog?: { tool: string; detail: string; input: Record<string, unknown> }[];
 }
 
+/** Format a tool call input string into a clean, human-readable one-liner */
+function formatToolCallInput(toolName: string, input: string): string {
+  try {
+    const inp = typeof input === "string" && input.startsWith("{") ? JSON.parse(input) : {};
+    switch (toolName) {
+      case "search":
+        return String(inp?.query ?? inp?.q ?? input).slice(0, 100);
+      case "scrape":
+        return String(inp?.url ?? "").replace(/^https?:\/\//, "");
+      case "interact":
+        return String(inp?.url ?? inp?.prompt ?? "").replace(/^https?:\/\//, "").slice(0, 80);
+      case "map":
+        return String(inp?.url ?? "").replace(/^https?:\/\//, "");
+      case "extract":
+        return String(inp?.url ?? inp?.urls?.[0] ?? "").replace(/^https?:\/\//, "").slice(0, 80);
+      case "bashExec":
+      case "bash_exec": {
+        const cmd = String(inp?.command ?? "");
+        if (cmd.startsWith("cat <<") || cmd.includes("> /data/")) return "Saving results...";
+        return cmd.split("\n")[0].slice(0, 60) || "Running command...";
+      }
+      case "formatOutput":
+        return `Formatting as ${inp?.format ?? "output"}`;
+      case "exportSkill":
+        return `Exporting skill`;
+      case "spawnAgents":
+      case "spawnWorkers": {
+        const tasks = Array.isArray(inp?.tasks) ? inp.tasks : [];
+        return `${tasks.length} parallel task${tasks.length !== 1 ? "s" : ""}`;
+      }
+      default:
+        return toolName;
+    }
+  } catch {
+    return toolName;
+  }
+}
+
 /** Extract the first URL from a string (prompt text, detail, JSON, etc.) */
 function extractUrl(text: string): string | null {
   try {
@@ -881,7 +932,7 @@ function WorkerCard({ id, prompt, result, workerStatus, liveProgress, stepDetail
                         <div key={ti} className="flex items-center gap-4 text-black-alpha-48">
                           {tcDomain && <Favicon domain={tcDomain} />}
                           <span className="text-mono-x-small truncate">
-                            {tc.name === "scrape" && tcDomain ? tcDomain : tc.name === "interact" && tcDomain ? `interact ${tcDomain}` : tc.name === "search" ? (() => { try { return JSON.parse(tc.input).query || tc.input; } catch { return tc.input; } })() : `${tc.name}: ${tc.input}`}
+                            {tc.name === "scrape" && tcDomain ? tcDomain : tc.name === "interact" && tcDomain ? `interact ${tcDomain}` : tc.name === "search" ? (() => { try { return JSON.parse(tc.input).query || tc.input; } catch { return tc.input; } })() : formatToolCallInput(tc.name, tc.input)}
                           </span>
                         </div>
                       );
