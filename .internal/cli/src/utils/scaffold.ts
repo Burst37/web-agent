@@ -9,17 +9,23 @@ const SKIP = new Set([
   'node_modules', '.next', '.git', '.DS_Store', 'README.md',
 ]);
 
-function copyDirRecursive(src: string, dest: string): void {
+/** Files to skip when copying agent-core (dev artifacts, build config) */
+const AGENT_CORE_SKIP = new Set([
+  'dist', 'tsup.config.ts', 'tsconfig.json', 'package.json',
+]);
+
+function copyDirRecursive(src: string, dest: string, extraSkip?: (name: string) => boolean): void {
   if (!fs.existsSync(src)) return;
   fs.mkdirSync(dest, { recursive: true });
 
   for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
     if (SKIP.has(entry.name)) continue;
+    if (extraSkip?.(entry.name)) continue;
     const srcPath = path.join(src, entry.name);
     const destPath = path.join(dest, entry.name);
 
     if (entry.isDirectory()) {
-      copyDirRecursive(srcPath, destPath);
+      copyDirRecursive(srcPath, destPath, extraSkip);
     } else {
       fs.copyFileSync(srcPath, destPath);
     }
@@ -29,17 +35,32 @@ function copyDirRecursive(src: string, dest: string): void {
 function rewriteImports(dir: string): void {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
     const fullPath = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
+    if (entry.isDirectory() && entry.name !== 'node_modules' && entry.name !== '.next') {
       rewriteImports(fullPath);
-    } else if (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx') || entry.name.endsWith('.json')) {
+    } else if (entry.name.endsWith('.ts') || entry.name.endsWith('.tsx')) {
       let content = fs.readFileSync(fullPath, 'utf-8');
-      const updated = content.replace(
-        /\.\.\/\.\.\/agent-core\/src/g,
-        './agent-core/src'
-      );
-      if (updated !== content) {
-        fs.writeFileSync(fullPath, updated, 'utf-8');
+      // Rewrite old relative imports
+      content = content.replace(/\.\.\/\.\.\/agent-core\/src/g, './agent-core/src');
+      // Rewrite workspace package imports to local barrel
+      // @firecrawl/agent-core → ./agent-core/src (in barrel files)
+      // For non-barrel .ts files, the @/agent-core alias resolves via tsconfig
+      if (entry.name === 'agent-core.ts' || entry.name === 'agent-core-types.ts') {
+        content = content.replace(/"@firecrawl\/agent-core"/g, '"./agent-core/src"');
       }
+      fs.writeFileSync(fullPath, content, 'utf-8');
+    } else if (entry.name === 'package.json') {
+      let content = fs.readFileSync(fullPath, 'utf-8');
+      // Remove workspace dep — agent-core is local, its deps are hoisted
+      const pkg = JSON.parse(content);
+      if (pkg.dependencies?.['@firecrawl/agent-core']) {
+        delete pkg.dependencies['@firecrawl/agent-core'];
+      }
+      fs.writeFileSync(fullPath, JSON.stringify(pkg, null, 2) + '\n', 'utf-8');
+    } else if (entry.name === 'next.config.ts') {
+      let content = fs.readFileSync(fullPath, 'utf-8');
+      // Remove transpilePackages for workspace dep (no longer needed when local)
+      content = content.replace(/\s*transpilePackages:\s*\["@firecrawl\/agent-core"\],?\n?/, '\n');
+      fs.writeFileSync(fullPath, content, 'utf-8');
     }
   }
 }
@@ -96,10 +117,14 @@ export async function scaffoldProject(opts: ScaffoldOptions): Promise<void> {
 
   fs.mkdirSync(projectDir, { recursive: true });
 
-  // Copy agent-core
+  // Copy agent-core (skip dev artifacts, test files, build output)
   const agentCoreSrc = path.join(sourceRoot, 'agent-core');
   if (fs.existsSync(agentCoreSrc)) {
-    copyDirRecursive(agentCoreSrc, path.join(projectDir, 'agent-core'));
+    copyDirRecursive(agentCoreSrc, path.join(projectDir, 'agent-core'), (name) => {
+      if (AGENT_CORE_SKIP.has(name)) return true;
+      if (name.endsWith('.test.ts')) return true;
+      return false;
+    });
   }
 
   // Copy template files
@@ -116,8 +141,32 @@ export async function scaffoldProject(opts: ScaffoldOptions): Promise<void> {
     }
   }
 
-  // Rewrite ../../agent-core/src to ./agent-core/src
+  // Rewrite imports and deps for standalone project
   rewriteImports(projectDir);
+
+  // Merge agent-core deps into the project package.json
+  const agentCorePkgPath = path.join(sourceRoot, 'agent-core', 'package.json');
+  const projectPkgPath = path.join(projectDir, 'package.json');
+  if (fs.existsSync(agentCorePkgPath) && fs.existsSync(projectPkgPath)) {
+    const corePkg = JSON.parse(fs.readFileSync(agentCorePkgPath, 'utf-8'));
+    const projectPkg = JSON.parse(fs.readFileSync(projectPkgPath, 'utf-8'));
+    // Add agent-core runtime deps to the project
+    for (const [dep, version] of Object.entries(corePkg.dependencies ?? {})) {
+      if (!projectPkg.dependencies?.[dep]) {
+        projectPkg.dependencies = projectPkg.dependencies ?? {};
+        projectPkg.dependencies[dep] = version;
+      }
+    }
+    // Add agent-core peer deps (optional providers)
+    for (const [dep, version] of Object.entries(corePkg.peerDependencies ?? {})) {
+      if (!projectPkg.dependencies?.[dep]) {
+        projectPkg.dependencies = projectPkg.dependencies ?? {};
+        projectPkg.dependencies[dep] = version;
+      }
+    }
+    fs.writeFileSync(projectPkgPath, JSON.stringify(projectPkg, null, 2) + '\n', 'utf-8');
+  }
+
   applyTemplateProviderDefaults(projectDir, template.id, selectedProvider, defaultModelId);
   success(`${template.name} template scaffolded`);
 
