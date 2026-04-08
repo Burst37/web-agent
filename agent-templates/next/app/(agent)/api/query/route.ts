@@ -4,7 +4,7 @@ import type { ModelConfig } from "@/agent-core";
 import { getTaskModel } from "@agent/_config";
 import { getFirecrawlKey, getProviderApiKeys, hydrateModelConfig } from "@agent/_lib/config/keys";
 
-export const maxDuration = 300;
+export const maxDuration = 800;
 
 const DEFAULT_MAX_STEPS = 15;
 const MAX_STEPS_LIMIT = 50;

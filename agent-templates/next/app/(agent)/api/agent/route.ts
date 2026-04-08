@@ -5,7 +5,7 @@ import { getFirecrawlKey, getProviderApiKeys, hydrateModelConfig } from "@agent/
 import { config as globalConfig } from "@agent/_config";
 import { loadAppSections } from "@/prompts/loader";
 
-export const maxDuration = 300;
+export const maxDuration = 800;
 
 export async function POST(req: Request) {
   const { messages, config } = (await req.json()) as {
