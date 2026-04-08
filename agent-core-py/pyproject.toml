@@ -1,0 +1,28 @@
+[project]
+name = "firecrawl-agent-core"
+version = "0.1.0"
+description = "AI-powered web research agent framework built on Firecrawl (Python)"
+requires-python = ">=3.11"
+license = "MIT"
+dependencies = [
+    "pydantic-ai>=1.70.0",
+    "firecrawl>=4.0.0",
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=1.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/firecrawl_agent"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
