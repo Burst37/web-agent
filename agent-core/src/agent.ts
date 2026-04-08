@@ -322,6 +322,65 @@ Do not use emojis.`,
     return "";
   }
 
+  /**
+   * Summarize a tool result structurally — keys, counts, shape.
+   * The skill needs to know HOW the data came back, not the data itself.
+   */
+  private summarizeToolOutput(toolName: string, output: unknown): string {
+    if (!output) return "(empty)";
+    const o = output as Record<string, unknown>;
+
+    if (toolName === "search") {
+      if (Array.isArray(output)) return `${output.length} results [${(output as Record<string, unknown>[]).slice(0, 3).map(r => r.url ?? r.title ?? "").join(", ")}]`;
+      if (Array.isArray(o.results)) return `${o.results.length} results`;
+      return "search completed";
+    }
+
+    if (toolName === "scrape") {
+      const parts: string[] = [];
+      if (o.markdown) parts.push(`markdown: ${String(o.markdown).length} chars`);
+      if (o.extract) {
+        const extract = o.extract;
+        if (typeof extract === "object" && extract !== null) {
+          const keys = Object.keys(extract as Record<string, unknown>);
+          parts.push(`extract: {${keys.join(", ")}}`);
+        } else {
+          parts.push(`extract: ${String(extract).length} chars`);
+        }
+      }
+      if (o.json) {
+        const json = o.json;
+        if (Array.isArray(json)) {
+          const sample = json[0];
+          const keys = sample && typeof sample === "object" ? Object.keys(sample as Record<string, unknown>) : [];
+          parts.push(`json: ${json.length} items [${keys.join(", ")}]`);
+        } else if (typeof json === "object" && json !== null) {
+          parts.push(`json: {${Object.keys(json as Record<string, unknown>).join(", ")}}`);
+        }
+      }
+      return parts.length ? parts.join(", ") : `${String(JSON.stringify(output)).length} chars`;
+    }
+
+    if (toolName === "interact") {
+      if (o.success === false) return `failed: ${o.error ?? "unknown error"}`;
+      if (o.liveViewUrl) return `success, liveViewUrl available`;
+      return `success, output: ${String(o.output ?? o.result ?? "").slice(0, 100)}`;
+    }
+
+    if (toolName === "formatOutput") {
+      return `format: ${o.format}, content: ${String(o.content ?? "").length} chars`;
+    }
+
+    if (toolName === "bashExec") {
+      const exit = o.exitCode ?? "?";
+      return `exit ${exit}, stdout: ${String(o.stdout ?? "").length} chars`;
+    }
+
+    // Generic fallback
+    if (typeof output === "string") return `${output.length} chars`;
+    return JSON.stringify(output).slice(0, 150);
+  }
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private mapSteps(steps: any[]): StepDetail[] {
     return (steps ?? []).map((s) => ({
@@ -471,16 +530,14 @@ Do not use emojis.`,
     // Build rich metadata about the run
     const metadata = this.buildRunMetadata(steps);
 
-    // Serialize full step history with more detail
+    // Serialize step history: full inputs, structural summary of outputs
     const stepHistory = steps.map((step, i) => {
       const calls = step.toolCalls.map((tc) => {
         const input = tc.input as Record<string, unknown> | undefined;
-        return `  CALL ${tc.name}(${JSON.stringify(input, null, 2)})`;
+        return `  CALL ${tc.name}(${JSON.stringify(input)})`;
       });
       const results = step.toolResults.map((tr) => {
-        const output = JSON.stringify(tr.output);
-        // Keep more of the output for the model to understand what worked
-        return `  RESULT ${tr.name} → ${output.slice(0, 1500)}`;
+        return `  RESULT ${tr.name} → ${this.summarizeToolOutput(tr.name, tr.output)}`;
       });
       return `Step ${i + 1}:\n${calls.join("\n")}\n${results.join("\n")}`;
     });
@@ -492,11 +549,10 @@ Do not use emojis.`,
 You are post-processing a completed agent run. Generate a REUSABLE, GENERALIZED skill package.
 
 CRITICAL RULES:
-1. **Match the actual method used.** If the agent used scrape with a query parameter, the skill MUST say "scrape with query". If it used interact with click actions, say that. NEVER describe a method that wasn't used.
-2. **Generalize entity-specific values.** If the run was for "AAPL", the skill should work for any ticker. Use parameters like {TICKER}, {COMPANY}, {URL} in the procedure. Document what to substitute.
-3. **Document the approach pattern** (search → scrape+query → format) not just the steps. Future runs need to know WHY this approach was chosen.
-4. **Include the actual tool inputs** — exact query strings, extraction prompts, and URL patterns that worked.
-5. **Note what the data source returned** — what fields were available, what the page structure looked like.
+1. **Match the actual method.** If the agent used scrape with a query parameter, say that. If it used interact with clicks, say that. NEVER describe a method that wasn't used in the run.
+2. **Generalize.** If the run targeted "AAPL", the skill must work for any ticker. Use {TICKER}, {COMPANY}, {URL} as parameters. The skill name should be generic (e.g. "yahoo-finance-financials" not "aapl-financials").
+3. **Focus on the procedure.** Document the approach pattern (search → scrape+query → format) and the exact tool inputs that worked (queries, prompts, URL patterns). The data is fleeting — the method is what matters.
+4. **Be proportional.** A 3-step run gets a concise skill. A 15-step run with pagination and workers gets a detailed one. Don't pad short procedures with speculation.
 
 Return a single JSON object with these keys:
 - "name": a generalized slug (e.g. "yahoo-finance-financials" not "aapl-financials")
