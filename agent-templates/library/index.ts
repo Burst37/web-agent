@@ -7,9 +7,7 @@ import "dotenv/config";
  * read it, modify it, extend it.
  *
  *   npm start              run this file
- *   npm run example        run any example from examples/
- *
- * See ARCHITECTURE.md for the full guide.
+ *   npm run example:basic   run any example from examples/
  */
 import { createAgent } from "./agent-core/src";
 

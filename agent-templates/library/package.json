@@ -4,13 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "tsx index.ts",
-    "dev": "tsx watch index.ts",
-    "example:basic": "tsx examples/1-basic.ts",
-    "example:structured": "tsx examples/2-structured-output.ts",
-    "example:parallel": "tsx examples/3-parallel-subagents.ts",
-    "example:skills": "tsx examples/4-with-skills.ts",
-    "example:stream": "tsx examples/5-streaming.ts"
+    "start": "node --import tsx/esm index.ts",
+    "dev": "node --import tsx/esm --watch index.ts",
+    "example:basic": "node --import tsx/esm examples/1-basic.ts",
+    "example:structured": "node --import tsx/esm examples/2-structured-output.ts",
+    "example:parallel": "node --import tsx/esm examples/3-parallel-subagents.ts",
+    "example:skills": "node --import tsx/esm examples/4-with-skills.ts",
+    "example:stream": "node --import tsx/esm examples/5-streaming.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "latest",
