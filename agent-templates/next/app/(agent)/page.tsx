@@ -625,6 +625,7 @@ export default function AgentPage() {
   const [skills, setSkills] = useState<SkillInfo[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [mentionStart, setMentionStart] = useState(0);
@@ -732,6 +733,17 @@ export default function AgentPage() {
   }, [isACP, config.model, acpChat, sdkChat]);
 
   const isRunning = status === "streaming" || status === "submitted";
+
+  // Auto-scroll to bottom when streaming
+  useEffect(() => {
+    if (!isRunning || !scrollRef.current) return;
+    const el = scrollRef.current;
+    const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 200;
+    if (isNearBottom) {
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    }
+  }, [messages, isRunning]);
+
   // Compute session stats from messages
   const sessionStats = useMemo(() => {
     const fc = { total: 0, search: { count: 0, credits: 0 }, scrape: { count: 0, credits: 0 }, map: { count: 0, credits: 0 }, crawl: { count: 0, credits: 0 }, interact: { count: 0, credits: 0 } };
@@ -1367,7 +1379,7 @@ export default function AgentPage() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-      <div className="flex-1 overflow-y-auto no-scrollbar">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto no-scrollbar">
       <div className={cn("mx-auto px-20 py-24 transition-all duration-200", !artifactOpen ? "max-w-900" : "max-w-700")}>
         {/* Query display */}
         <div className="mb-20">

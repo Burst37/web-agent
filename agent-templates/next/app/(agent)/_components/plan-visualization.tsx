@@ -962,7 +962,7 @@ function WorkerCard({ id, prompt, result, workerStatus, liveProgress, stepDetail
   );
 }
 
-function WorkersPanel({ item }: { item: TimelineItem }) {
+function WorkersPanel({ item, apiBase = "" }: { item: TimelineItem; apiBase?: string }) {
   const tasks = item.workerTasks ?? [];
   const results = (item.workerResults ?? []) as WorkerResultData[];
   const isRunning = item.status === "running";
@@ -980,7 +980,7 @@ function WorkersPanel({ item }: { item: TimelineItem }) {
   useEffect(() => {
     if (!isRunning) return;
     const poll = () => {
-      fetch("/api/workers/progress")
+      fetch(`${apiBase}/api/workers/progress`)
         .then((r) => r.json())
         .then(setLiveProgress)
         .catch(() => {});
@@ -1376,11 +1376,13 @@ export default function PlanVisualization({
   isRunning,
   preloadedSkills,
   onArtifactClick,
+  apiBase = "",
 }: {
   messages: UIMessage[];
   isRunning: boolean;
   preloadedSkills?: string[];
   onArtifactClick?: () => void;
+  apiBase?: string;
 }) {
   const timeline = extractTimeline(messages);
 
@@ -1497,20 +1499,31 @@ export default function PlanVisualization({
             const fmtLabel: Record<string, string> = { csv: "CSV", json: "JSON", text: "Markdown" };
             const label = fmtLabel[item.formatType ?? "text"] ?? "Output";
             return (
-              <div key={i} className="flex items-center gap-6 my-8">
+              <div key={i} className="my-12 rounded-10 border border-border-faint overflow-hidden">
                 <button
                   type="button"
-                  className="text-mono-x-small text-black-alpha-32 bg-black-alpha-4 px-8 py-2 rounded-4 cursor-pointer hover:bg-black-alpha-8 hover:text-accent-black transition-all"
+                  className="w-full flex items-center gap-8 px-14 py-10 text-left hover:bg-black-alpha-2 transition-all"
                   onClick={() => onArtifactClick?.()}
-                >{label}</button>
-                {item.status === "running" && (
-                  <span className="inline-block w-4 h-4 rounded-full bg-heat-100 animate-pulse" />
-                )}
+                >
+                  <span className="text-mono-x-small text-black-alpha-48 bg-black-alpha-4 px-6 py-1 rounded-4 flex-shrink-0">
+                    /{item.formatType ?? "output"}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-label-medium text-accent-black">{label}</span>
+                  </div>
+                  {item.status === "running" ? (
+                    <div className="w-5 h-5 rounded-full bg-heat-100 animate-pulse flex-shrink-0" />
+                  ) : (
+                    <svg className="w-14 h-14 text-accent-forest flex-shrink-0" fill="none" viewBox="0 0 16 16">
+                      <path d="M13.3 4.3L6 11.6 2.7 8.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </button>
               </div>
             );
           }
           case "workers":
-            return <WorkersPanel key={i} item={item} />;
+            return <WorkersPanel key={i} item={item} apiBase={apiBase} />;
           default:
             return null;
         }
