@@ -12,6 +12,7 @@ const agent = createAgent({
 
 const result = await agent.run({
   prompt: "Get the P/E ratio and stock price for NVIDIA, Google, and Microsoft",
+  format: "json",
   schema: {
     type: "array",
     items: {
@@ -27,4 +28,4 @@ const result = await agent.run({
   },
 });
 
-console.log(JSON.stringify(result.output, null, 2));
+console.log(result.data ?? result.text);
