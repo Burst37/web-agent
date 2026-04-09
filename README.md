@@ -6,14 +6,31 @@ AI-powered web research agent built on [Firecrawl](https://firecrawl.dev). Give 
 
 ## Stack
 
-| | Install |
-|---|---|
-| **[Next.js Template](./agent-templates/next/)** - Chat UI, streaming, skills, sub-agents, structured output | `firecrawl-agent init -t next` |
-| **[Express Template](./agent-templates/express/)** - API server with skills, sub-agents, structured output | `firecrawl-agent init -t express` |
-| **[Agent Core](./agent-core/)** - Orchestrator, skills, sub-agents, structured output as a library | Included in templates, or [use directly](./agent-core/) |
-| **[Firecrawl AI SDK](https://npmjs.com/package/firecrawl-aisdk)** - search, scrape, interact as Vercel AI SDK tools | `npm i firecrawl-aisdk` |
+Each layer builds on the one below it.
 
----
+```
+Hosted /agent endpoint          firecrawl.dev/app/agent
+        |
+Next.js / Express templates     Full apps with UI, streaming, config
+        |
+Agent Core                      Orchestrator, skills, sub-agents, structured output
+        |
+Firecrawl AI SDK                search, scrape, interact as Vercel AI SDK tools
+        |
+Firecrawl SDK                   Core API client (scrape, search, crawl, extract)
+        |
+Firecrawl API                   docs.firecrawl.dev/api-reference
+```
+
+| | |
+|---|---|
+| **[Hosted Agent](https://firecrawl.dev/app/agent)** | Use the agent directly on firecrawl.dev. No setup, no keys to manage. |
+| **[Next.js Template](./agent-templates/next/)** | `firecrawl-agent init -t next` |
+| **[Express Template](./agent-templates/express/)** | `firecrawl-agent init -t express` |
+| **[Agent Core](./agent-core/)** | Included in templates, or [use directly](./agent-core/) |
+| **[Firecrawl AI SDK](https://npmjs.com/package/firecrawl-aisdk)** | `npm i firecrawl-aisdk` |
+| **[Firecrawl SDK](https://npmjs.com/package/firecrawl)** | `npm i firecrawl` |
+| **[API Reference](https://docs.firecrawl.dev/api-reference)** | REST API - use from any language |
 
 ### Examples
 
@@ -23,8 +40,6 @@ AI-powered web research agent built on [Firecrawl](https://firecrawl.dev). Give 
 | Agent Core | [Library usage](./agent-templates/library/) · [Custom agent](./agent-templates/library/examples/custom-agent.ts) |
 | Next.js | [Full template](./agent-templates/next/) |
 | Express | [API server](./agent-templates/express/) |
-
----
 
 ## How it works
 
