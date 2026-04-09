@@ -18,9 +18,9 @@ Each layer builds on the one below it.
 | ↑ | | |
 | [**Express Template**](./agent-templates/express/) | API server with skills, sub-agents, structured output | `firecrawl-agent init -t express` |
 | ↑ | | |
-| [**Agent Core**](./agent-core/) | Orchestrator, skills, sub-agents, structured output | Included in templates |
+| [**Agent Core**](./agent-core/) | Orchestrator, skills, sub-agents, structured output | `firecrawl-agent init -t library` |
 | ↑ | | |
-| [**Firecrawl AI SDK**](https://npmjs.com/package/firecrawl-aisdk) | search, scrape, interact as Vercel AI SDK tools | `npm i firecrawl-aisdk` |
+| [**Firecrawl AI SDK**](https://npmjs.com/package/firecrawl-aisdk) | search, scrape, interact as Vercel AI SDK tools | `firecrawl-agent init -t aisdk` |
 | ↑ | | |
 | [**Firecrawl SDK**](https://npmjs.com/package/firecrawl) | Core API client for scrape, search, crawl, extract | `npm i firecrawl` |
 | ↑ | | |
