@@ -31,25 +31,56 @@ Each layer builds on the one below it. Start at the top for a ready-to-use app, 
 
 ### Examples
 
-**Agent Core** ([all examples](./agent-core/examples/))
+| Level | Examples |
+|---|---|
+| Next.js | [Full template](./agent-templates/next/) |
+| Express | [API server](./agent-templates/express/) |
+| Agent Core | [Basic](./agent-core/examples/1-basic.ts) · [Structured output](./agent-core/examples/2-structured-output.ts) · [Parallel sub-agents](./agent-core/examples/3-parallel-subagents.ts) · [With skills](./agent-core/examples/4-with-skills.ts) · [Streaming](./agent-core/examples/5-streaming.ts) |
+| Firecrawl AI SDK | [npmjs.com/package/firecrawl-aisdk](https://npmjs.com/package/firecrawl-aisdk) |
 
-1. [Basic usage](./agent-core/examples/1-basic.ts) - single prompt, text response
-2. [Structured output](./agent-core/examples/2-structured-output.ts) - enforce a JSON schema
-3. [Parallel sub-agents](./agent-core/examples/3-parallel-subagents.ts) - multiple sites concurrently
-4. [With skills](./agent-core/examples/4-with-skills.ts) - load a reusable skill
-5. [Streaming](./agent-core/examples/5-streaming.ts) - get results as they arrive
+## Skills
 
-**Templates**
+Skills are reusable SKILL.md files that teach the agent domain-specific procedures. Drop a folder into `agent-core/src/skills/definitions/` and it's auto-discovered at startup.
 
-- [Next.js](./agent-templates/next/) - full web app with chat UI
-- [Express](./agent-templates/express/) - API server with `POST /v1/run`
+```
+agent-core/src/skills/definitions/
+  e-commerce/
+    SKILL.md          # procedure: how to extract products, handle pagination
+  deep-research/
+    SKILL.md          # procedure: multi-source research with fact-checking
+  structured-extraction/
+    SKILL.md          # procedure: schema-driven extraction with validation
+```
+
+Each SKILL.md has frontmatter and a procedure:
+
+```markdown
+---
+name: e-commerce
+description: Extract products, pricing, and inventory from e-commerce sites.
+category: E-commerce
+---
+
+# E-commerce Extraction
+
+## General Patterns
+- Check for sitemap.xml first
+- Look for /products.json or API endpoints before scraping HTML
+- Always check total count vs extracted count
+
+## Pagination
+- Check for next/prev links, page numbers, "showing X of Y"
+- Keep going until you have all the data
+```
+
+The agent loads skills on demand via the `load_skill` tool. You can also pass `skills: ["e-commerce"]` in the run params to pre-load specific skills.
 
 ## How it works
 
 The agent combines web tools with an AI model in a loop - it plans, acts, observes, and repeats until the task is done.
 
 - **Tools** - search, scrape, interact (browser automation). Powered by [firecrawl-aisdk](https://www.npmjs.com/package/firecrawl-aisdk).
-- **Skills** - reusable SKILL.md files that teach the agent site-specific procedures. Auto-discovered at startup.
+- **Skills** - reusable SKILL.md playbooks. Auto-discovered from `agent-core/src/skills/definitions/`.
 - **Sub-agents** - parallel workers for independent tasks. The orchestrator spawns them dynamically.
 - **Output** - structured results via `formatOutput` (JSON, CSV, Markdown) and data processing via `bashExec`.
 
