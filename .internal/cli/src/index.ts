@@ -26,7 +26,7 @@ ${bold}Quick start:${reset}
   ${dim}$${reset} firecrawl-agent init                          ${dim}# interactive wizard${reset}
   ${dim}$${reset} firecrawl-agent init my-app -t express         ${dim}# one-liner, Express API${reset}
   ${dim}$${reset} firecrawl-agent init my-app -t next            ${dim}# one-liner, full Next.js UI${reset}
-  ${dim}$${reset} firecrawl-agent init my-app -t hono            ${dim}# one-liner, Hono serverless${reset}
+  ${dim}$${reset} firecrawl-agent init my-app -t library         ${dim}# one-liner, library only${reset}
 
 ${bold}With API keys:${reset}
   ${dim}$${reset} firecrawl-agent init my-app -t express --api-key fc-... --key anthropic=sk-...
@@ -44,7 +44,7 @@ ${bold}After setup:${reset}
 ${bold}Templates:${reset}
   ${bold}next${reset}      Full Next.js app with chat UI, history, settings
   ${bold}express${reset}   Lightweight API server with /v1/run endpoint
-  ${bold}hono${reset}      Fast serverless API — ideal for edge deployments
+  ${bold}library${reset}   Extensible agent-core for scripts, services, or your own app
 `);
 
 program.addCommand(createInitCommand());

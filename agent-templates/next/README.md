@@ -16,30 +16,19 @@ cp .env.local.example .env.local   # add your FIRECRAWL_API_KEY
 npm run dev                         # http://localhost:3000
 ```
 
-## Features
-
-- **Chat interface** - streaming responses with real-time tool call visualization
-- **Plan visualization** - mermaid flowcharts showing the agent's research plan
-- **Parallel agent tracking** - live progress for each worker with browser view when using interact
-- **Structured output** - JSON viewer, CSV table, markdown renderer with download
-- **Save as Skill** - generate a reusable SKILL.md from any successful conversation
-- **Model selector** - switch between providers and models from the UI (BYOK - Bring Your Own Key)
-- **Settings panel** - configure API keys, default provider, custom OpenAI-compatible endpoints
-- **File upload** - upload CSV, JSON, or text files for the agent to process
-
 ## Configuration
 
-All config lives in `app/(agent)/_config.ts`:
+**`app/(agent)/_config.ts`** is the single file that controls all model selections, agent behavior, and feature flags. Open it first — it's the main thing you'll customize.
 
 ```typescript
 export const config = {
-  // Pick your provider - uncomment one block
+  // Pick your provider — uncomment one block
   orchestrator: { provider: "anthropic", model: "claude-sonnet-4-6" },
   subAgent:     { provider: "anthropic", model: "claude-sonnet-4-6" },
   background:   { provider: "anthropic", model: "claude-haiku-4-5-20251001" },
 
-  maxWorkers: 6,         // max concurrent parallel agents
-  workerMaxSteps: 10,    // max steps per worker
+  maxWorkers: 10,              // max concurrent parallel agents
+  workerMaxSteps: 50,          // max steps per worker
 
   // Task-specific model overrides (null = use background model)
   tasks: {
@@ -60,6 +49,19 @@ export const config = {
   },
 };
 ```
+
+Swap providers by uncommenting a different block (Google, OpenAI, or custom OpenAI-compatible). The file also has pricing estimates and helper functions for task-specific model overrides.
+
+## Features
+
+- **Chat interface** — streaming responses with real-time tool call visualization
+- **Plan visualization** — mermaid flowcharts showing the agent's research plan
+- **Parallel agent tracking** — live progress for each worker with browser view when using interact
+- **Structured output** — JSON viewer, CSV table, markdown renderer with download
+- **Save as Skill** — generate a reusable SKILL.md from any successful conversation
+- **Model selector** — switch between providers and models from the UI (BYOK - Bring Your Own Key)
+- **Settings panel** — configure API keys, default provider, custom OpenAI-compatible endpoints
+- **File upload** — upload CSV, JSON, or text files for the agent to process
 
 ## API Endpoints
 

@@ -212,7 +212,7 @@ When handling a request:
       bashExec,
       exportSkill,
     },
-    stopWhen: stepCountIs(config.maxSteps ?? 20),
+    stopWhen: stepCountIs(config.maxSteps ?? 50),
     prepareStep: compaction.prepareStep,
     experimental_repairToolCall: async ({ toolCall, inputSchema }) => {
       try {

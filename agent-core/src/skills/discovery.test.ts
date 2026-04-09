@@ -14,7 +14,7 @@ describe("getDefaultSkillsDir", () => {
     const entries = await fs.readdir(dir);
     expect(entries).toContain("deep-research");
     expect(entries).toContain("e-commerce");
-    expect(entries).toContain("finance");
+    expect(entries).toContain("structured-extraction");
   });
 });
 
@@ -38,19 +38,13 @@ describe("discoverSkills", () => {
     expect(deepResearch!.directory).toContain("deep-research");
   });
 
-  it("discovers site playbooks for e-commerce skill", async () => {
+  it("returns skills without site playbooks when none exist", async () => {
     const skills = await discoverSkills();
     const ecommerce = skills.find((s) => s.name === "e-commerce");
 
     expect(ecommerce).toBeDefined();
-    expect(ecommerce!.sitePlaybooks).toBeDefined();
-    expect(ecommerce!.sitePlaybooks!.length).toBeGreaterThan(0);
-
-    const amazon = ecommerce!.sitePlaybooks!.find(
-      (pb) => pb.platform === "amazon",
-    );
-    expect(amazon).toBeDefined();
-    expect(amazon!.domains).toContain("amazon.com");
+    // site playbooks are optional — e-commerce skill currently has none
+    expect(ecommerce!.sitePlaybooks ?? []).toEqual([]);
   });
 
   it("returns empty array for nonexistent directory", async () => {
@@ -65,25 +59,12 @@ describe("discoverSkills", () => {
 });
 
 describe("buildDomainIndex", () => {
-  it("maps domains to skills and playbooks", async () => {
+  it("returns empty map when no skills have playbooks", async () => {
     const skills = await discoverSkills();
     const index = buildDomainIndex(skills);
 
-    expect(index.size).toBeGreaterThan(0);
-
-    const amazon = index.get("amazon.com");
-    expect(amazon).toBeDefined();
-    expect(amazon!.skill.name).toBe("e-commerce");
-    expect(amazon!.playbook.platform).toBe("amazon");
-  });
-
-  it("is case-insensitive for domain lookups", async () => {
-    const skills = await discoverSkills();
-    const index = buildDomainIndex(skills);
-
-    // buildDomainIndex lowercases domains
-    const result = index.get("amazon.com");
-    expect(result).toBeDefined();
+    // no built-in skills currently have site playbooks
+    expect(index.size).toBe(0);
   });
 
   it("returns empty map for skills without playbooks", () => {

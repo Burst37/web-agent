@@ -42,7 +42,7 @@ export interface WorkerResult {
 
 // --- Worker tool ---
 
-const WORKER_TIMEOUT_MS = 120_000; // 2 minutes per worker
+const WORKER_TIMEOUT_MS = 300_000; // 5 minutes per worker
 
 export interface WorkerToolOptions {
   maxWorkers?: number;
@@ -55,7 +55,7 @@ export function createWorkerTool(
   skills: SkillMetadata[],
   options: WorkerToolOptions = {},
 ) {
-  const { maxWorkers = 6, workerMaxSteps = 10 } = options;
+  const { maxWorkers = 6, workerMaxSteps = 30 } = options;
 
   const skillTools = createSkillTools(skills);
   // Workers get search + scrape only (no interact — browser sessions are too heavy for parallel workers)

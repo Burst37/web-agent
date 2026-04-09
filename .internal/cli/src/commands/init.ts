@@ -34,7 +34,7 @@ export function createInitCommand(): Command {
   return new Command('init')
     .description('Create a new Firecrawl Agent project')
     .argument('[project-name]', 'Project directory name')
-    .option('-t, --template <id>', 'Template (next, express, hono)')
+    .option('-t, --template <id>', 'Template (next, express, library)')
     .option('--provider <id>', 'Default model provider (anthropic, openai, google, custom-openai)')
     .option('--model <id>', 'Default model ID')
     .option('--from <source>', 'External repo (user/repo) or local path with agent-manifest.json')
@@ -47,7 +47,7 @@ Examples:
   $ firecrawl-agent init my-app -t next                     # Next.js with full UI
   $ firecrawl-agent init my-app -t next --provider openai   # choose the default provider
   $ firecrawl-agent init my-app -t express                  # Express API server
-  $ firecrawl-agent init my-app -t hono                     # Hono serverless
+  $ firecrawl-agent init my-app -t library                   # library only
   $ firecrawl-agent init my-app -t express --api-key fc-... # with Firecrawl key
   $ firecrawl-agent init my-app -t next --key anthropic=sk-... --key openai=sk-...
   $ firecrawl-agent init my-app --from user/repo            # from external repo

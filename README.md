@@ -89,7 +89,7 @@ The agent combines web tools with an AI model in a loop - it plans, acts, observ
 | Directory | What's inside |
 |-----------|--------------|
 | [`agent-core/`](./agent-core/) | Core agent logic, orchestrator, Skills, tools |
-| [`agent-templates/`](./agent-templates/) | Server templates - [Next.js](./agent-templates/next/), [Express](./agent-templates/express/) |
+| [`agent-templates/`](./agent-templates/) | Deployment templates - [Next.js](./agent-templates/next/), [Express](./agent-templates/express/), [Library](./agent-templates/library/) |
 
 ## License
 

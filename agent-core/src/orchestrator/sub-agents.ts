@@ -156,7 +156,7 @@ If the task splits into 2+ independent collection tasks, use spawnAgents to para
 
 When finished, write a clear summary of what you found.${preloadedSkills}${customInstr}`,
       tools,
-      stopWhen: stepCountIs(config.maxSteps ?? 10),
+      stopWhen: stepCountIs(config.maxSteps ?? 30),
     });
 
     subAgentTools[`subagent_${config.id}`] = makeSubagentTool(
