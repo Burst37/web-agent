@@ -1302,11 +1302,10 @@ export default function AgentPage() {
         <div className="w-full max-w-640 mt-20">
           <div className="grid grid-cols-2 gap-8">
             {[
-              "Get AAPL financials from finance.yahoo.com/quote/AAPL: income statement, balance sheet, and cash flow",
-              "Extract the top 20 products from amazon.com/s?k=mechanical+keyboards with prices and ratings",
-              "Search for the 5 best AI code editors in 2026, scrape each homepage, and compare their features",
-              "Scrape news.ycombinator.com front page, then scrape the top 5 article links in parallel",
-              "Research Anthropic, OpenAI, and Google DeepMind: scrape each site in parallel, extract team size, funding, and key products",
+              "Get the P/E ratio, stock price, and latest press release for NVIDIA, Google, and Microsoft",
+              "Scrape the top 10 stories from news.ycombinator.com with scores, comment counts, and links",
+              "Compare Cursor, Windsurf, and Claude Code: pricing, features, and supported languages from each site",
+              "Find the 5 most recent YC-backed AI startups on ycombinator.com/companies and get each founder's LinkedIn",
             ].map((prompt) => (
               <button
                 key={prompt}
