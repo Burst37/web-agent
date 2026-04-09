@@ -38,13 +38,46 @@ export interface Manifest {
 let cached: Manifest | null = null;
 let cachedSourceRoot: string | null = null;
 
+const DEFAULT_REMOTE = 'firecrawl/firecrawl-agent';
+
 export function loadManifest(): Manifest {
   if (cached) return cached;
   const manifestPath = path.resolve(__dirname, '../../agent-manifest.json');
-  const raw = fs.readFileSync(manifestPath, 'utf-8');
-  cached = JSON.parse(raw) as Manifest;
-  cachedSourceRoot = path.resolve(__dirname, '../../../..');
-  return cached;
+  if (fs.existsSync(manifestPath)) {
+    const raw = fs.readFileSync(manifestPath, 'utf-8');
+    cached = JSON.parse(raw) as Manifest;
+    cachedSourceRoot = path.resolve(__dirname, '../../../..');
+    return cached;
+  }
+  // Not running from within the repo - clone from GitHub
+  const { manifest } = loadExternalManifestSync(DEFAULT_REMOTE);
+  return manifest;
+}
+
+function cloneRepo(source: string, dest: string): void {
+  const ghToken = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+
+  // Try gh CLI first (handles private repos via gh auth)
+  try {
+    execSync(`gh repo clone ${source} "${dest}" -- --depth 1`, { stdio: 'pipe' });
+    return;
+  } catch {}
+
+  // Fall back to git clone with token if available
+  const cloneUrl = ghToken
+    ? `https://${ghToken}@github.com/${source}.git`
+    : `https://github.com/${source}.git`;
+  execSync(`git clone --depth 1 ${cloneUrl} "${dest}"`, { stdio: 'pipe' });
+}
+
+function loadExternalManifestSync(source: string): { manifest: Manifest; sourceRoot: string } {
+  const tmpDir = fs.mkdtempSync(path.join(require('os').tmpdir(), 'fc-agent-'));
+  cloneRepo(source, tmpDir);
+  const manifestPath = path.join(tmpDir, 'agent-manifest.json');
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8')) as Manifest;
+  cached = manifest;
+  cachedSourceRoot = tmpDir;
+  return { manifest, sourceRoot: tmpDir };
 }
 
 /**
@@ -76,11 +109,11 @@ export async function loadExternalManifest(source: string): Promise<{
   const tmpDir = fs.mkdtempSync(path.join(require('os').tmpdir(), 'fc-agent-'));
   info(`Cloning ${source}...`);
   try {
-    execSync(`git clone --depth 1 https://github.com/${source}.git "${tmpDir}"`, {
-      stdio: 'pipe',
-    });
+    cloneRepo(source, tmpDir);
   } catch {
-    throw new Error(`Failed to clone https://github.com/${source} — check the repo exists and is accessible`);
+    throw new Error(
+      `Failed to clone ${source} - for private repos, install the gh CLI (gh auth login) or set GITHUB_TOKEN`
+    );
   }
 
   const manifestPath = path.join(tmpDir, 'agent-manifest.json');
