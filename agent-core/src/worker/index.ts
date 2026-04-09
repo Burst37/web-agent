@@ -143,7 +143,13 @@ export function createWorkerTool(
                   else if (name === "bashExec" || name === "bash_exec")
                     detail = String(args.command ?? "").slice(0, 80);
                   else if (name === "load_skill")
-                    detail = String(args.name ?? args.skill ?? "");
+                    detail = `Loading skill: ${args.name ?? args.skill ?? ""}`;
+                  else if (name === "read_skill_resource")
+                    detail = `Reading: ${args.file ?? args.resource ?? args.name ?? ""}`;
+                  else if (name === "lookup_site_playbook")
+                    detail = `Playbook: ${args.domain ?? args.url ?? ""}`;
+                  else if (name === "formatOutput")
+                    detail = `Formatting ${args.format ?? "output"}`;
                   else detail = JSON.stringify(args).slice(0, 80);
                   return { tool: name, detail, input: args };
                 });

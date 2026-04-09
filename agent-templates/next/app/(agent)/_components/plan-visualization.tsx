@@ -811,8 +811,11 @@ function describeWorkerStep(step: { tool: string; detail: string; input: Record<
     case "bash_exec":
       return { label: step.detail || "Running command", url: null, icon: "bash" };
     case "load_skill":
+      return { label: step.detail?.startsWith("Loading") ? step.detail : `Loading skill: ${step.detail || "unknown"}`, url: null, icon: "skill" };
+    case "read_skill_resource":
+      return { label: step.detail?.startsWith("Reading") ? step.detail : `Reading: ${step.input.file ?? step.input.resource ?? step.detail ?? "resource"}`, url: null, icon: "skill" };
     case "lookup_site_playbook":
-      return { label: step.detail || step.tool, url: null, icon: "skill" };
+      return { label: step.detail?.startsWith("Playbook") ? step.detail : `Playbook: ${step.input.domain ?? step.detail ?? "site"}`, url: null, icon: "skill" };
     case "formatOutput":
       return { label: "Formatting output", url: null, icon: "other" };
     case "thinking":
