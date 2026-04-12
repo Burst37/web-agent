@@ -1,33 +1,26 @@
 import { createFirecrawlAgent, toResponse } from "@/agent-core";
-import { getFirecrawlKey, getProviderApiKeys } from "@agent/_lib/config/keys";
 
 export const maxDuration = 300;
 
 /**
- * POST /api/v1/run
- *
- * Consolidated agent endpoint. Body shape:
- *   { prompt: string, stream?: boolean, model?: string | ModelConfig }
- *
- * Streaming returns SSE `data: {...AgentEvent}\n\n` events.
- * Non-streaming returns `{ text, messages }`.
+ * POST /api/v1/run — consolidated agent endpoint.
+ *   Body: { prompt, stream?, model? }
+ *   Stream mode returns `data: {...AgentEvent}\n\n` SSE events.
+ *   Otherwise returns `{ text, messages }`.
  */
 export async function POST(req: Request) {
-  const body = await req.json();
-  const { prompt, stream = false, model, ...rest } = body as {
-    prompt: string;
+  const { prompt, stream = false, model } = (await req.json()) as {
+    prompt?: string;
     stream?: boolean;
-    model?: string | { provider: string; model: string };
+    model?: string;
   };
 
-  if (!prompt) {
-    return Response.json({ error: "prompt is required" }, { status: 400 });
-  }
+  if (!prompt) return Response.json({ error: "prompt is required" }, { status: 400 });
 
-  const firecrawlApiKey = getFirecrawlKey();
+  const firecrawlApiKey = process.env.FIRECRAWL_API_KEY;
   if (!firecrawlApiKey) {
     return Response.json(
-      { error: "FIRECRAWL_API_KEY is missing. Set it in .env.local or Settings." },
+      { error: "FIRECRAWL_API_KEY is missing. Set it in .env.local." },
       { status: 500 },
     );
   }
@@ -35,17 +28,13 @@ export async function POST(req: Request) {
   try {
     const agent = await createFirecrawlAgent({
       firecrawlApiKey,
-      model: model ?? "anthropic:claude-sonnet-4-6",
-      apiKeys: getProviderApiKeys(),
+      model: model ?? process.env.MODEL ?? "anthropic:claude-sonnet-4-6",
     });
-
     const input = { messages: [{ role: "user" as const, content: prompt }] };
 
-    if (stream) {
-      return toResponse(agent, input);
-    }
+    if (stream) return toResponse(agent, input);
 
-    const result = await agent.invoke(input, rest as any);
+    const result = await agent.invoke(input);
     const last = result.messages[result.messages.length - 1];
     return Response.json({
       text: typeof last.content === "string" ? last.content : JSON.stringify(last.content),
