@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
-    "build": "node scripts/verify-agent-core.mjs && next build --webpack",
+    "dev": "next dev",
+    "build": "node scripts/verify-agent-core.mjs && next build",
     "start": "next start",
     "lint": "next lint"
   },

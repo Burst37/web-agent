@@ -904,23 +904,29 @@ function BashResult({ command, stdout, stderr, exitCode, rawInput, rawOutput, to
               <div className="text-mono-x-small text-black-alpha-32 mb-3">command</div>
               <pre className="text-mono-small text-accent-black whitespace-pre-wrap break-all">{command}</pre>
             </div>
-            {hasOutput && (
-              <div className="border-t border-border-faint bg-black-alpha-2 px-14 py-8 max-h-[400px] overflow-auto no-scrollbar">
-                {stdout && (
-                  <>
-                    <div className="text-mono-x-small text-black-alpha-32 mb-3">stdout</div>
-                    <pre className="text-mono-small text-accent-black whitespace-pre-wrap">{stdout}</pre>
-                  </>
-                )}
-                {stderr && (
-                  <>
-                    <div className="text-mono-x-small text-accent-crimson/60 mt-8 mb-3">stderr</div>
-                    <pre className="text-mono-small text-accent-crimson whitespace-pre-wrap">{stderr}</pre>
-                  </>
-                )}
+
+            {/* stdout/stderr — always render with a placeholder when empty so
+                the user sees the response landed, just with nothing printed. */}
+            <div className="border-t border-border-faint bg-black-alpha-2 px-14 py-8 max-h-[400px] overflow-auto no-scrollbar">
+              <div className="text-mono-x-small text-black-alpha-32 mb-3">stdout</div>
+              <pre className="text-mono-small text-accent-black whitespace-pre-wrap">{stdout || <span className="text-black-alpha-24 italic">(empty)</span>}</pre>
+              {stderr && (
+                <>
+                  <div className="text-mono-x-small text-accent-crimson/60 mt-8 mb-3">stderr</div>
+                  <pre className="text-mono-small text-accent-crimson whitespace-pre-wrap">{stderr}</pre>
+                </>
+              )}
+            </div>
+
+            {/* Raw response — full tool output, always inline. Shows exitCode,
+                ms, context, etc. alongside the stdout echo. No input section
+                because the command block above already has it. */}
+            {rawOutput && (
+              <div className="border-t border-border-faint bg-black-alpha-1 px-14 py-8 max-h-[300px] overflow-auto no-scrollbar">
+                <div className="text-mono-x-small text-black-alpha-32 mb-3">raw response</div>
+                <pre className="text-mono-small text-accent-black whitespace-pre-wrap break-all">{rawOutput}</pre>
               </div>
             )}
-            <RawIOToggle input={rawInput} output={rawOutput} toolName={toolName} />
           </>
         )}
       </div>
@@ -1758,9 +1764,15 @@ function extractTimeline(messages: UIMessage[]): {
         const status = isComplete ? "complete" as const : "running" as const;
 
         // Serialize raw input/output once so each tile can expose "View raw".
+        // Always serialize whatever output is present — even `{}` or an
+        // `{error: "..."}` envelope — so users can inspect the response.
         const rawInputStr = Object.keys(input).length > 0 ? JSON.stringify(input, null, 2) : undefined;
-        const rawOutputStr = hasOutput
-          ? (typeof rawOutput === "string" ? rawOutput as string : JSON.stringify(rawOutput, null, 2))
+        const rawOutputStr = isComplete
+          ? (rawOutput === undefined || rawOutput === null
+              ? "(no output)"
+              : typeof rawOutput === "string"
+                ? rawOutput as string
+                : JSON.stringify(rawOutput, null, 2))
           : undefined;
 
         // Record the pre-branch length so we can retroactively stamp any items
@@ -1771,25 +1783,40 @@ function extractTimeline(messages: UIMessage[]): {
           const results: SearchResult[] = [];
           if (output && typeof output === "object") {
             const o = output as Record<string, unknown>;
-            // Find the results array -- Firecrawl returns { web: [...] } or { data: [...] }
-            let data: unknown[] | undefined;
-            if (Array.isArray(o.web)) data = o.web as unknown[];
-            else if (Array.isArray(o.data)) data = o.data as unknown[];
-            else if (Array.isArray(o.results)) data = o.results as unknown[];
-            else if (Array.isArray(output)) data = output as unknown[];
-
-            if (data) {
-              for (const r of data) {
-                const item = r as Record<string, unknown>;
-                if (item && typeof item === "object" && (item.url || item.title)) {
-                  results.push({
-                    title: String(item.title ?? ""),
-                    url: String(item.url ?? ""),
-                    description: String(item.description ?? item.snippet ?? ""),
-                    markdown: typeof item.markdown === "string" ? item.markdown : undefined,
-                  });
-                }
+            // Firecrawl's shape is usually `{web, news, images}` at the top,
+            // but the raw API wraps it in `{data: {...}}` and the SDK
+            // sometimes passes that through verbatim. Check both levels.
+            const levels: Record<string, unknown>[] = [o];
+            if (o.data && typeof o.data === "object" && !Array.isArray(o.data)) {
+              levels.push(o.data as Record<string, unknown>);
+            }
+            const combined: unknown[] = [];
+            for (const lvl of levels) {
+              for (const key of ["web", "news", "images", "results"]) {
+                const arr = lvl[key];
+                if (Array.isArray(arr)) combined.push(...arr);
               }
+              const dataArr = lvl.data;
+              if (Array.isArray(dataArr)) combined.push(...(dataArr as unknown[]));
+            }
+            if (Array.isArray(output)) combined.push(...(output as unknown[]));
+
+            for (const r of combined) {
+              const item = r as Record<string, unknown>;
+              if (!item || typeof item !== "object") continue;
+              if (!item.url && !item.title && !item.imageUrl) continue;
+              // Query-format results carry the extracted answer either on an
+              // `answer` field or inside a nested `json`/`extract` object.
+              const answer = typeof item.answer === "string" ? item.answer as string : undefined;
+              const desc = String(item.description ?? item.snippet ?? answer ?? "");
+              results.push({
+                title: String(item.title ?? ""),
+                url: String(item.url ?? item.imageUrl ?? ""),
+                description: desc,
+                markdown: typeof item.markdown === "string"
+                  ? item.markdown as string
+                  : answer ?? undefined,
+              });
             }
           }
           const searchCredits = typeof (output as Record<string, unknown>).creditsUsed === "number"
