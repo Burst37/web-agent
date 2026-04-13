@@ -1,9 +1,12 @@
-import { generateText, type ToolSet, type StepResult } from "ai";
-import { createOrchestrator, type OrchestratorOptions } from "./orchestrator";
+import { generateText } from "ai";
+import { createDeepAgent, type DeepAgent, type SubAgent } from "deepagents";
+import { tool as lcTool } from "langchain";
+import { initChatModel } from "langchain/chat_models/universal";
 import { resolveModel } from "./resolve-model";
-import { discoverSkills } from "./skills/discovery";
-import { workerProgress } from "./worker";
+import { discoverSkills, getDefaultSkillsDir } from "./skills/discovery";
 import { buildFirecrawlToolkit } from "./toolkit";
+import { formatOutput, bashExec, createExportSkillTool, initBashWithFiles } from "./tools";
+import { workerProgress } from "./worker";
 import type {
   CreateAgentOptions,
   ExportedSkill,
@@ -15,7 +18,89 @@ import type {
   StepDetail,
 } from "./types";
 
-type Step = StepResult<ToolSet>;
+// --- AI SDK tool → LangChain tool shim ---
+// `tool({...})` from "ai" is an identity helper at runtime. Extract the three
+// fields Deep Agents needs and wrap with langchain's `tool()`.
+//
+// This wrapper also **gates `formatOutput`**: it reads a per-run `runState`
+// object off `config.configurable` (injected from the request handler) and
+// refuses to run formatOutput until at least one data-collection tool has
+// returned non-empty output. Prompts tell the model this too, but that's
+// advice — this is enforcement. Stops the "formatOutput called prematurely
+// with stub data" failure mode at the source.
+const DATA_TOOLS = new Set([
+  "scrape", "scrapeBash", "search", "interact",
+  "extract", "crawl", "map", "batchScrape",
+]);
+
+function resultHasData(result: unknown): boolean {
+  if (result == null) return false;
+  if (typeof result === "string") return result.trim().length > 0;
+  if (typeof result === "object") {
+    const o = result as Record<string, unknown>;
+    // Explicit error envelope → not data
+    if (typeof o.error === "string" && o.error) return false;
+    // Search/scrape-style shapes — consider data present if any of these
+    // resolve to non-empty.
+    const candidates = [
+      o.markdown, o.content, o.html, o.stdout, o.text, o.data,
+      o.web, o.news, o.images, o.results, o.pages, o.links,
+      o.json, o.extract, o.preview,
+    ];
+    for (const c of candidates) {
+      if (typeof c === "string" && c.trim().length > 0) return true;
+      if (Array.isArray(c) && c.length > 0) return true;
+      if (c && typeof c === "object" && Object.keys(c as object).length > 0) return true;
+    }
+    // Fallback: any non-metadata key means something came back
+    const META = new Set(["creditsUsed", "status", "statusCode", "scrapeId", "cacheState", "cachedAt", "proxyUsed", "url"]);
+    return Object.keys(o).some((k) => !META.has(k));
+  }
+  return true;
+}
+
+function aiToolToLc(name: string, t: any) {
+  return lcTool(
+    async (input: unknown, config?: { configurable?: { runState?: { dataCollected?: boolean } } }) => {
+      const runState = config?.configurable?.runState;
+
+      if (name === "formatOutput" && runState && !runState.dataCollected) {
+        return JSON.stringify({
+          error:
+            "No data collected yet. You must call a data-gathering tool " +
+            "(search, scrape, scrapeBash, interact, extract, map, or crawl) " +
+            "and receive a non-empty result before calling formatOutput. " +
+            "Gather the data first, then call formatOutput with the results.",
+        });
+      }
+
+      const result = await t.execute!(input as never);
+
+      if (runState && DATA_TOOLS.has(name) && resultHasData(result)) {
+        runState.dataCollected = true;
+      }
+
+      return typeof result === "string" ? result : JSON.stringify(result);
+    },
+    { name, description: t.description ?? "", schema: t.inputSchema as never },
+  );
+}
+
+function aiToolkitToLc(tools: Record<string, any>) {
+  return Object.entries(tools).map(([n, t]) => aiToolToLc(n, t));
+}
+
+// --- Model resolver: ModelConfig → LangChain chat model for Deep Agents ---
+// Uses langchain's universal `initChatModel` factory, so every provider works
+// without a per-provider switch case.
+async function resolveLcModel(config: ModelConfig, apiKeys?: Record<string, string>) {
+  const keyFor = config.apiKey ?? apiKeys?.[config.provider];
+  const modelName = `${config.provider}:${config.model}`;
+  const opts: Record<string, unknown> = {};
+  if (keyFor) opts.apiKey = keyFor;
+  if (config.baseURL) opts.configuration = { baseURL: config.baseURL };
+  return initChatModel(modelName, opts);
+}
 
 export class FirecrawlAgent {
   constructor(private options: CreateAgentOptions) {}
@@ -30,140 +115,103 @@ export class FirecrawlAgent {
     return { inputTokens, outputTokens, totalTokens: inputTokens + outputTokens };
   }
 
-  /**
-   * Run the agent to completion. Returns the full result.
-   */
   async run(params: RunParams): Promise<RunResult> {
     workerProgress.clear();
-    const orchestrator = await this.buildOrchestrator(params);
+    const agent = await this.buildAgent(params);
+    const allMsgs: any[] = [];
 
-    const result = await orchestrator.generate({
-      prompt: params.prompt,
-      onStepFinish: params.onStep
-        ? ({ text, toolCalls, usage }) => {
-            if (text) params.onStep!({ type: "text", text });
-            for (const tc of toolCalls ?? []) {
-              if (!tc) continue;
-              params.onStep!({
-                type: "tool-call",
-                toolName: tc.toolName,
-                input: tc.input,
-              });
-            }
-            if (usage) params.onStep!({ type: "usage", usage });
-          }
-        : undefined,
-    });
+    try {
+      const result = await agent.invoke({
+        messages: [{ role: "user", content: this.buildPrompt(params) }],
+      });
+      for (const m of result.messages ?? []) allMsgs.push(m);
+    } catch (err) {
+      throw err;
+    }
 
-    const steps = this.mapSteps(result.steps);
-    const extracted = this.extractFormattedOutput(result.steps, params.format);
+    const steps = this.mapSteps(allMsgs);
+    const extracted = this.extractFormattedOutput(steps, params.format);
     const workerUsage = this.sumWorkerUsage();
+    const modelUsage = this.sumModelUsage(allMsgs);
 
     const runResult: RunResult = {
-      text: result.text ?? "",
+      text: extracted?.content ?? this.finalText(allMsgs),
       data: extracted?.content,
       format: extracted?.format ?? params.format,
       steps,
       usage: {
-        inputTokens: (result.usage?.inputTokens ?? 0) + workerUsage.inputTokens,
-        outputTokens: (result.usage?.outputTokens ?? 0) + workerUsage.outputTokens,
-        totalTokens: (result.usage?.totalTokens ?? 0) + workerUsage.totalTokens,
+        inputTokens: modelUsage.inputTokens + workerUsage.inputTokens,
+        outputTokens: modelUsage.outputTokens + workerUsage.outputTokens,
+        totalTokens: modelUsage.totalTokens + workerUsage.totalTokens,
       },
     };
 
-    // Extract exported skill from tool results (agent called exportSkill during the run)
-    const exported = this.extractExportedSkill(result.steps);
-    if (exported) {
-      runResult.exportedSkill = exported;
+    if (params.onStep) {
+      for (const step of steps) {
+        if (step.text) params.onStep({ type: "text", text: step.text });
+        for (const tc of step.toolCalls) {
+          params.onStep({ type: "tool-call", toolName: tc.name, input: tc.input });
+        }
+      }
     }
+
+    const exported = this.extractExportedSkill(steps);
+    if (exported) runResult.exportedSkill = exported;
 
     return runResult;
   }
 
-  /**
-   * Stream agent events as an async generator. Events are yielded in real-time
-   * as the agent executes — tool calls, results, and text appear as they happen.
-   */
   async *stream(params: RunParams): AsyncGenerator<AgentEvent> {
     workerProgress.clear();
-    const orchestrator = await this.buildOrchestrator(params);
+    const agent = await this.buildAgent(params);
+    const allMsgs: any[] = [];
 
-    // Channel: callback pushes events, generator pulls them
-    const queue: AgentEvent[] = [];
-    let resolve: (() => void) | null = null;
-    let done = false;
-
-    const push = (event: AgentEvent) => {
-      queue.push(event);
-      if (resolve) { resolve(); resolve = null; }
-    };
-
-    const generatePromise = orchestrator.generate({
-      prompt: params.prompt,
-      onStepFinish: ({ text, toolCalls, toolResults, usage }) => {
-        if (text) push({ type: "text", content: text });
-        for (const tc of toolCalls ?? []) {
-          if (!tc) continue;
-          const c = tc as Record<string, unknown>;
-          push({
-            type: "tool-call",
-            toolName: tc.toolName,
-            input: c.args ?? c.input,
-          });
+    try {
+      for await (const [mode, chunk] of await agent.stream(
+        { messages: [{ role: "user", content: this.buildPrompt(params) }] },
+        { streamMode: ["messages", "updates"] },
+      )) {
+        if (mode === "messages") {
+          const [msg] = chunk as unknown as [any, unknown];
+          if (msg?.text) yield { type: "text", content: msg.text };
+          for (const tc of msg?.tool_calls ?? []) {
+            yield { type: "tool-call", toolName: tc.name, input: tc.args };
+          }
+        } else if (mode === "updates") {
+          const update = chunk as Record<string, any>;
+          for (const node of Object.values(update)) {
+            for (const m of (node as any)?.messages ?? []) {
+              allMsgs.push(m);
+              const t = m?.type ?? m?._getType?.();
+              if (t === "tool" || t === "ToolMessage") {
+                yield { type: "tool-result", toolName: m.name, output: m.content };
+              }
+            }
+          }
         }
-        for (const tr of toolResults ?? []) {
-          if (!tr) continue;
-          const r = tr as Record<string, unknown>;
-          push({
-            type: "tool-result",
-            toolName: tr.toolName,
-            output: r.output ?? r.result,
-          });
-        }
-        if (usage) push({ type: "usage", usage });
-      },
-    }).then((result) => {
-      const steps = this.mapSteps(result.steps);
-      const extracted = this.extractFormattedOutput(result.steps, params.format);
-      const workerUsage = this.sumWorkerUsage();
-
-      push({
-        type: "done",
-        text: extracted?.content ?? result.text ?? "",
-        steps,
-        usage: {
-          inputTokens: (result.usage?.inputTokens ?? 0) + workerUsage.inputTokens,
-          outputTokens: (result.usage?.outputTokens ?? 0) + workerUsage.outputTokens,
-          totalTokens: (result.usage?.totalTokens ?? 0) + workerUsage.totalTokens,
-        },
-      });
-      done = true;
-      if (resolve) { resolve(); resolve = null; }
-    }).catch((err) => {
-      push({ type: "error", error: err instanceof Error ? err.message : String(err) });
-      done = true;
-      if (resolve) { resolve(); resolve = null; }
-    });
-
-    // Yield events as they arrive
-    while (true) {
-      if (queue.length > 0) {
-        yield queue.shift()!;
-        continue;
       }
-      if (done) break;
-      await new Promise<void>((r) => { resolve = r; });
+    } catch (err) {
+      yield { type: "error", error: err instanceof Error ? err.message : String(err) };
+      return;
     }
 
-    // Drain any remaining
-    while (queue.length > 0) yield queue.shift()!;
+    const steps = this.mapSteps(allMsgs);
+    const extracted = this.extractFormattedOutput(steps, params.format);
+    const workerUsage = this.sumWorkerUsage();
+    const modelUsage = this.sumModelUsage(allMsgs);
 
-    await generatePromise;
+    yield {
+      type: "done",
+      text: extracted?.content ?? this.finalText(allMsgs),
+      steps,
+      usage: {
+        inputTokens: modelUsage.inputTokens + workerUsage.inputTokens,
+        outputTokens: modelUsage.outputTokens + workerUsage.outputTokens,
+        totalTokens: modelUsage.totalTokens + workerUsage.totalTokens,
+      },
+    };
   }
 
-  /**
-   * Return a Web Response with SSE stream. Works with Next.js, Hono, Bun, etc.
-   */
   toResponse(params: RunParams): Response {
     const encoder = new TextEncoder();
     const self = this;
@@ -171,9 +219,7 @@ export class FirecrawlAgent {
       async start(controller) {
         try {
           for await (const event of self.stream(params)) {
-            controller.enqueue(
-              encoder.encode(`data: ${JSON.stringify(event)}\n\n`),
-            );
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
           }
         } catch (err) {
           controller.enqueue(
@@ -184,7 +230,6 @@ export class FirecrawlAgent {
         }
       },
     });
-
     return new Response(stream, {
       headers: {
         "Content-Type": "text/event-stream",
@@ -194,16 +239,12 @@ export class FirecrawlAgent {
     });
   }
 
-  /**
-   * Pipe SSE events directly to an Express/Node response object.
-   */
   async sse(
     params: RunParams,
-    res: { setHeader(k: string, v: string): void; write(chunk: string): void; end(): void },
+    res: { setHeader(k: string, v: string): void; write(c: string): void; end(): void },
   ): Promise<void> {
     res.setHeader("Content-Type", "text/event-stream");
     res.setHeader("Cache-Control", "no-cache");
-
     try {
       for await (const event of this.stream(params)) {
         res.write(`data: ${JSON.stringify(event)}\n\n`);
@@ -215,9 +256,6 @@ export class FirecrawlAgent {
     }
   }
 
-  /**
-   * Generate an execution plan without running the agent.
-   */
   async plan(prompt: string): Promise<string> {
     const model = await resolveModel(this.options.model, this.options.apiKeys);
     const skills = await discoverSkills(this.options.skillsDir);
@@ -253,12 +291,8 @@ Do not use emojis.`,
     return text;
   }
 
-  /**
-   * Get the raw ToolLoopAgent for AI SDK integration.
-   * Use this when you need direct access to the underlying agent.
-   */
-  async createRawAgent(params: RunParams) {
-    return this.buildOrchestrator(params);
+  async createRawAgent(params: RunParams): Promise<DeepAgent> {
+    return this.buildAgent(params);
   }
 
   // --- Private helpers ---
@@ -267,103 +301,189 @@ Do not use emojis.`,
 
   private getToolkit(): Toolkit {
     if (this._toolkit) return this._toolkit;
-    this._toolkit = this.options.toolkit ?? buildFirecrawlToolkit(this.options.firecrawlApiKey, this.options.firecrawlOptions);
+    this._toolkit =
+      this.options.toolkit ??
+      buildFirecrawlToolkit(this.options.firecrawlApiKey, this.options.firecrawlOptions);
     return this._toolkit;
   }
 
-  private async buildOrchestrator(params: RunParams) {
-    const opts: OrchestratorOptions = {
-      config: {
-        prompt: params.prompt,
-        urls: params.urls,
-        schema: params.schema,
-        columns: params.columns,
-        uploads: params.uploads,
-        model: this.options.model,
-        subAgentModel: this.options.subAgentModel,
-        skills: params.skills ?? [],
-        skillInstructions: params.skillInstructions,
-        subAgents: params.subAgents ?? [],
-        maxSteps: params.maxSteps ?? this.options.maxSteps,
-        exportSkill: params.exportSkill,
-      },
-      toolkit: this.getToolkit(),
-      apiKeys: this.options.apiKeys,
-      skillsDir: this.options.skillsDir,
-      maxWorkers: this.options.maxWorkers,
-      workerMaxSteps: this.options.workerMaxSteps,
-      appSections: this.options.appSections,
+  private async buildAgent(params: RunParams): Promise<DeepAgent> {
+    const model = await resolveLcModel(this.options.model, this.options.apiKeys);
+    const subAgentModel = this.options.subAgentModel
+      ? await resolveLcModel(this.options.subAgentModel, this.options.apiKeys)
+      : model;
+    const toolkit = this.getToolkit();
+    const skillsDir = this.options.skillsDir ?? getDefaultSkillsDir();
+
+    const uploadedFiles: Record<string, string> = {};
+    if (params.uploads?.length) {
+      for (const upload of params.uploads) {
+        const isText =
+          upload.type.startsWith("text/") ||
+          /\.(csv|tsv|json|md|txt|xml|yaml|yml|toml|ini|log|sql|html|css|js|ts|py|rb|sh)$/i.test(upload.name);
+        const safe = upload.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        uploadedFiles[isText ? `/data/${safe}` : `/data/${safe}.b64`] = upload.content;
+      }
+    }
+    if (Object.keys(uploadedFiles).length > 0) await initBashWithFiles(uploadedFiles);
+
+    const exportSkillTool = createExportSkillTool(skillsDir);
+
+    // Tools the sub-agents get: data-gathering only. `formatOutput` and
+    // `exportSkill` are ORCHESTRATOR-ONLY — a sub-agent calling formatOutput
+    // would open the artifact panel mid-run with partial data. `bashExec`
+    // stays available because sub-agents may need to reshape data.
+    const subAgentTools = [
+      ...aiToolkitToLc(toolkit.tools as Record<string, any>),
+      aiToolToLc("bashExec", bashExec),
+    ];
+
+    // Orchestrator tool set includes the terminal formatOutput + exportSkill.
+    const tools = [
+      ...subAgentTools,
+      aiToolToLc("formatOutput", formatOutput),
+      aiToolToLc("exportSkill", exportSkillTool),
+    ];
+
+    // Override Deep Agents' default "general-purpose" sub-agent so it inherits
+    // the RESTRICTED tool set. Otherwise it clones the parent's tools and can
+    // fire formatOutput prematurely from inside a task run.
+    const generalPurposeSubAgent: SubAgent = {
+      name: "general-purpose",
+      description: "General-purpose data-gathering sub-agent. Use for multi-step research requiring search/scrape/scrapeBash. Returns raw findings; DOES NOT format final output — that's the orchestrator's job.",
+      systemPrompt: "You are a data-gathering sub-agent. Use search/scrape/scrapeBash/interact/extract/map/crawl to collect what was requested. Return ONLY a terse JSON-shaped block of raw facts (fields, URLs, numbers). No prose. No 'summary'. No narration. No markdown headings or bullet commentary. No reflection on what you did. Just the data. Example good output: `{ \"ticker\": \"NVDA\", \"price\": 142.15, \"pe_ratio\": 68.3, \"sources\": [\"https://…\"] }`. The orchestrator will aggregate your raw data with others and produce the final artifact — you don't need to summarize, explain, or format.",
+      model: subAgentModel,
+      tools: subAgentTools,
+      skills: [skillsDir],
     };
 
-    // Add format-specific instructions to the prompt
-    if (params.format) {
-      const formatInstructions = this.buildFormatInstructions(params);
-      opts.config.prompt = `${params.prompt}${formatInstructions}`;
-    }
+    const userSubagents: SubAgent[] = await Promise.all(
+      (params.subAgents ?? []).map(async (cfg) => {
+        const filtered = toolkit.createFiltered ? toolkit.createFiltered(cfg.tools) : toolkit.tools;
+        return {
+          name: cfg.name,
+          description: cfg.description,
+          systemPrompt: cfg.instructions ?? `You are ${cfg.name}.`,
+          model: cfg.model ? await resolveLcModel(cfg.model, this.options.apiKeys) : subAgentModel,
+          tools: aiToolkitToLc(filtered as Record<string, any>),
+          skills: cfg.skills ?? [],
+        };
+      }),
+    );
 
-    return createOrchestrator(opts);
+    const subagents: SubAgent[] = [generalPurposeSubAgent, ...userSubagents];
+
+    const appSystemPrompt = (this.options.appSections ?? []).join("\n\n");
+    const systemPrompt = [toolkit.systemPrompt, appSystemPrompt].filter(Boolean).join("\n\n");
+
+    const skills = [skillsDir, ...(params.skills ?? [])];
+
+    // NB: Deep Agents already includes SummarizationMiddleware in its default
+    // stack — passing another instance throws "Middleware ... defined multiple
+    // times". We trust the default thresholds for now; if history bloat recurs,
+    // we'll need to override via a custom graph or monkey-patch the default.
+    return createDeepAgent({
+      model: model as any,
+      tools,
+      subagents,
+      skills,
+      systemPrompt: systemPrompt || undefined,
+    });
   }
 
-  private buildFormatInstructions(params: RunParams): string {
-    const { format, schema, columns } = params;
-    // When schema/columns are provided, the research plan in the system prompt
-    // already contains the full schema. Keep user-prompt instructions brief.
-    if (format === "json" && schema) {
-      return `\n\nCollect all data from your research plan, then call formatOutput with format "json".`;
-    } else if (format === "json") {
-      return `\n\nReturn the data as structured JSON. Call formatOutput with format "json" and the data as a well-structured JSON object or array.`;
-    } else if (format === "csv" && columns?.length) {
-      return `\n\nCollect all column data from your research plan, then call formatOutput with format "csv" and columns: ${JSON.stringify(columns)}.`;
-    } else if (format === "csv") {
-      return `\n\nReturn the data as CSV. Call formatOutput with format "csv" and data as array of objects.`;
-    } else if (format === "markdown") {
-      return `\n\nReturn the data as clean, well-structured markdown. Call formatOutput with format "text" and the markdown content.`;
+  private buildPrompt(params: RunParams): string {
+    const parts = [params.prompt];
+    if (params.urls?.length) parts.push(`\n\nStart with these URLs: ${params.urls.join(", ")}`);
+    if (params.schema) {
+      parts.push(
+        `\n\nReturn data matching this schema exactly:\n\`\`\`json\n${JSON.stringify(params.schema, null, 2)}\n\`\`\`\nCall formatOutput with format "json" and the collected data when done.`,
+      );
+    }
+    if (params.columns?.length) {
+      parts.push(
+        `\n\nRequired columns: ${params.columns.join(", ")}\nCall formatOutput with format "csv" and columns: ${JSON.stringify(params.columns)} when done.`,
+      );
+    }
+    if (params.format === "markdown" && !params.schema && !params.columns) {
+      parts.push(`\n\nCall formatOutput with format "text" and the markdown content when done.`);
+    }
+    return parts.join("");
+  }
+
+  private mapSteps(messages: any[]): StepDetail[] {
+    const steps: StepDetail[] = [];
+    let current: StepDetail = { text: "", toolCalls: [], toolResults: [] };
+    for (const msg of messages) {
+      const t = msg?.type ?? msg?._getType?.();
+      if (t === "ai" || t === "AIMessage" || t === "AIMessageChunk") {
+        if (current.text || current.toolCalls.length || current.toolResults.length) {
+          steps.push(current);
+          current = { text: "", toolCalls: [], toolResults: [] };
+        }
+        if (msg.content) current.text = typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content);
+        for (const tc of msg.tool_calls ?? []) {
+          current.toolCalls.push({ name: tc.name, input: tc.args });
+        }
+      } else if (t === "tool" || t === "ToolMessage") {
+        const output = this.tryParse(msg.content);
+        current.toolResults.push({ name: msg.name, output });
+      }
+    }
+    if (current.text || current.toolCalls.length || current.toolResults.length) {
+      steps.push(current);
+    }
+    return steps;
+  }
+
+  private finalText(messages: any[]): string {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      const t = m?.type ?? m?._getType?.();
+      if ((t === "ai" || t === "AIMessage" || t === "AIMessageChunk") && m.content) {
+        return typeof m.content === "string" ? m.content : JSON.stringify(m.content);
+      }
     }
     return "";
   }
 
-  private mapSteps(steps: Step[]): StepDetail[] {
-    return (steps ?? []).map((s) => ({
-      text: s.text ?? "",
-      toolCalls: (s.toolCalls ?? []).filter(Boolean).map((tc) => ({
-        name: tc.toolName ?? "",
-        input: tc.input,
-      })),
-      toolResults: (s.toolResults ?? []).filter(Boolean).map((tr) => ({
-        name: tr.toolName ?? "",
-        output: tr.output,
-      })),
-    }));
+  private sumModelUsage(messages: any[]) {
+    let inputTokens = 0;
+    let outputTokens = 0;
+    for (const m of messages) {
+      const u = m?.usage_metadata ?? m?.response_metadata?.usage;
+      if (u) {
+        inputTokens += u.input_tokens ?? u.promptTokens ?? 0;
+        outputTokens += u.output_tokens ?? u.completionTokens ?? 0;
+      }
+    }
+    return { inputTokens, outputTokens, totalTokens: inputTokens + outputTokens };
   }
 
-  private extractFormattedOutput(steps: Step[], format?: string): { format: string; content: string } | null {
+  private extractFormattedOutput(
+    steps: StepDetail[],
+    format?: string,
+  ): { format: string; content: string } | null {
     if (!format) return null;
     for (const step of [...steps].reverse()) {
-      for (const tr of step.toolResults ?? []) {
-        if (tr.toolName === "formatOutput") {
-          const output = tr.output as { format?: string; content?: string } | undefined;
-          if (output?.content) {
-            return { format: output.format ?? format, content: output.content };
-          }
+      for (const tr of step.toolResults) {
+        if (tr.name === "formatOutput") {
+          const parsed = (tr.output ?? {}) as { format?: string; content?: string };
+          if (parsed.content) return { format: parsed.format ?? format, content: parsed.content };
         }
       }
     }
     return null;
   }
 
-  /**
-   * Extract an exported skill from the agent's tool results.
-   * The agent calls exportSkill as a tool during the run — we just find its output.
-   */
-  private extractExportedSkill(steps: Step[]): ExportedSkill | null {
+  private extractExportedSkill(steps: StepDetail[]): ExportedSkill | null {
     for (const step of [...steps].reverse()) {
-      for (const tr of step.toolResults ?? []) {
-        if (tr.toolName === "exportSkill") {
-          const output = tr.output as { name?: string; skillMd?: string } | undefined;
-          if (output?.skillMd) {
+      for (const tr of step.toolResults) {
+        if (tr.name === "exportSkill") {
+          const parsed = (tr.output ?? {}) as { name?: string; skillMd?: string };
+          if (parsed.skillMd) {
             return {
-              name: output.name ?? "exported-skill",
-              skillMd: output.skillMd,
+              name: parsed.name ?? "exported-skill",
+              skillMd: parsed.skillMd,
               workflow: "",
               schema: "",
             };
@@ -373,36 +493,22 @@ Do not use emojis.`,
     }
     return null;
   }
+
+  private tryParse(x: unknown): unknown {
+    if (typeof x !== "string") return x;
+    try {
+      return JSON.parse(x);
+    } catch {
+      return x;
+    }
+  }
 }
 
-/**
- * Create a Firecrawl Agent instance.
- *
- * @example
- * ```ts
- * import { createAgent } from '@firecrawl/agent-core'
- *
- * const agent = createAgent({
- *   firecrawlApiKey: 'fc-...',
- *   model: { provider: 'anthropic', model: 'claude-sonnet-4-20250514' }
- * })
- *
- * const result = await agent.run({ prompt: 'get Vercel pricing' })
- * console.log(result.text)
- * ```
- */
 export function createAgent(options: CreateAgentOptions): FirecrawlAgent {
   return new FirecrawlAgent(options);
 }
 
-/**
- * Create an agent configured entirely from environment variables.
- * Reads FIRECRAWL_API_KEY, MODEL_PROVIDER, MODEL_ID, and all provider keys.
- * Throws if FIRECRAWL_API_KEY is not set.
- */
-export function createAgentFromEnv(
-  overrides?: Partial<CreateAgentOptions>
-): FirecrawlAgent {
+export function createAgentFromEnv(overrides?: Partial<CreateAgentOptions>): FirecrawlAgent {
   const firecrawlApiKey = process.env.FIRECRAWL_API_KEY;
   if (!firecrawlApiKey) throw new Error("FIRECRAWL_API_KEY not set");
 
