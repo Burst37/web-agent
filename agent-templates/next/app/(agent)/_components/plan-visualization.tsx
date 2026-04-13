@@ -719,15 +719,28 @@ function SubAgentCard({ item }: { item: TimelineItem }) {
         </div>
       </button>
 
-      {/* Expanded: full nested tiles for sub-agent's own tool calls */}
-      {expanded && (item.subagentChildren?.length ?? 0) > 0 && (
+      {/* Expanded: sub-agent's train of thought (live streaming) + tool calls */}
+      {expanded && (item.subagentStreamText || (item.subagentChildren?.length ?? 0) > 0) && (
         <div className="border-t border-border-faint bg-black-alpha-2 px-14 py-8">
-          <div className="text-label-x-small text-black-alpha-24 mb-2">Sub-agent activity</div>
-          <div className="flex flex-col">
-            {item.subagentChildren!.map((child, j) => (
-              <ChildTile key={j} item={child} />
-            ))}
-          </div>
+          {item.subagentStreamText && (
+            <>
+              <div className="text-label-x-small text-black-alpha-24 mb-2">Train of thought</div>
+              <pre className="text-body-small text-black-alpha-56 whitespace-pre-wrap break-words mb-6 max-h-[240px] overflow-auto">
+                {item.subagentStreamText}
+                {isRunning && <span className="inline-block w-[6px] h-[11px] bg-heat-100 align-middle animate-pulse ml-1" />}
+              </pre>
+            </>
+          )}
+          {(item.subagentChildren?.length ?? 0) > 0 && (
+            <>
+              <div className="text-label-x-small text-black-alpha-24 mb-2">Sub-agent activity</div>
+              <div className="flex flex-col">
+                {item.subagentChildren!.map((child, j) => (
+                  <ChildTile key={j} item={child} />
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -763,25 +776,44 @@ function SubAgentCard({ item }: { item: TimelineItem }) {
         </div>
       )}
 
-      {/* Collapsed preview of what it did (prefers new subagentChildren, falls back to legacy subItems) */}
+      {/* Collapsed preview of what it did — count tool calls + pages scraped */}
       {!expanded && ((item.subagentChildren?.length ?? 0) > 0 || subItems.length > 0) && (
         <div className="px-14 pb-8">
           <div className="flex flex-wrap gap-4">
             {(() => {
-              const counts: Record<string, number> = {};
+              type Bucket = "searches" | "pages scraped" | "bash queries" | "tasks";
+              const counts: Record<Bucket | string, number> = {};
+              const bump = (k: Bucket | string, n = 1) => { counts[k] = (counts[k] ?? 0) + n; };
               if (item.subagentChildren?.length) {
                 for (const child of item.subagentChildren) {
-                  const k = child.type === "scrapeBashLoad" ? "scrape" : child.type;
-                  counts[k] = (counts[k] || 0) + 1;
+                  if (child.type === "scrapeBashLoad") {
+                    bump("pages scraped", child.scrapePages?.length ?? 1);
+                  } else if (child.type === "bash") {
+                    bump("bash queries");
+                  } else if (child.type === "search") {
+                    bump("searches");
+                  } else if (child.type === "scrape" || child.type === "interact") {
+                    bump("pages scraped");
+                  } else if (child.type === "subagent") {
+                    bump("tasks");
+                  } else if (child.type === "text") {
+                    // don't count narration
+                  } else {
+                    bump(child.type);
+                  }
                 }
               } else {
                 for (const si of subItems) {
-                  if (si.type !== "text") counts[si.type] = (counts[si.type] || 0) + 1;
+                  if (si.type === "text") continue;
+                  if (si.type === "search") bump("searches");
+                  else if (si.type === "scrape") bump("pages scraped");
+                  else if (si.type === "bash") bump("bash queries");
+                  else bump(si.type);
                 }
               }
-              return Object.entries(counts).map(([type, count]) => (
-                <span key={type} className="text-mono-x-small text-black-alpha-24 bg-black-alpha-4 px-6 py-1 rounded-4">
-                  {count} {type}{count !== 1 ? (type === "search" ? "es" : "s") : ""}
+              return Object.entries(counts).map(([label, count]) => (
+                <span key={label} className="text-mono-x-small text-black-alpha-24 bg-black-alpha-4 px-6 py-1 rounded-4">
+                  {count} {label}
                 </span>
               ));
             })()}
@@ -900,6 +932,10 @@ function BashResult({ command, stdout, stderr, exitCode, rawInput, rawOutput, to
 // the top level so nothing looks different — just nested.
 function ChildTile({ item }: { item: TimelineItem }) {
   switch (item.type) {
+    case "text":
+      return (
+        <div className="my-6 text-body-small text-black-alpha-48 italic">{item.text}</div>
+      );
     case "search":
       return (
         <SearchResults
@@ -1622,6 +1658,8 @@ interface TimelineItem {
   rawOutput?: string;
   toolName?: string;
   toolCallId?: string;
+  // Server-provided authoritative sub-agent narration stream (accumulated)
+  subagentStreamText?: string;
   // status
   status: "running" | "complete";
 }
@@ -1632,7 +1670,7 @@ interface SubagentStep {
   toolResults: { toolName: string; output: Record<string, unknown> }[];
 }
 
-function extractTimeline(messages: UIMessage[]): TimelineItem[] {
+function extractTimeline(messages: UIMessage[]): { items: TimelineItem[]; subagentText: Record<string, string> } {
   const items: TimelineItem[] = [];
   // `itemByToolCallId` and `toolCallParent` are populated as we walk the
   // messages: the server emits `data-subagent-map` parts that tell us which
@@ -1640,6 +1678,10 @@ function extractTimeline(messages: UIMessage[]): TimelineItem[] {
   // final grouping until all items are built so ordering doesn't matter.
   const itemByToolCallId = new Map<string, TimelineItem>();
   const toolCallParent: Record<string, string> = {};
+  // Per-parent-task accumulated text buffer, filled from `data-subagent-text`
+  // parts emitted by the server. This is the authoritative sub-agent narration
+  // — bridge-side text deltas for sub-agent messages are stripped server-side.
+  const subagentText: Record<string, string> = {};
 
   for (const msg of messages) {
     if (msg.role !== "assistant") continue;
@@ -1650,14 +1692,36 @@ function extractTimeline(messages: UIMessage[]): TimelineItem[] {
         for (const [childId, parentId] of Object.entries(data)) {
           toolCallParent[childId] = parentId;
         }
-        if (typeof window !== "undefined" && Object.keys(data).length > 0) {
-          // eslint-disable-next-line no-console
-          console.log("[ui] subagent-map part received:", data);
+        continue;
+      }
+      // Server-side sub-agent narration — one data part per parent task, each
+      // carrying the latest accumulated text.
+      if ((part as { type?: string }).type === "data-subagent-text") {
+        const d = (part as { data?: { parentId?: string; text?: string } }).data;
+        if (d?.parentId && typeof d.text === "string") {
+          subagentText[d.parentId] = d.text;
         }
         continue;
       }
       if (part.type === "text" && part.text.trim()) {
-        items.push({ type: "text", text: part.text, status: "complete" });
+        // Each text part in AI SDK v6 carries an `id` tied to the AIMessage
+        // that produced it. The server emits `msg:<id> → parentTaskId` in the
+        // subagent map when that message came from a sub-agent graph. If it
+        // matches, nest this text under that parent; otherwise render at the
+        // orchestrator level as usual.
+        const partId = (part as { id?: string }).id;
+        const msgParent = partId ? toolCallParent[`msg:${partId}`] : undefined;
+        if (typeof window !== "undefined") {
+          const preview = part.text.slice(0, 50).replace(/\n/g, " ");
+          // eslint-disable-next-line no-console
+          console.log(`[ui] text part id=${partId ?? "<none>"} matched=${!!msgParent} "${preview}..."`);
+        }
+        const textItem: TimelineItem = { type: "text", text: part.text, status: "complete" };
+        if (msgParent) {
+          textItem.toolCallId = `text:${partId}:${items.length}`;
+          toolCallParent[textItem.toolCallId] = msgParent;
+        }
+        items.push(textItem);
       } else if (isToolPart(part)) {
         const p = part as Record<string, unknown>;
         const toolCallId = typeof p.toolCallId === "string" ? p.toolCallId as string : undefined;
@@ -2097,7 +2161,15 @@ function extractTimeline(messages: UIMessage[]): TimelineItem[] {
     }
   }
 
-  return grouped;
+  // Attach the sub-agent text stream to each matching task tile so the card
+  // can render it inside its own "train of thought" section.
+  for (const g of grouped) {
+    if (g.type === "subagent" && g.toolCallId && subagentText[g.toolCallId]) {
+      g.subagentStreamText = subagentText[g.toolCallId];
+    }
+  }
+
+  return { items: grouped, subagentText };
 }
 
 // --- Main ---
@@ -2115,7 +2187,7 @@ export default function PlanVisualization({
   onArtifactClick?: () => void;
   apiBase?: string;
 }) {
-  const timeline = extractTimeline(messages);
+  const timeline = extractTimeline(messages).items;
 
   // Check if any skill load_skill calls already exist in timeline
   const loadedSkillNames = new Set(
@@ -2254,8 +2326,44 @@ export default function PlanVisualization({
           case "subagent":
             return <SubAgentCard key={i} item={item} />;
           case "format": {
-            const fmtLabel: Record<string, string> = { csv: "CSV", json: "JSON", text: "Markdown" };
-            const label = fmtLabel[item.formatType ?? "text"] ?? "Output";
+            const fmtKey = item.formatType ?? "text";
+            const fmtLabel: Record<string, string> = { csv: "CSV", json: "JSON", text: "Output" };
+            const label = fmtLabel[fmtKey] ?? "Output";
+            const isRunning = item.status === "running";
+
+            // Derive a summary of the output content: sizes + structural
+            // breadcrumbs (top-level keys for JSON, row count for CSV).
+            let summary = "";
+            const content = item.formatData?.content;
+            if (content) {
+              const bytes = content.length;
+              const sizeStr = bytes >= 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${bytes} B`;
+              if (fmtKey === "json") {
+                try {
+                  const parsed = JSON.parse(content);
+                  const keys = parsed && typeof parsed === "object" && !Array.isArray(parsed)
+                    ? Object.keys(parsed).slice(0, 4)
+                    : undefined;
+                  const rows = Array.isArray(parsed) ? parsed.length : undefined;
+                  if (keys && keys.length > 0) {
+                    const more = Object.keys(parsed).length - keys.length;
+                    summary = `${keys.join(", ")}${more > 0 ? `, +${more} more` : ""} · ${sizeStr}`;
+                  } else if (rows !== undefined) {
+                    summary = `${rows} row${rows === 1 ? "" : "s"} · ${sizeStr}`;
+                  } else {
+                    summary = sizeStr;
+                  }
+                } catch { summary = sizeStr; }
+              } else if (fmtKey === "csv") {
+                const rowCount = Math.max(0, content.split("\n").filter((l) => l.trim()).length - 1);
+                summary = `${rowCount} row${rowCount === 1 ? "" : "s"} · ${sizeStr}`;
+              } else {
+                summary = sizeStr;
+              }
+            }
+
+            const title = isRunning ? `Generating ${label}` : `${label} ready`;
+
             return (
               <div key={i} className="my-12 border border-border-faint overflow-hidden">
                 <button
@@ -2264,12 +2372,15 @@ export default function PlanVisualization({
                   onClick={() => onArtifactClick?.()}
                 >
                   <span className="text-mono-x-small text-black-alpha-48 bg-black-alpha-4 px-6 py-1 rounded-4 flex-shrink-0">
-                    /{item.formatType ?? "output"}
+                    /{fmtKey}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <span className="text-label-medium text-accent-black">{label}</span>
+                    <div className="text-label-medium text-accent-black">{title}</div>
+                    {summary && (
+                      <div className="text-body-small text-black-alpha-40 truncate">{summary}</div>
+                    )}
                   </div>
-                  {item.status === "running" ? (
+                  {isRunning ? (
                     <div className="w-5 h-5 rounded-full bg-heat-100 animate-pulse flex-shrink-0" />
                   ) : (
                     <svg className="w-14 h-14 text-accent-forest flex-shrink-0" fill="none" viewBox="0 0 16 16">

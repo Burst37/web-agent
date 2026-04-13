@@ -201,13 +201,67 @@ export async function POST(req: Request) {
       return out;
     }
 
+    // Pull out assistant message ids (used to attribute text parts back to
+    // the sub-agent that emitted them).
+    function collectMessageIds(data: unknown): string[] {
+      const out: string[] = [];
+      if (!data) return out;
+      const msg = Array.isArray(data) ? data[0] : data;
+      const anyMsg = msg as { id?: string };
+      if (typeof anyMsg?.id === "string") out.push(anyMsg.id);
+      const state = data as { messages?: Array<{ id?: string }> };
+      for (const m of state?.messages ?? []) if (typeof m.id === "string") out.push(m.id);
+      return out;
+    }
+
+    // One map carries both kinds of entries to the client:
+    //   - `<toolu_xxx>`        → parent task toolu_*   (tool call attribution)
+    //   - `msg:<message_id>`   → parent task toolu_*   (text part attribution; legacy)
     const toolCallParent: Record<string, string> = {};
     const seenNamespaces = new Set<string>();
     const nsToParent = new Map<string, string>();          // sub-ns → claimed parent toolu_*
     const nsChildren = new Map<string, Set<string>>();     // sub-ns → child tool_call_ids seen so far
+    const nsMessageIds = new Map<string, Set<string>>();   // sub-ns → message_ids seen so far
+    const nsPendingText = new Map<string, string>();       // sub-ns → text seen BEFORE parent was claimed
     const pendingNamespaces: string[] = [];                // FIFO of sub-ns keys awaiting a parent
     const pendingTasks: string[] = [];                     // FIFO of root task tool_call_ids awaiting a sub-ns
     const knownTasks = new Set<string>();                  // dedupe root task ids across repeated emissions
+
+    // Accumulate sub-agent text by parent task id — authoritative text stream
+    // for each task, bypassing the bridge's text-part attribution entirely.
+    const subagentText: Record<string, string> = {};
+
+    // Extract text content out of an AIMessageChunk-shaped value. LangChain's
+    // content can be a plain string or an array of content blocks.
+    function extractText(msg: unknown): string {
+      if (!msg || typeof msg !== "object") return "";
+      const content = (msg as { content?: unknown }).content;
+      if (typeof content === "string") return content;
+      if (Array.isArray(content)) {
+        let out = "";
+        for (const block of content) {
+          if (typeof block === "string") out += block;
+          else if (block && typeof block === "object") {
+            const b = block as { type?: string; text?: string };
+            if (b.type === "text" && typeof b.text === "string") out += b.text;
+          }
+        }
+        return out;
+      }
+      return "";
+    }
+
+    // Return a shallow clone of the messages-mode payload `[msg, metadata]`
+    // with the text content stripped off the AIMessageChunk, so the bridge
+    // won't emit duplicate text-delta chunks for sub-agent text we've already
+    // captured ourselves.
+    function stripTextFromMsgPayload(data: unknown): unknown {
+      if (!Array.isArray(data) || data.length === 0) return data;
+      const [msg, ...rest] = data as [unknown, ...unknown[]];
+      if (!msg || typeof msg !== "object") return data;
+      const withEmptyContent = Object.assign(Object.create(Object.getPrototypeOf(msg)), msg, { content: "" });
+      return [withEmptyContent, ...rest];
+    }
 
     // Match pending namespaces with pending tasks FIFO-style. Retroactively
     // maps all children that were seen in that namespace BEFORE the parent
@@ -226,6 +280,20 @@ export async function POST(req: Request) {
               console.log(`[agent] map (retro) child=${childId} parent=${parentId}`);
             }
           }
+        }
+        const msgs = nsMessageIds.get(nsKey);
+        if (msgs) {
+          for (const msgId of msgs) {
+            const key = `msg:${msgId}`;
+            if (!toolCallParent[key]) toolCallParent[key] = parentId;
+          }
+        }
+        // Retroactive text: any narration we captured under this ns before
+        // the parent was claimed gets stitched into the parent's stream now.
+        const buffered = nsPendingText.get(nsKey);
+        if (buffered) {
+          subagentText[parentId] = (subagentText[parentId] ?? "") + buffered;
+          nsPendingText.delete(nsKey);
         }
       }
     }
@@ -259,19 +327,57 @@ export async function POST(req: Request) {
             // We're inside a sub-agent graph.
             if (!nsChildren.has(nsKey)) {
               nsChildren.set(nsKey, new Set());
+              nsMessageIds.set(nsKey, new Set());
               if (!nsToParent.has(nsKey)) pendingNamespaces.push(nsKey);
               tryAssign();
             }
             const kids = nsChildren.get(nsKey)!;
             for (const tc of collectToolCalls(data)) kids.add(tc.id);
+            const msgs = nsMessageIds.get(nsKey)!;
+            for (const id of collectMessageIds(data)) msgs.add(id);
 
             const parentId = nsToParent.get(nsKey);
             if (parentId) {
               for (const tc of collectToolCalls(data)) {
                 if (!toolCallParent[tc.id]) {
                   toolCallParent[tc.id] = parentId;
-                  console.log(`[agent] map child=${tc.id} (${tc.name}) parent=${parentId}`);
                 }
+              }
+              for (const id of collectMessageIds(data)) {
+                const key = `msg:${id}`;
+                if (!toolCallParent[key]) toolCallParent[key] = parentId;
+              }
+            }
+
+            // Capture sub-agent text and strip it from the payload we forward
+            // to the bridge, so it never shows up in the orchestrator's main
+            // thread. The text will be rendered inside the sub-agent's tile
+            // via `data-subagent-text` (emitted from the merge loop below).
+            //
+            // IMPORTANT: we only capture text from chunks that ALSO have tool
+            // calls — i.e. reasoning that precedes a tool invocation. The
+            // sub-agent's FINAL message (no tool calls) is its structured
+            // JSON reply to the orchestrator. That's the output, not a
+            // thought — we still strip it from the bridge so it doesn't leak
+            // into the orchestrator thread, but we don't add it to the
+            // "train of thought" stream.
+            if (mode === "messages" && Array.isArray(data)) {
+              const msg = data[0] as { tool_calls?: unknown[]; tool_call_chunks?: unknown[] };
+              const text = extractText(msg);
+              const hasToolActivity = (Array.isArray(msg?.tool_calls) && msg.tool_calls.length > 0)
+                || (Array.isArray(msg?.tool_call_chunks) && msg.tool_call_chunks.length > 0);
+              if (text) {
+                if (hasToolActivity) {
+                  if (parentId) {
+                    subagentText[parentId] = (subagentText[parentId] ?? "") + text;
+                  } else {
+                    nsPendingText.set(nsKey, (nsPendingText.get(nsKey) ?? "") + text);
+                  }
+                }
+                // Regardless of tool activity, strip text from the bridge
+                // payload so it never reaches the orchestrator's UI thread.
+                yield [mode, stripTextFromMsgPayload(data)];
+                continue;
               }
             }
           } else {
@@ -311,24 +417,47 @@ export async function POST(req: Request) {
           // Consume and forward main stream chunks; periodically flush mapping.
           const reader = mainStream.getReader();
           let lastMapSize = 0;
+          const lastTextLen: Record<string, number> = {};
           try {
             while (true) {
               const { done, value } = await reader.read();
               if (done) break;
               writer.write(value);
-              // If the wrapped stream recorded new mappings since last flush,
-              // push an updated data-subagent-map part so the client sees them.
+              // Flush the id → parent mapping when it grows.
               const size = Object.keys(toolCallParent).length;
               if (size > lastMapSize) {
                 writer.write({ type: "data-subagent-map", id: "subagent-map", data: { ...toolCallParent } } as never);
                 lastMapSize = size;
               }
+              // Flush sub-agent text reducers — one data part per parent,
+              // re-emitted each time its buffer grows. AI SDK v6 keeps the
+              // latest `data-*` with the same `id` in the UIMessage, so the
+              // client always has the authoritative accumulated text.
+              for (const [parentId, text] of Object.entries(subagentText)) {
+                if ((lastTextLen[parentId] ?? 0) !== text.length) {
+                  writer.write({
+                    type: "data-subagent-text",
+                    id: `subagent-text:${parentId}`,
+                    data: { parentId, text },
+                  } as never);
+                  lastTextLen[parentId] = text.length;
+                }
+              }
             }
-            // Final flush in case mappings arrived after the last read.
+            // Final flush.
             if (Object.keys(toolCallParent).length > lastMapSize) {
               writer.write({ type: "data-subagent-map", id: "subagent-map", data: { ...toolCallParent } } as never);
             }
-            console.log(`[agent] stream done. subagent-map size=${Object.keys(toolCallParent).length}`);
+            for (const [parentId, text] of Object.entries(subagentText)) {
+              if ((lastTextLen[parentId] ?? 0) !== text.length) {
+                writer.write({
+                  type: "data-subagent-text",
+                  id: `subagent-text:${parentId}`,
+                  data: { parentId, text },
+                } as never);
+              }
+            }
+            console.log(`[agent] stream done. map=${Object.keys(toolCallParent).length} subagent-texts=${Object.keys(subagentText).length}`);
           } finally {
             reader.releaseLock();
           }
