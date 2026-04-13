@@ -127,38 +127,71 @@ function JsonViewer({ data }: { data: string }) {
 
 function CsvTable({ data }: { data: string }) {
   const rows = useMemo(() => {
-    const lines = data.split("\n").filter((l) => l.trim());
-    return lines.map((line) => {
-      const cells: string[] = [];
-      let current = "";
-      let inQuote = false;
-      for (const ch of line) {
-        if (ch === '"') inQuote = !inQuote;
-        else if (ch === "," && !inQuote) { cells.push(current.trim()); current = ""; }
-        else current += ch;
+    // RFC-4180-ish parser: a row terminates on a newline OUTSIDE quotes, so
+    // a press release title containing "\n" inside a quoted cell stays on
+    // its own row instead of shattering the table. Doubled `""` inside a
+    // quoted cell is the standard escape for a literal quote.
+    const stripped = data.replace(/^\uFEFF/, ""); // strip BOM
+    const cells: string[] = [];
+    const out: string[][] = [];
+    let cur = "";
+    let inQuote = false;
+    const pushCell = () => { cells.push(cur); cur = ""; };
+    const pushRow = () => { pushCell(); out.push(cells.splice(0)); };
+    for (let i = 0; i < stripped.length; i++) {
+      const ch = stripped[i];
+      if (inQuote) {
+        if (ch === '"') {
+          if (stripped[i + 1] === '"') { cur += '"'; i++; }
+          else inQuote = false;
+        } else {
+          cur += ch;
+        }
+        continue;
       }
-      cells.push(current.trim());
-      return cells;
-    });
+      if (ch === '"') { inQuote = true; continue; }
+      if (ch === ",") { pushCell(); continue; }
+      if (ch === "\r") continue;
+      if (ch === "\n") { pushRow(); continue; }
+      cur += ch;
+    }
+    if (cur.length > 0 || cells.length > 0) pushRow();
+    return out
+      .map((r) => r.map((c) => c.trim()))
+      .filter((r) => r.some((c) => c.length > 0));
   }, [data]);
 
-  if (rows.length < 2) return <div className="text-body-small text-black-alpha-32">No tabular data</div>;
+  // If the source isn't actually CSV (every row has 0–1 cells), fall back to
+  // a preformatted dump so users at least see what the agent emitted.
+  const maxCols = rows.reduce((m, r) => Math.max(m, r.length), 0);
+  if (rows.length < 2 || maxCols < 2) {
+    return (
+      <pre className="text-mono-small text-accent-black whitespace-pre-wrap break-words">{data}</pre>
+    );
+  }
+
+  // Pad short rows so every <tr> has the same column count as the header.
+  const padded = rows.map((r) => {
+    const copy = r.slice();
+    while (copy.length < maxCols) copy.push("");
+    return copy;
+  });
 
   return (
     <div className="overflow-auto rounded-10 border border-border-faint">
       <table className="w-full text-body-small">
         <thead>
           <tr className="bg-black-alpha-2 border-b border-border-faint">
-            {rows[0].map((h, i) => (
-              <th key={i} className="text-left text-label-small text-black-alpha-56 px-12 py-8 whitespace-nowrap">{h}</th>
+            {padded[0].map((h, i) => (
+              <th key={i} className="text-left text-label-small text-black-alpha-56 px-12 py-8 align-top">{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {rows.slice(1).map((row, ri) => (
+          {padded.slice(1).map((row, ri) => (
             <tr key={ri} className={cn("border-b border-border-faint last:border-0", ri % 2 === 1 && "bg-black-alpha-1")}>
               {row.map((cell, ci) => (
-                <td key={ci} className="px-12 py-6 text-accent-black whitespace-nowrap">{cell}</td>
+                <td key={ci} className="px-12 py-6 text-accent-black align-top whitespace-pre-wrap break-words max-w-[420px]">{cell}</td>
               ))}
             </tr>
           ))}

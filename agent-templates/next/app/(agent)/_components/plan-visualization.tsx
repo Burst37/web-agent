@@ -4,6 +4,14 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import type { UIMessage } from "ai";
 import StreamdownBlock from "@/components/shared/streamdown-block";
 import { cn } from "@/utils/cn";
+import {
+  parseToolResult,
+  normalizeToolOutput,
+  type SearchResultRow,
+  type ScrapeResultPayload,
+  type ScrapeBashLoadPayload,
+  type BashResultPayload,
+} from "@/agent-core/src/tool-results";
 
 // --- Icons ---
 
@@ -101,18 +109,6 @@ function summarizeError(err: string | undefined): string | undefined {
   return (firstSentence.length > 100 ? firstSentence.slice(0, 97) + "…" : firstSentence);
 }
 
-// @ai-sdk/langchain bridge sets UIMessage tool part `output` to the LangChain
-// ToolMessage content string. Our adapter JSON-stringifies non-string results,
-// so parse it back to an object here before extractors read fields like
-// `markdown`, `web`, `metadata` etc. Keeps the raw string as a fallback.
-function normalizeToolOutput(raw: unknown): unknown {
-  if (typeof raw !== "string") return raw;
-  const trimmed = raw.trim();
-  if (!trimmed) return raw;
-  if (trimmed[0] !== "{" && trimmed[0] !== "[") return raw;
-  try { return JSON.parse(trimmed); } catch { return raw; }
-}
-
 // Shared chip for metadata key/value pairs on tile headers.
 function MetaChip({ label, value, tone = "neutral" }: { label?: string; value: string | number; tone?: "neutral" | "success" | "warn" | "info" }) {
   const toneClass =
@@ -128,54 +124,20 @@ function MetaChip({ label, value, tone = "neutral" }: { label?: string; value: s
   );
 }
 
-// Collapsible "Raw" panel showing the literal tool input + output JSON the
-// agent sent/received. Keeps the tile compact by default.
-function RawIOToggle({ input, output, toolName }: { input?: string; output?: string; toolName?: string }) {
-  const [open, setOpen] = useState(false);
-  if (!input && !output) return null;
-  return (
-    <div className="mx-14 mb-10 rounded-6 border border-border-faint bg-black-alpha-2">
-      <button
-        type="button"
-        className="w-full flex items-center gap-6 px-10 py-6 text-left hover:bg-black-alpha-4 transition-colors"
-        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
-      >
-        <span className="text-mono-x-small text-black-alpha-56">
-          Raw {toolName ? `/${toolName}` : "tool"} I/O
-        </span>
-        <span className="flex-1" />
-        <svg fill="none" height="10" viewBox="0 0 24 24" width="10" className={cn("transition-transform text-black-alpha-24", open && "rotate-180")} stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          <path d="M6 9l6 6 6-6" />
-        </svg>
-      </button>
-      {open && (
-        <div className="border-t border-border-faint px-10 py-8 flex flex-col gap-8 max-h-[420px] overflow-auto no-scrollbar">
-          {input && (
-            <div>
-              <div className="text-mono-x-small text-black-alpha-32 mb-3">input</div>
-              <pre className="text-mono-small text-accent-black whitespace-pre-wrap break-all">{input}</pre>
-            </div>
-          )}
-          {output && (
-            <div>
-              <div className="text-mono-x-small text-black-alpha-32 mb-3">output</div>
-              <pre className="text-mono-small text-accent-black whitespace-pre-wrap break-all">{output}</pre>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
+// Legacy "Raw I/O" debug panel, now a no-op — the canonical payload from
+// agent-core's parseToolResult is rich enough to render friendly tiles, so
+// raw JSON never appears in the main UI. The TimelineItem.rawInput/rawOutput
+// fields are still populated so a future debug inspector can surface them
+// out-of-band (e.g. on cmd-click of a tile), but nothing renders them here.
+function RawIOToggle(_: { input?: string; output?: string; toolName?: string }) {
+  return null;
 }
 
 // --- Search results rendering ---
 
-interface SearchResult {
-  title?: string;
-  url?: string;
-  description?: string;
-  markdown?: string;
-}
+// Canonical row shape from agent-core. Re-exported as a local alias so
+// existing TimelineItem / props typing keeps working without a churn.
+type SearchResult = SearchResultRow;
 
 function SearchResultItem({ result }: { result: SearchResult }) {
   const [expanded, setExpanded] = useState(false);
@@ -191,7 +153,19 @@ function SearchResultItem({ result }: { result: SearchResult }) {
         onClick={() => setExpanded(!expanded)}
         onKeyDown={(e) => e.key === "Enter" && setExpanded(!expanded)}
       >
-        {domain ? <Favicon domain={domain} /> : <GlobeIcon />}
+        {result.favicon ? (
+          <img
+            src={result.favicon}
+            alt=""
+            width={16}
+            height={16}
+            className="rounded-2 flex-shrink-0 mt-2"
+          />
+        ) : domain ? (
+          <div className="mt-2"><Favicon domain={domain} /></div>
+        ) : (
+          <GlobeIcon />
+        )}
         <div className="min-w-0 flex-1">
           <div className="text-label-medium text-accent-black truncate">
             {result.title || result.url || "Untitled"}
@@ -199,6 +173,16 @@ function SearchResultItem({ result }: { result: SearchResult }) {
           {result.url && (
             <div className="text-body-small text-black-alpha-32 truncate">{result.url}</div>
           )}
+          <div className="flex items-center gap-6 mt-1 flex-wrap">
+            {result.category && result.category !== "web" && (
+              <span className="text-mono-x-small text-black-alpha-40 bg-black-alpha-4 px-4 py-0 rounded-4">
+                {result.category}
+              </span>
+            )}
+            {result.date && (
+              <span className="text-body-small text-black-alpha-32">{result.date}</span>
+            )}
+          </div>
           {result.description && !expanded && (
             <div className="text-body-small text-black-alpha-48 line-clamp-2 mt-2">{result.description}</div>
           )}
@@ -598,14 +582,19 @@ function InteractCard({ item }: { item: TimelineItem }) {
 function SubAgentCard({ item }: { item: TimelineItem }) {
   const isRunning = item.status !== "complete";
   // Auto-expand while running (so inner calls stream visibly) and
-  // auto-collapse once done (keeps the final timeline tidy).
-  const [userToggled, setUserToggled] = useState(false);
-  const [expanded, setExpanded] = useState(true);
+  // auto-collapse when the task transitions to complete (keeps the final
+  // timeline tidy). Manual toggles win during the current state, but the
+  // transition-driven fold always fires so a completed task snaps shut
+  // even if the user had expanded it mid-run.
+  const [expanded, setExpanded] = useState(isRunning);
+  const prevRunningRef = useRef(isRunning);
   useEffect(() => {
-    if (userToggled) return;
-    setExpanded(isRunning);
-  }, [isRunning, userToggled]);
-  const onToggle = () => { setUserToggled(true); setExpanded((v) => !v); };
+    const wasRunning = prevRunningRef.current;
+    if (wasRunning && !isRunning) setExpanded(false);
+    if (!wasRunning && isRunning) setExpanded(true);
+    prevRunningRef.current = isRunning;
+  }, [isRunning]);
+  const onToggle = () => setExpanded((v) => !v);
   const steps = item.subagentSteps ?? [];
 
   // Parse sub-agent steps into mini timeline items
@@ -864,8 +853,10 @@ function describeBashAction(command: string): { label: string; detail?: string; 
 }
 
 function BashResult({ command, stdout, stderr, exitCode, rawInput, rawOutput, toolName }: { command: string; stdout: string; stderr: string; exitCode: number; rawInput?: string; rawOutput?: string; toolName?: string }) {
-  const [expanded, setExpanded] = useState(false);
   const hasOutput = !!(stdout || stderr);
+  // Default to expanded whenever the command finished with output so users
+  // can see stdout/stderr without clicking into each tile.
+  const [expanded, setExpanded] = useState(hasOutput);
   const { label, detail } = describeBashAction(command);
   const singleLine = command.split("\n")[0];
   const cmdPreview = singleLine.length > 120 ? singleLine.slice(0, 117) + "…" : singleLine;
@@ -952,7 +943,10 @@ function ChildTile({ item }: { item: TimelineItem }) {
           toolName={item.toolName}
           results={item.status === "complete" && item.searchResults?.length ? item.searchResults : []}
           creditsUsed={item.creditsUsed}
-          isLatest={false}
+          // Auto-expand sub-agent results so the favicons/titles are visible
+          // without an extra click. Users can collapse manually if they want
+          // the sub-agent panel tighter.
+          isLatest={true}
         />
       );
     case "scrape":
@@ -977,6 +971,9 @@ function ChildTile({ item }: { item: TimelineItem }) {
           rawOutput={item.rawOutput}
           toolName={item.toolName}
           isInteract={false}
+          // Auto-expand so sub-agent scrape content (markdown/answer) is
+          // visible inline; matches search/bash behavior.
+          isLatest={true}
         />
       );
     case "scrapeBashLoad":
@@ -1071,10 +1068,12 @@ function extractDomainsFromCommand(cmd: string): string[] {
 // --- scrapeBash load-mode tile: stacked favicons + domain list ---
 
 function ScrapeBashLoadCard({ item }: { item: TimelineItem }) {
-  const [expanded, setExpanded] = useState(false);
   const pages = item.scrapePages ?? [];
   const isRunning = item.status === "running";
   const error = item.scrapeError;
+  // Default expanded once the load is finished and there's at least one
+  // page (or an error) so users see the per-URL list inline.
+  const [expanded, setExpanded] = useState(!isRunning && (pages.length > 0 || !!error));
 
   const domains = useMemo(() => {
     const seen = new Set<string>();
@@ -1697,6 +1696,21 @@ function extractTimeline(messages: UIMessage[]): {
   // callback fires. Used to pin iframes inside interact tiles early.
   const interactLiveView: Record<string, { liveViewUrl: string; interactiveLiveViewUrl: string | null; url: string }> = {};
 
+  // Pre-scan for `data-tool-output` parts so we can backfill outputs onto
+  // tool parts whose `output` field the @ai-sdk/langchain bridge didn't
+  // populate (common for sub-agent tool calls emitted inside a LangGraph
+  // subgraph). Server emits these keyed by tool_call_id.
+  const toolOutputByCallId: Record<string, unknown> = {};
+  for (const msg of messages) {
+    if (msg.role !== "assistant") continue;
+    for (const part of msg.parts) {
+      if ((part as { type?: string }).type === "data-tool-output") {
+        const d = (part as { data?: { toolCallId?: string; output?: unknown } }).data;
+        if (d?.toolCallId !== undefined) toolOutputByCallId[d.toolCallId] = d.output;
+      }
+    }
+  }
+
   for (const msg of messages) {
     if (msg.role !== "assistant") continue;
     for (const part of msg.parts) {
@@ -1737,11 +1751,6 @@ function extractTimeline(messages: UIMessage[]): {
         // orchestrator level as usual.
         const partId = (part as { id?: string }).id;
         const msgParent = partId ? toolCallParent[`msg:${partId}`] : undefined;
-        if (typeof window !== "undefined") {
-          const preview = part.text.slice(0, 50).replace(/\n/g, " ");
-          // eslint-disable-next-line no-console
-          console.log(`[ui] text part id=${partId ?? "<none>"} matched=${!!msgParent} "${preview}..."`);
-        }
         const textItem: TimelineItem = { type: "text", text: part.text, status: "complete" };
         if (msgParent) {
           textItem.toolCallId = `text:${partId}:${items.length}`;
@@ -1754,7 +1763,26 @@ function extractTimeline(messages: UIMessage[]): {
         const state = (p.state ?? "") as string;
         const toolName = (p.toolName ?? (part.type as string).replace("tool-", "")) as string;
         const input = (p.input ?? p.args ?? {}) as Record<string, unknown>;
-        const rawOutput = normalizeToolOutput(p.output ?? p.result);
+        // Prefer the bridge's output, but fall back to the server's
+        // data-tool-output backfill for tool calls the bridge skipped
+        // (sub-agent tool calls inside a LangGraph subgraph).
+        //
+        // The bridge sometimes emits `tool-output-available` with a literal
+        // empty string when LangGraph hasn't snapshotted the sub-agent
+        // ToolMessage yet — `??` would treat that as "present", letting
+        // the empty value win over the real backfill. Treat empty strings
+        // and `{}` as missing so the backfill always wins when the bridge
+        // has nothing useful.
+        const rawFromBridge = p.output ?? p.result;
+        const rawFromBackfill = toolCallId ? toolOutputByCallId[toolCallId] : undefined;
+        const bridgeHasUsefulOutput =
+          rawFromBridge !== undefined &&
+          rawFromBridge !== null &&
+          !(typeof rawFromBridge === "string" && rawFromBridge.trim() === "") &&
+          !(typeof rawFromBridge === "object" && Object.keys(rawFromBridge as Record<string, unknown>).length === 0);
+        const rawOutput = normalizeToolOutput(
+          bridgeHasUsefulOutput ? rawFromBridge : rawFromBackfill,
+        );
         const output = (rawOutput ?? {}) as Record<string, unknown>;
         // Treat presence of any non-empty output as complete — the @ai-sdk/langchain
         // bridge emits tool-output-available with the string content, but if the
@@ -1779,254 +1807,94 @@ function extractTimeline(messages: UIMessage[]): {
         // pushed below with this part's toolCallId (used for server-map grouping).
         const beforePushLen = items.length;
 
-        if (toolName === "search") {
-          const results: SearchResult[] = [];
-          if (output && typeof output === "object") {
-            const o = output as Record<string, unknown>;
-            // Firecrawl's shape is usually `{web, news, images}` at the top,
-            // but the raw API wraps it in `{data: {...}}` and the SDK
-            // sometimes passes that through verbatim. Check both levels.
-            const levels: Record<string, unknown>[] = [o];
-            if (o.data && typeof o.data === "object" && !Array.isArray(o.data)) {
-              levels.push(o.data as Record<string, unknown>);
-            }
-            const combined: unknown[] = [];
-            for (const lvl of levels) {
-              for (const key of ["web", "news", "images", "results"]) {
-                const arr = lvl[key];
-                if (Array.isArray(arr)) combined.push(...arr);
-              }
-              const dataArr = lvl.data;
-              if (Array.isArray(dataArr)) combined.push(...(dataArr as unknown[]));
-            }
-            if (Array.isArray(output)) combined.push(...(output as unknown[]));
+        // Tool-specific payload parsing lives in agent-core/src/tool-results.ts
+        // so every app template (next/express/library) maps Firecrawl's raw
+        // shapes the same way. This block just maps canonical payloads into
+        // the TimelineItem UI shape.
+        const normalized = parseToolResult({
+          toolName,
+          input,
+          // Use the already-resolved rawOutput (bridge-or-backfill) so the
+          // normalizer sees sub-agent tool outputs even when the bridge
+          // didn't surface them.
+          output: rawOutput,
+        });
+        const pay = normalized.payload;
 
-            for (const r of combined) {
-              const item = r as Record<string, unknown>;
-              if (!item || typeof item !== "object") continue;
-              if (!item.url && !item.title && !item.imageUrl) continue;
-              // Query-format results carry the extracted answer either on an
-              // `answer` field or inside a nested `json`/`extract` object.
-              const answer = typeof item.answer === "string" ? item.answer as string : undefined;
-              const desc = String(item.description ?? item.snippet ?? answer ?? "");
-              results.push({
-                title: String(item.title ?? ""),
-                url: String(item.url ?? item.imageUrl ?? ""),
-                description: desc,
-                markdown: typeof item.markdown === "string"
-                  ? item.markdown as string
-                  : answer ?? undefined,
-              });
-            }
-          }
-          const searchCredits = typeof (output as Record<string, unknown>).creditsUsed === "number"
-            ? (output as Record<string, unknown>).creditsUsed as number
-            : undefined;
-          // Infer which source categories were queried (web/news/images)
-          const sources: string[] = [];
-          const inputSources = input.sources as unknown;
-          if (Array.isArray(inputSources)) {
-            for (const s of inputSources) {
-              if (typeof s === "string") sources.push(s);
-              else if (s && typeof s === "object" && "type" in s) sources.push(String((s as { type: string }).type));
-            }
-          } else if (output && typeof output === "object") {
-            const o = output as Record<string, unknown>;
-            if (Array.isArray(o.web) && o.web.length) sources.push("web");
-            if (Array.isArray(o.news) && o.news.length) sources.push("news");
-            if (Array.isArray(o.images) && o.images.length) sources.push("images");
-          }
+        if (pay.kind === "search") {
           items.push({
             type: "search",
-            query: String(input.query ?? ""),
-            searchResults: results,
-            searchSources: sources.length > 0 ? sources : undefined,
-            creditsUsed: searchCredits,
+            query: pay.query,
+            searchResults: pay.results,
+            searchSources: pay.sources.length > 0 ? pay.sources : undefined,
+            creditsUsed: pay.creditsUsed,
             rawInput: rawInputStr,
             rawOutput: rawOutputStr,
             toolName,
             status,
           });
-        } else if (toolName === "scrape" || toolName === "interact" || toolName === "map") {
-          const outObj = output as Record<string, unknown>;
-          // Firecrawl can return markdown at top level or nested in data
-          let markdown = "";
-          if (typeof outObj?.markdown === "string") {
-            markdown = outObj.markdown as string;
-          } else if (typeof outObj?.content === "string") {
-            markdown = outObj.content as string;
-          } else if (typeof (outObj?.data as Record<string, unknown>)?.markdown === "string") {
-            markdown = (outObj.data as Record<string, unknown>).markdown as string;
+        } else if (pay.kind === "scrape" || pay.kind === "interact" || pay.kind === "map") {
+          const scrape = pay as ScrapeResultPayload;
+          // Fall back to a JSON preview when the tool returned structured
+          // extract/json output with no markdown body.
+          let content = scrape.markdown;
+          if (!content && scrape.json !== undefined) {
+            content = "```json\n" + JSON.stringify(scrape.json, null, 2) + "\n```";
           }
-          // Also capture JSON/extract output as stringified content
-          if (!markdown && outObj?.json) {
-            markdown = "```json\n" + JSON.stringify(outObj.json, null, 2) + "\n```";
+          // For map results, synthesize a bullet list of discovered URLs so
+          // the card has something visible above the raw JSON.
+          if (!content && scrape.links && scrape.links.length > 0) {
+            content = scrape.links.slice(0, 50).map((l) => `- ${l}`).join("\n");
           }
-          if (!markdown && outObj?.extract) {
-            markdown = "```json\n" + JSON.stringify(outObj.extract, null, 2) + "\n```";
-          }
-          // Fallback: if nothing found, dump the raw output (excluding transport/meta fields)
-          // Skip for interact -- we extract output + liveViewUrl separately
-          if (!markdown && toolName !== "interact" && typeof outObj === "object" && outObj && status === "complete") {
-            const STRIP_KEYS = new Set([
-              "rawHtml", "html", "liveViewUrl", "interactiveLiveViewUrl",
-              "scrapeId", "creditsUsed", "cacheState", "cachedAt",
-              "proxyUsed", "concurrencyLimited", "statusCode", "contentType",
-              "sourceURL", "url", "favicon", "metadata",
-            ]);
-            const preview: Record<string, unknown> = {};
-            for (const [k, v] of Object.entries(outObj)) {
-              if (!STRIP_KEYS.has(k)) preview[k] = v;
-            }
-            const str = JSON.stringify(preview, null, 2);
-            if (str.length > 10 && str !== "{}") {
-              markdown = "```json\n" + str.slice(0, 5000) + "\n```";
-            }
-          }
-          const answer = typeof outObj?.answer === "string" ? outObj.answer as string
-            : typeof (outObj?.data as Record<string, unknown>)?.answer === "string" ? (outObj.data as Record<string, unknown>).answer as string
-            : undefined;
-          const liveViewUrl = outObj?.liveViewUrl ?? outObj?.interactiveLiveViewUrl;
-          const credits = typeof outObj?.creditsUsed === "number" ? outObj.creditsUsed as number : undefined;
-          // Interact output
-          const interactOutput = typeof outObj?.output === "string" ? outObj.output as string : undefined;
-          // Interact prompt (input.prompt)
-          const interactPrompt = typeof input.prompt === "string" ? input.prompt as string : undefined;
-          // Page metadata
-          const meta = (outObj?.metadata ?? (outObj?.data as Record<string, unknown>)?.metadata) as Record<string, unknown> | undefined;
-          const pageTitle = typeof meta?.title === "string" ? meta.title as string
-            : typeof meta?.ogTitle === "string" ? meta.ogTitle as string : undefined;
-          const pageDescription = typeof meta?.description === "string" ? meta.description as string
-            : typeof meta?.ogDescription === "string" ? meta.ogDescription as string : undefined;
-          const pageLanguage = typeof meta?.language === "string" ? meta.language as string : undefined;
-          const statusCode = typeof meta?.statusCode === "number" ? meta.statusCode as number
-            : typeof outObj?.statusCode === "number" ? outObj.statusCode as number : undefined;
-          const contentType = typeof meta?.contentType === "string" ? meta.contentType as string
-            : typeof outObj?.contentType === "string" ? outObj.contentType as string : undefined;
-          const cacheState = typeof outObj?.cacheState === "string" ? outObj.cacheState as string : undefined;
-          const cachedAt = typeof outObj?.cachedAt === "string" ? outObj.cachedAt as string : undefined;
-          const proxyUsed = typeof outObj?.proxyUsed === "string" ? outObj.proxyUsed as string : undefined;
-          const scrapeId = typeof outObj?.scrapeId === "string" ? outObj.scrapeId as string : undefined;
-          // Extract input metadata
-          const formats = Array.isArray(input.formats) ? (input.formats as unknown[]).map((f) => {
-            if (typeof f === "string") return f;
-            if (typeof f === "object" && f && "type" in f) return String((f as { type: string }).type);
-            return String(f);
-          }) : undefined;
-          const scrapeQuery = Array.isArray(input.formats)
-            ? (input.formats as unknown[]).find((f): f is { type: string; prompt: string } =>
-                typeof f === "object" && f !== null && "prompt" in (f as Record<string, unknown>) && typeof (f as { prompt?: unknown }).prompt === "string"
-              )?.prompt
-            : interactPrompt;
           items.push({
-            type: toolName === "interact" ? "interact" : "scrape",
-            url: String(input.url ?? outObj?.url ?? ""),
-            content: markdown,
-            answer,
-            creditsUsed: credits,
-            scrapeQuery: scrapeQuery ? String(scrapeQuery) : undefined,
-            scrapeFormats: formats,
-            pageTitle,
-            pageDescription,
-            pageLanguage,
-            statusCode,
-            contentType,
-            cacheState,
-            cachedAt,
-            proxyUsed,
-            scrapeId,
-            liveViewUrl: liveViewUrl ? String(liveViewUrl) : undefined,
-            interactOutput: interactOutput,
-            interactPrompt,
+            type: pay.kind === "interact" ? "interact" : "scrape",
+            url: scrape.url,
+            content,
+            answer: scrape.answer,
+            creditsUsed: scrape.creditsUsed,
+            scrapeQuery: scrape.scrapeQuery,
+            scrapeFormats: scrape.formats,
+            pageTitle: scrape.pageTitle,
+            pageDescription: scrape.pageDescription,
+            pageLanguage: scrape.pageLanguage,
+            statusCode: scrape.statusCode,
+            contentType: scrape.contentType,
+            cacheState: scrape.cacheState,
+            cachedAt: scrape.cachedAt,
+            proxyUsed: scrape.proxyUsed,
+            scrapeId: scrape.scrapeId,
+            liveViewUrl: scrape.liveViewUrl,
+            interactOutput: scrape.interactOutput,
+            interactPrompt: scrape.interactPrompt,
             rawInput: rawInputStr,
             rawOutput: rawOutputStr,
             toolName,
             status,
           });
-        } else if (toolName === "bashExec" || toolName === "bash_exec") {
+        } else if (pay.kind === "scrapeBashLoad") {
+          const load = pay as ScrapeBashLoadPayload;
+          items.push({
+            type: "scrapeBashLoad",
+            scrapePages: load.pages,
+            scrapeError: load.error,
+            rawInput: rawInputStr,
+            rawOutput: rawOutputStr,
+            toolName,
+            status,
+          });
+        } else if (pay.kind === "bash") {
+          const bash = pay as BashResultPayload;
           items.push({
             type: "bash",
-            command: String(input.command ?? ""),
-            stdout: String((output as { stdout?: string }).stdout ?? ""),
-            stderr: String((output as { stderr?: string }).stderr ?? ""),
-            exitCode: Number((output as { exitCode?: number }).exitCode ?? 0),
+            command: bash.command || String(input.command ?? input.url ?? ""),
+            stdout: bash.stdout,
+            stderr: bash.stderr || bash.error || "",
+            exitCode: bash.exitCode,
             rawInput: rawInputStr,
             rawOutput: rawOutputStr,
             toolName,
             status,
           });
-        } else if (toolName === "scrapeBash" || toolName === "scrape_bash") {
-          // scrapeBash has two output shapes:
-          //  - load mode: { loaded, total, pages: [{status,url,sandboxPath,lineCount}], hint }
-          //  - run mode : { stdout, stderr, exitCode, cmd, ms, context }
-          //  - or an error envelope: { error: "..." } / page with status: "error"
-          const outObj = output as Record<string, unknown>;
-          const isRun = typeof outObj?.cmd === "string" || typeof outObj?.stdout === "string";
-          const isLoad = Array.isArray(outObj?.pages) || typeof outObj?.sandboxPath === "string";
-          const topError = typeof outObj?.error === "string" ? outObj.error as string : undefined;
-          const pageErrors = Array.isArray(outObj?.pages)
-            ? (outObj.pages as Array<Record<string, unknown>>).filter((p) => p.status === "error").map((p) => String(p.url ?? "")).filter(Boolean)
-            : [];
-
-          if (isRun) {
-            items.push({
-              type: "bash",
-              command: String(outObj.cmd ?? input.command ?? ""),
-              stdout: String(outObj.stdout ?? ""),
-              stderr: String(outObj.stderr ?? topError ?? ""),
-              exitCode: Number(outObj.exitCode ?? (topError ? 1 : 0)),
-              rawInput: rawInputStr,
-              rawOutput: rawOutputStr,
-              toolName,
-              status,
-            });
-          } else if (isLoad) {
-            const pages = Array.isArray(outObj.pages) ? outObj.pages as Array<Record<string, unknown>> : [];
-            const inputUrlsArr = Array.isArray(input.urls) ? (input.urls as unknown[]).map(String) : undefined;
-            const singleUrl = typeof outObj.url === "string" ? outObj.url as string : (typeof input.url === "string" ? input.url as string : undefined);
-
-            // Build a normalized pages list — if Firecrawl returned per-page
-            // entries, use those; otherwise fall back to single-url or the
-            // input urls array so the UI can still show what was attempted.
-            const pageList: ScrapeBashPage[] = pages.length > 0
-              ? pages.map((p) => ({
-                  url: String(p.url ?? ""),
-                  status: (p.status === "loaded" || p.status === "empty" || p.status === "error") ? p.status as ScrapeBashPage["status"] : "loaded",
-                  lineCount: typeof p.lineCount === "number" ? p.lineCount as number : undefined,
-                  sandboxPath: typeof p.sandboxPath === "string" ? p.sandboxPath as string : undefined,
-                }))
-              : singleUrl
-                ? [{
-                    url: singleUrl,
-                    status: topError ? "error" : "loaded",
-                    lineCount: typeof outObj.lineCount === "number" ? outObj.lineCount as number : undefined,
-                    sandboxPath: typeof outObj.sandboxPath === "string" ? outObj.sandboxPath as string : undefined,
-                  }]
-                : (inputUrlsArr ?? []).map((u) => ({ url: u, status: topError ? "error" as const : "loaded" as const }));
-
-            items.push({
-              type: "scrapeBashLoad",
-              scrapePages: pageList,
-              scrapeError: topError ?? (pageErrors.length > 0 && pageErrors.length === pages.length ? "All URLs failed to load" : undefined),
-              rawInput: rawInputStr,
-              rawOutput: rawOutputStr,
-              toolName,
-              status,
-            });
-          } else {
-            // Unknown shape — treat error string as stderr, fall back to raw.
-            items.push({
-              type: "bash",
-              command: String(input.command ?? input.url ?? "(scrapeBash)"),
-              stdout: "",
-              stderr: topError ?? "",
-              exitCode: topError ? 1 : 0,
-              rawInput: rawInputStr,
-              rawOutput: rawOutputStr,
-              toolName,
-              status,
-            });
-          }
         } else if (toolName === "lookup_site_playbook") {
           // Site playbooks are sub-resources, not top-level skills — don't show them as cards
         } else if (toolName === "load_skill" || toolName === "read_skill_resource") {
@@ -2142,7 +2010,13 @@ function extractTimeline(messages: UIMessage[]): {
       }
     }
   }
-  // Propagate liveViewUrl from completed interact items to running ones
+  // Propagate liveViewUrl from completed interact items to running ones.
+  // Two sources of truth:
+  //   1. Completed interact items (already have liveViewUrl on the tile).
+  //   2. `interactLiveView` parts emitted by the server's onSessionStart
+  //      callback — these arrive BEFORE any tool output, so the running tile
+  //      can show its iframe immediately even though it doesn't yet know
+  //      its own scrapeId.
   const knownLiveViewUrls = new Map<string, string>();
   let lastKnownLiveViewUrl: string | undefined;
   for (const item of items) {
@@ -2152,10 +2026,19 @@ function extractTimeline(messages: UIMessage[]): {
       lastKnownLiveViewUrl = item.liveViewUrl;
     }
   }
+  // Also seed from the server-pushed liveview parts so an in-flight tile
+  // can attach an iframe before any other interact tile has finished.
+  for (const v of Object.values(interactLiveView)) {
+    if (!v.liveViewUrl) continue;
+    const domain = v.url ? getDomain(v.url) : null;
+    if (domain && !knownLiveViewUrls.has(domain)) {
+      knownLiveViewUrls.set(domain, v.liveViewUrl);
+    }
+    lastKnownLiveViewUrl = lastKnownLiveViewUrl ?? v.liveViewUrl;
+  }
   for (const item of items) {
     if (item.type === "interact" && !item.liveViewUrl) {
       const domain = item.url ? getDomain(item.url) : null;
-      // Try same-domain first, then fall back to any prior interact's liveViewUrl
       if (domain && knownLiveViewUrls.has(domain)) {
         item.liveViewUrl = knownLiveViewUrls.get(domain);
       } else if (lastKnownLiveViewUrl) {

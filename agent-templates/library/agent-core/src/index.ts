@@ -12,6 +12,19 @@ export { formatOutput, bashExec, initBashWithFiles, listBashFiles, readBashFile,
 export { buildFirecrawlToolkit } from "./toolkit";
 export { loadOrchestratorPrompt } from "./orchestrator/loader";
 export { loadWorkerPrompt } from "./worker/loader";
+export { parseToolResult, normalizeToolOutput } from "./tool-results";
+export type {
+  ParseToolResult,
+  ParseToolResultInput,
+  ToolResultPayload,
+  SearchResultPayload,
+  SearchResultRow,
+  ScrapeResultPayload,
+  ScrapeBashLoadPayload,
+  ScrapeBashLoadedPage,
+  BashResultPayload,
+  UnknownToolPayload,
+} from "./tool-results";
 
 // Types
 export type {

@@ -18,10 +18,10 @@ Each layer builds on the one below it. Start at the top for a ready-to-use app, 
 
 | Layer | Description | Get started |
 |:---:|---|---|
-| [**Next.js Template**](./agent-templates/next/) | Chat UI, streaming, Skills, Subagents, structured output | `firecrawl-agent init -t next` |
-| [**Express Template**](./agent-templates/express/) | API server with Skills, Subagents, structured output | `firecrawl-agent init -t express` |
+| [**Next.js Template**](./agent-templates/next/) | Chat UI, streaming, Skills, Subagents, structured output | `firecrawl-agent create -t next` |
+| [**Express Template**](./agent-templates/express/) | API server with Skills, Subagents, structured output | `firecrawl-agent create -t express` |
 | ↑ | | |
-| [**Agent Core**](./agent-core/) | Orchestrator, Skills, Subagents, structured output | `firecrawl-agent init -t library` |
+| [**Agent Core**](./agent-core/) | Orchestrator built on [Deep Agents](https://docs.langchain.com/oss/javascript/deepagents/overview) (LangChain). Skills, Subagents, structured output | `firecrawl-agent create -t library` |
 | ↑ | | |
 | [**Firecrawl AI SDK**](https://npmjs.com/package/firecrawl-aisdk) | Search, Scrape, Interact as Vercel AI SDK tools | `npm i firecrawl-aisdk` |
 | ↑ | | |
@@ -77,12 +77,13 @@ The agent loads Skills on demand via the `load_skill` tool. You can also pass `s
 
 ## How it works
 
-The agent combines web tools with an AI model in a loop - it plans, acts, observes, and repeats until the task is done.
+The agent combines web tools with an AI model in a loop — it plans, acts, observes, and repeats until the task is done. The harness is [Deep Agents](https://docs.langchain.com/oss/javascript/deepagents/overview) (from LangChain), which gives us the plan-act loop, parallel `task` sub-agent spawning, and on-demand SKILL.md loading out of the box. Our `agent-core` wires Firecrawl's tools into that runtime and layers on structured output, scrapeBash sandboxing, and a thin streaming shim for UIs.
 
-- **Tools** - Search, Scrape, Interact (browser automation). Powered by [firecrawl-aisdk](https://www.npmjs.com/package/firecrawl-aisdk).
-- **Skills** - reusable SKILL.md playbooks. Auto-discovered from `agent-core/src/skills/definitions/`.
-- **Subagents** - parallel workers for independent tasks. The orchestrator spawns them dynamically.
-- **Output** - structured results via `formatOutput` (JSON, CSV, Markdown) and data processing via `bashExec`.
+- **Harness** — [Deep Agents](https://docs.langchain.com/oss/javascript/deepagents/overview) / LangGraph. Provides the agent loop, sub-agent spawning, skills loading, and context management.
+- **Tools** — Search, Scrape, Interact (browser automation), scrapeBash (WASM sandbox). Powered by [firecrawl-aisdk](https://www.npmjs.com/package/firecrawl-aisdk).
+- **Skills** — reusable SKILL.md playbooks. Auto-discovered from `agent-core/src/skills/definitions/`, loaded on demand via Deep Agents' skills middleware.
+- **Subagents** — parallel workers for independent tasks, spawned via Deep Agents' `task` tool. Each has its own tool set and session state (e.g. an isolated interact browser session).
+- **Output** — structured results via `formatOutput` (JSON, CSV) and data processing via `bashExec`.
 
 ## Project structure
 

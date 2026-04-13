@@ -241,6 +241,51 @@ export async function POST(req: Request) {
     // for each task, bypassing the bridge's text-part attribution entirely.
     const subagentText: Record<string, string> = {};
 
+    // Capture ToolMessage outputs seen anywhere in the stream, keyed by the
+    // real tool_call_id. The @ai-sdk/langchain bridge is flaky about emitting
+    // `tool-output-available` for sub-agent ToolMessages that live inside a
+    // subgraph's "values" events — it sees the messages array but doesn't
+    // always enqueue an output part for each one. We sidestep the whole thing
+    // by capturing outputs ourselves and emitting `data-tool-output` parts
+    // the client merges back into the matching tool tile.
+    const toolOutputs: Record<string, { toolCallId: string; output: unknown }> = {};
+
+    // Pick every ToolMessage out of the stream payload (works on root-level
+    // `[msg, metadata]` tuples AND on `values` state objects `{messages: []}`).
+    function collectToolMessages(
+      mode: unknown,
+      data: unknown,
+    ): Array<{ toolCallId: string; output: unknown }> {
+      const out: Array<{ toolCallId: string; output: unknown }> = [];
+      const push = (m: unknown) => {
+        if (!m || typeof m !== "object") return;
+        const obj = m as { type?: string; tool_call_id?: string; content?: unknown; kwargs?: { tool_call_id?: string; content?: unknown } };
+        const isSerialized = obj.type === "constructor" && (obj as { id?: unknown[] }).id &&
+          Array.isArray((obj as { id?: unknown[] }).id) &&
+          (obj as { id?: unknown[] }).id!.includes("ToolMessage");
+        const t = obj.type;
+        const isTool = t === "tool" || t === "ToolMessage" || isSerialized ||
+          (typeof obj === "object" && obj !== null && (obj as unknown as { constructor?: { name?: string } }).constructor?.name === "ToolMessage");
+        if (!isTool) return;
+        const src = isSerialized && obj.kwargs ? obj.kwargs : obj;
+        const id = typeof src.tool_call_id === "string" ? src.tool_call_id : undefined;
+        if (!id) return;
+        out.push({ toolCallId: id, output: src.content });
+      };
+      if (mode === "messages" && Array.isArray(data)) {
+        push(data[0]);
+      } else if (mode === "values" && data && typeof data === "object") {
+        const msgs = (data as { messages?: unknown[] }).messages;
+        if (Array.isArray(msgs)) for (const m of msgs) push(m);
+      } else if (mode === "updates" && data && typeof data === "object") {
+        for (const node of Object.values(data as Record<string, unknown>)) {
+          const msgs = (node as { messages?: unknown[] } | null)?.messages;
+          if (Array.isArray(msgs)) for (const m of msgs) push(m);
+        }
+      }
+      return out;
+    }
+
     // Extract text content out of an AIMessageChunk-shaped value. LangChain's
     // content can be a plain string or an array of content blocks.
     function extractText(msg: unknown): string {
@@ -330,6 +375,13 @@ export async function POST(req: Request) {
           if (!seenNamespaces.has(JSON.stringify(ns))) {
             seenNamespaces.add(JSON.stringify(ns));
             console.log(`[agent] ns=${JSON.stringify(ns)} mode=${String(mode)}`);
+          }
+          // Capture every ToolMessage we see regardless of namespace. The
+          // outer merge loop re-emits these as `data-tool-output` parts so
+          // the client always has the real output, even when the bridge
+          // drops `tool-output-available` for a sub-agent call.
+          for (const tm of collectToolMessages(mode, data)) {
+            toolOutputs[tm.toolCallId] = tm;
           }
           const nsKey = subAgentNsKey(ns);
 
@@ -448,6 +500,31 @@ export async function POST(req: Request) {
             }
           };
 
+          // One data part per tool_call_id, re-emitted whenever its output
+          // payload changes. The client merges these into the matching
+          // tool-<name> part when the bridge didn't supply an output of
+          // its own (e.g. sub-agent tool calls inside a LangGraph subgraph).
+          const emittedToolOutputs: Record<string, string> = {};
+          const flushToolOutputs = () => {
+            for (const [id, tm] of Object.entries(toolOutputs)) {
+              let signature: string;
+              try {
+                signature = typeof tm.output === "string"
+                  ? tm.output
+                  : JSON.stringify(tm.output);
+              } catch {
+                signature = String(tm.output);
+              }
+              if (emittedToolOutputs[id] === signature) continue;
+              writer.write({
+                type: "data-tool-output",
+                id: `tool-output:${id}`,
+                data: { toolCallId: id, output: tm.output },
+              } as never);
+              emittedToolOutputs[id] = signature;
+            }
+          };
+
           try {
             while (true) {
               const { done, value } = await reader.read();
@@ -477,6 +554,8 @@ export async function POST(req: Request) {
               // the onSessionStart callback. Each scrapeId gets its own
               // stable `id` so the UIMessage reducer replaces-in-place.
               flushInteractSessions();
+              // Flush any tool outputs the bridge didn't surface on its own.
+              flushToolOutputs();
             }
             // Final flush.
             if (Object.keys(toolCallParent).length > lastMapSize) {
@@ -492,7 +571,8 @@ export async function POST(req: Request) {
               }
             }
             flushInteractSessions();
-            console.log(`[agent] stream done. map=${Object.keys(toolCallParent).length} subagent-texts=${Object.keys(subagentText).length} interact-sessions=${Object.keys(interactSessions).length}`);
+            flushToolOutputs();
+            console.log(`[agent] stream done. map=${Object.keys(toolCallParent).length} subagent-texts=${Object.keys(subagentText).length} tool-outputs=${Object.keys(toolOutputs).length} interact-sessions=${Object.keys(interactSessions).length}`);
           } finally {
             reader.releaseLock();
           }

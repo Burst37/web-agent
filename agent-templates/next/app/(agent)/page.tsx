@@ -1182,7 +1182,7 @@ export default function AgentPage(props: AgentPageProps) {
           <div className="grid grid-cols-2 gap-8">
             {[
               "Get the P/E ratio, stock price, and latest press release for NVIDIA, Google, and Microsoft",
-              "Scrape the top 10 stories from news.ycombinator.com with scores, comment counts, and links",
+              "Go to https://www-cdn.anthropic.com/08ab9158070959f88f296514c21b7facce6f52bc.pdf — what are the benchmarks for Claude Mythos?",
               "Compare Cursor, Windsurf, and Claude Code: pricing, features, and supported languages from each site",
               "Find the 5 most recent YC-backed AI startups on ycombinator.com/companies and get each founder's LinkedIn",
             ].map((prompt) => (
@@ -1369,7 +1369,7 @@ export default function AgentPage(props: AgentPageProps) {
             {/* Follow-up input */}
             {!isRunning && (
               <div
-                className="bg-accent-white rounded-12 overflow-hidden transition-opacity"
+                className="bg-accent-white overflow-hidden transition-opacity"
                 style={{
                   boxShadow:
                     "0px 2px 12px -2px rgba(0,0,0,0.04), 0px 0px 0px 1px rgba(0,0,0,0.06)",
@@ -1393,7 +1393,7 @@ export default function AgentPage(props: AgentPageProps) {
                   {followUp.trim() && (
                     <button
                       type="button"
-                      className="bg-heat-100 hover:bg-[color:var(--heat-90)] text-accent-white rounded-8 p-6 transition-all active:scale-95"
+                      className="bg-heat-100 hover:bg-[color:var(--heat-90)] text-accent-white p-6 transition-all active:scale-95"
                       onClick={() => {
                         setSuggestions([]);
                         sendMessage({ text: followUp });
@@ -1422,7 +1422,7 @@ export default function AgentPage(props: AgentPageProps) {
                   <button
                     key={i}
                     type="button"
-                    className="px-12 py-6 rounded-8 text-body-small text-black-alpha-40 bg-black-alpha-2 hover:bg-black-alpha-4 hover:text-accent-black transition-all text-left"
+                    className="px-12 py-6 text-body-small text-black-alpha-40 bg-black-alpha-2 hover:bg-black-alpha-4 hover:text-accent-black transition-all text-left"
                     onClick={() => {
                       setSuggestions([]);
                       sendMessage({ text: s });
