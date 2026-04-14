@@ -290,10 +290,10 @@ function PlusMenu({
     <div className="fixed inset-0 bg-black/10 z-40" onClick={onClose} />
     <div
       ref={ref}
-      className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-accent-white rounded-16 border border-border-muted overflow-hidden flex w-[560px]"
+      className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-accent-white rounded-16 border border-border-muted overflow-hidden flex w-[960px] max-w-[92vw]"
       style={{
         boxShadow: "0px 24px 48px -12px rgba(0,0,0,0.12), 0px 8px 16px -4px rgba(0,0,0,0.06)",
-        maxHeight: "min(480px, 80vh)",
+        maxHeight: "min(800px, 90vh)",
       }}
     >
       {/* Left nav */}
@@ -431,8 +431,8 @@ function PlusMenu({
                 </>
               )}
               {schema && (
-                <div className="bg-black-alpha-2 rounded-8 px-10 py-6 text-mono-x-small text-black-alpha-40 break-all max-h-[100px] overflow-auto" style={{ scrollbarWidth: "thin" }}>
-                  {JSON.stringify(schema, null, 2)}
+                <div className="bg-black-alpha-2 px-10 py-6 max-h-[180px] overflow-auto" style={{ scrollbarWidth: "thin" }}>
+                  <JsonViewer data={JSON.stringify(schema)} />
                 </div>
               )}
             </div>
