@@ -64,40 +64,49 @@ export interface ScaffoldOptions {
   envVars: Record<string, string>;
   selectedProvider?: string;
   defaultModelId?: string;
+  /** Sub-agent provider. Defaults to selectedProvider when omitted. */
+  subAgentProvider?: string;
+  /** Sub-agent model id. Defaults to defaultModelId when omitted. */
+  subAgentModelId?: string;
   skipInstall?: boolean;
 }
 
 function applyTemplateProviderDefaults(
   projectDir: string,
   templateId: string,
-  providerId?: string,
-  modelId?: string,
+  orchProvider: string | undefined,
+  orchModel: string | undefined,
+  subProvider: string | undefined,
+  subModel: string | undefined,
 ): void {
-  if (!providerId || !modelId || templateId !== 'next') return;
+  if (!orchProvider || !orchModel || templateId !== 'next') return;
 
   const configPath = path.join(projectDir, 'app', '(agent)', '_config.ts');
   if (!fs.existsSync(configPath)) return;
+
+  const effectiveSubProvider = subProvider ?? orchProvider;
+  const effectiveSubModel = subModel ?? orchModel;
 
   let content = fs.readFileSync(configPath, 'utf-8');
   content = content
     .replace(
       /^(\s*)orchestrator:\s*\{ provider: "[^"]+", model: "[^"]+" \} satisfies ModelRef,$/m,
-      `$1orchestrator: { provider: "${providerId}", model: "${modelId}" } satisfies ModelRef,`
+      `$1orchestrator: { provider: "${orchProvider}", model: "${orchModel}" } satisfies ModelRef,`
     )
     .replace(
       /^(\s*)subAgent:\s*\{ provider: "[^"]+", model: "[^"]+" \} satisfies ModelRef,$/m,
-      `$1subAgent:     { provider: "${providerId}", model: "${modelId}" } satisfies ModelRef,`
+      `$1subAgent:     { provider: "${effectiveSubProvider}", model: "${effectiveSubModel}" } satisfies ModelRef,`
     )
     .replace(
       /^(\s*)background:\s*\{ provider: "[^"]+", model: "[^"]+" \} satisfies ModelRef,$/m,
-      `$1background:   { provider: "${providerId}", model: "${modelId}" } satisfies ModelRef,`
+      `$1background:   { provider: "${orchProvider}", model: "${orchModel}" } satisfies ModelRef,`
     );
 
   fs.writeFileSync(configPath, content, 'utf-8');
 }
 
 export async function scaffoldProject(opts: ScaffoldOptions): Promise<void> {
-  const { projectDir, template, envVars, selectedProvider, defaultModelId, skipInstall } = opts;
+  const { projectDir, template, envVars, selectedProvider, defaultModelId, subAgentProvider, subAgentModelId, skipInstall } = opts;
   const sourceRoot = getSourceRoot();
 
   fs.mkdirSync(projectDir, { recursive: true });
@@ -154,7 +163,14 @@ export async function scaffoldProject(opts: ScaffoldOptions): Promise<void> {
     fs.writeFileSync(projectPkgPath, JSON.stringify(projectPkg, null, 2) + '\n', 'utf-8');
   }
 
-  applyTemplateProviderDefaults(projectDir, template.id, selectedProvider, defaultModelId);
+  applyTemplateProviderDefaults(
+    projectDir,
+    template.id,
+    selectedProvider,
+    defaultModelId,
+    subAgentProvider,
+    subAgentModelId,
+  );
   success(`${template.name} template scaffolded`);
 
   // Write .env file

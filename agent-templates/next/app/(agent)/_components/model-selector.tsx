@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { AVAILABLE_MODELS, type Provider } from "@agent/_lib/config/models";
 import { getExperimentalFeatures } from "@agent/_config";
 import type { ModelConfig } from "@/agent-core-types";
@@ -15,6 +16,28 @@ const PROVIDERS: { id: Provider; name: string }[] = [
   { id: "google", name: "Google" },
 ];
 
+// Provider → (label, docs URL). Used to point users at the right console when
+// their selected provider has no key configured.
+const PROVIDER_DOCS: Record<Provider, { label: string; url: string }> = {
+  anthropic:       { label: "Anthropic",    url: "https://console.anthropic.com/settings/keys" },
+  openai:          { label: "OpenAI",       url: "https://platform.openai.com/api-keys" },
+  google:          { label: "Google AI",    url: "https://aistudio.google.com/apikey" },
+  gateway:         { label: "AI Gateway",   url: "https://vercel.com/dashboard/ai-gateway" },
+  "custom-openai": { label: "Custom OpenAI", url: "" },
+  firecrawl:       { label: "Firecrawl",    url: "https://firecrawl.dev/app/api-keys" },
+};
+
+// Keys returned by /api/config are keyed by the KeyId in keys.ts, not the
+// provider string — normalize here.
+const PROVIDER_TO_KEY_ID: Record<Provider, string | null> = {
+  anthropic: "anthropic",
+  openai: "openai",
+  google: "google",
+  gateway: "gateway",
+  "custom-openai": "customOpenAI",
+  firecrawl: "firecrawl",
+};
+
 export default function ModelSelector({
   value,
   onChange,
@@ -25,6 +48,24 @@ export default function ModelSelector({
   compact?: boolean;
 }) {
   const models = AVAILABLE_MODELS[value.provider] ?? [];
+  const [keyStatuses, setKeyStatuses] = useState<Record<string, { configured: boolean }>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/config")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data: { keys?: Record<string, { configured: boolean }> } | null) => {
+        if (!cancelled && data?.keys) setKeyStatuses(data.keys);
+      })
+      .catch(() => { /* best-effort — warning just won't show */ });
+    return () => { cancelled = true; };
+  }, []);
+
+  const keyId = PROVIDER_TO_KEY_ID[value.provider];
+  const docs = PROVIDER_DOCS[value.provider];
+  const serverHasKey = keyId ? !!keyStatuses[keyId]?.configured : false;
+  const inlineHasKey = !!value.apiKey?.trim();
+  const needsKey = !!docs?.url && !serverHasKey && !inlineHasKey;
 
   return (
     <div className={cn("flex flex-col gap-8", compact && "gap-6")}>
@@ -90,6 +131,25 @@ export default function ModelSelector({
             value={value.baseURL ?? ""}
             onChange={(e) => onChange({ ...value, baseURL: e.target.value || undefined })}
           />
+        </div>
+      )}
+
+      {needsKey && (
+        <div className="px-10 py-8 border border-heat-100/30 bg-heat-100/6 text-body-small text-accent-black">
+          <div className="flex items-center gap-6">
+            <svg fill="none" height="12" viewBox="0 0 24 24" width="12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-heat-100 flex-shrink-0">
+              <path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+            <span>No {docs.label} key configured.</span>
+          </div>
+          <a
+            href={docs.url}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-4 inline-flex items-center gap-4 text-label-small text-heat-100 hover:underline"
+          >
+            Get an API key →
+          </a>
         </div>
       )}
     </div>

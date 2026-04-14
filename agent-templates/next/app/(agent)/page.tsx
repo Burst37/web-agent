@@ -1287,13 +1287,13 @@ export default function AgentPage(props: AgentPageProps) {
               </div>
             )}
             {sparkError && (
-              <div className="my-12 rounded-10 border border-border-faint overflow-hidden">
+              <div className="my-12 border border-border-faint overflow-hidden">
                 <div className="flex items-center gap-8 px-14 py-10">
                   <ProviderModelIcon icon="firecrawl" size={16} />
                   <span className="text-label-small text-accent-black">
                     {config.model.model === "spark-1-pro" ? "Spark 1 Pro" : "Spark 1 Mini"}
                   </span>
-                  <span className="text-mono-x-small text-accent-crimson bg-accent-crimson/8 px-4 py-1 rounded-4">failed</span>
+                  <span className="text-mono-x-small text-accent-crimson bg-accent-crimson/8 px-4 py-1">failed</span>
                 </div>
                 <div className="border-t border-border-faint bg-background-lighter p-14">
                   <div className="text-body-small text-accent-black">{sparkError}</div>
@@ -1368,7 +1368,7 @@ export default function AgentPage(props: AgentPageProps) {
           <div className="mt-20 pt-16">
             {/* Error display */}
             {chatError && (
-              <div className="mb-10 px-14 py-10 rounded-10 border border-accent-crimson/20 bg-accent-crimson/5 text-body-small text-accent-black">
+              <div className="mb-10 px-14 py-10 border border-accent-crimson/20 bg-accent-crimson/5 text-body-small text-accent-black">
                 <span className="text-accent-crimson text-label-small">Error: </span>
                 {(() => {
                   const msg = chatError.message || "Something went wrong";

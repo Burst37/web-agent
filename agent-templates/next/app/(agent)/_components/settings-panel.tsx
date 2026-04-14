@@ -32,14 +32,6 @@ const PROVIDERS = [
   ...(EXPERIMENTAL.customOpenAI ? [{ id: "customOpenAI", label: "Custom OpenAI", icon: "openai", envVar: "CUSTOM_OPENAI_API_KEY", placeholder: "sk-...", description: "Any OpenAI-compatible provider using your own base URL and model IDs.", required: false, hasModels: true, provider: "custom-openai" as Provider, extraField: { id: "customOpenAIBaseURL", label: "Base URL", placeholder: "https://openrouter.ai/api/v1", help: "Saved separately and used as the default base URL for the custom-openai provider." } }] : []),
 ];
 
-const OPERATIONS = [
-  { id: "search", label: "Search" },
-  { id: "scrape", label: "Scrape" },
-  { id: "interact", label: "Interact" },
-  { id: "plan", label: "Plan" },
-  { id: "export", label: "Export" },
-];
-
 function StatusDot({ configured, required }: { configured: boolean; required?: boolean }) {
   return (
     <div className={cn(
@@ -303,8 +295,6 @@ function GeneralView({
   onChange: (c: AgentConfig) => void;
   keyStatuses: Record<string, { configured: boolean }>;
 }) {
-  const [showAdvanced, setShowAdvanced] = useState(false);
-
   const availableProviders = (Object.keys(PROVIDER_META).filter(k => k !== "acp") as Provider[]).filter(
     (p) => {
       const hasAny = Object.values(keyStatuses).some(s => s.configured);
@@ -394,71 +384,6 @@ function GeneralView({
         />
       </div>
 
-      <div>
-        <button
-          type="button"
-          className="flex items-center gap-8 text-label-medium text-black-alpha-40 hover:text-accent-black transition-colors"
-          onClick={() => setShowAdvanced(!showAdvanced)}
-        >
-          <svg fill="none" height="12" viewBox="0 0 24 24" width="12" className={cn("transition-transform", showAdvanced && "rotate-90")} stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <path d="M9 18l6-6-6-6" />
-          </svg>
-          Per-operation subagent model overrides
-        </button>
-        <p className="text-body-small text-black-alpha-24 mt-4 ml-20">Override which model subagents use for specific operations.</p>
-
-        {showAdvanced && (
-          <div className="mt-14 flex flex-col gap-12 pl-20 border-l-2 border-border-faint">
-            {OPERATIONS.map((op) => {
-              const override = config.operationModels?.[op.id];
-              return (
-                <div key={op.id}>
-                  <div className="flex items-center gap-8 mb-6">
-                    <span className="text-label-small text-black-alpha-48">{op.label}</span>
-                    {!override && <span className="text-mono-x-small text-black-alpha-20">(default)</span>}
-                  </div>
-                  <div className="flex gap-6">
-                    <select
-                      className="flex-1 bg-background-base border border-black-alpha-8 rounded-10 px-12 py-8 text-body-small appearance-none cursor-pointer focus:border-heat-100 focus:outline-none"
-                      value={override?.provider ?? ""}
-                      onChange={(e) => {
-                        const opModels = { ...(config.operationModels ?? {}) };
-                        if (!e.target.value) { delete opModels[op.id]; }
-                        else {
-                          const provider = e.target.value as ModelConfig["provider"];
-                          const models = AVAILABLE_MODELS[provider] ?? [];
-                          opModels[op.id] = { provider, model: models[0]?.id ?? "" };
-                        }
-                        onChange({ ...config, operationModels: Object.keys(opModels).length ? opModels : undefined });
-                      }}
-                    >
-                      <option value="">Default</option>
-                      {availableProviders.map((p) => (
-                        <option key={p} value={p}>{PROVIDER_META[p].name}</option>
-                      ))}
-                    </select>
-                    {override && (
-                      <select
-                        className="flex-1 bg-background-base border border-black-alpha-8 rounded-10 px-12 py-8 text-body-small appearance-none cursor-pointer focus:border-heat-100 focus:outline-none"
-                        value={override.model}
-                        onChange={(e) => {
-                          const opModels = { ...(config.operationModels ?? {}) };
-                          opModels[op.id] = { ...override, model: e.target.value };
-                          onChange({ ...config, operationModels: opModels });
-                        }}
-                      >
-                        {(AVAILABLE_MODELS[override.provider] ?? []).map((m) => (
-                          <option key={m.id} value={m.id}>{m.name}</option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
     </div>
   );
 }

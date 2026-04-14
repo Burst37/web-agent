@@ -1,7 +1,6 @@
 import { Command } from 'commander';
 import { select, password, input } from '@inquirer/prompts';
 import * as path from 'path';
-import * as fs from 'fs';
 import {
   getTemplates, getProviders, getTemplate,
   loadExternalManifest,
@@ -24,6 +23,8 @@ interface InitOptions {
   template?: string;
   provider?: string;
   model?: string;
+  subAgentProvider?: string;
+  subAgentModel?: string;
   from?: string;
   apiKey?: string;
   key?: string[];
@@ -36,8 +37,10 @@ export function createInitCommand(): Command {
     .description('Create a new Firecrawl Agent project')
     .argument('[project-name]', 'Project directory name')
     .option('-t, --template <id>', 'Template (next, express, library)')
-    .option('--provider <id>', 'Default model provider (anthropic, openai, google, custom-openai)')
-    .option('--model <id>', 'Default model ID')
+    .option('--provider <id>', 'Orchestrator model provider (anthropic, openai, google, custom-openai)')
+    .option('--model <id>', 'Orchestrator model ID')
+    .option('--sub-agent-provider <id>', 'Sub-agent model provider (defaults to orchestrator)')
+    .option('--sub-agent-model <id>', 'Sub-agent model ID (defaults to orchestrator)')
     .option('--from <source>', 'External repo (user/repo) or local path with agent-manifest.json')
     .option('--api-key <key>', 'Firecrawl API key')
     .option('--key <provider=key>', 'Provider API key (repeatable, e.g. --key anthropic=sk-...)', collect, [])
@@ -89,6 +92,41 @@ function parseKeyFlags(keys: string[]): Record<string, string> {
     map[envVar] = value;
   }
   return map;
+}
+
+/**
+ * Prompt the user to pick a provider+model pair from the available manifest.
+ * Used by both the initial orchestrator prompt and the review-loop "Change…"
+ * actions so changes stay in sync.
+ */
+async function promptProviderAndModel(
+  availableProviders: ProviderEntry[],
+  message: string,
+): Promise<{ provider: ProviderEntry; modelId: string }> {
+  const providerId = await select({
+    message,
+    choices: availableProviders
+      .filter((p) => p.models && p.models.length > 0)
+      .map((provider) => ({
+        name: `${provider.name}  ${dim}${provider.models[0].name}${reset}`,
+        value: provider.id,
+      })),
+  });
+  const provider = getSelectedProvider(availableProviders, providerId)!;
+
+  let modelId: string;
+  if (provider.id === 'custom-openai') {
+    modelId = (await input({ message: 'Model ID', default: 'gpt-4o' })).trim() || 'gpt-4o';
+  } else if (provider.models.length > 1) {
+    modelId = await select({
+      message: 'Model',
+      choices: provider.models.map((m) => ({ name: m.name, value: m.id })),
+    });
+  } else {
+    modelId = provider.models[0]?.id ?? 'gpt-4o';
+  }
+
+  return { provider, modelId };
 }
 
 async function handleInit(rawName: string | undefined, options: InitOptions): Promise<void> {
@@ -167,7 +205,7 @@ async function handleInit(rawName: string | undefined, options: InitOptions): Pr
     }
   }
 
-  // --- Model selection ---
+  // --- Orchestrator model selection ---
   let selectedModelId: string;
 
   if (options.model) {
@@ -188,6 +226,49 @@ async function handleInit(rawName: string | undefined, options: InitOptions): Pr
     });
   } else {
     selectedModelId = selectedProvider.models[0]?.id ?? 'gpt-4o';
+  }
+
+  // --- Sub-agent model selection ---
+  // Defaults to the orchestrator pair; user can override with flags or via
+  // an interactive "same / different provider" prompt.
+  let selectedSubProvider: ProviderEntry = selectedProvider;
+  let selectedSubModelId: string = selectedModelId;
+
+  if (options.subAgentProvider || options.subAgentModel) {
+    const subProv = options.subAgentProvider
+      ? getSelectedProvider(availableProviders, options.subAgentProvider)
+      : selectedProvider;
+    if (options.subAgentProvider && !subProv) {
+      warn(`Unknown sub-agent provider "${options.subAgentProvider}". Available: ${availableProviders.map((p) => p.id).join(', ')}`);
+      process.exit(1);
+    }
+    selectedSubProvider = subProv ?? selectedProvider;
+    selectedSubModelId =
+      options.subAgentModel ??
+      (selectedSubProvider.id === selectedProvider.id ? selectedModelId : selectedSubProvider.models[0]?.id ?? selectedModelId);
+  } else if (process.stdin.isTTY && !options.model) {
+    // Only prompt interactively when the user also didn't fully specify the
+    // orchestrator via flags — keeps fully-flagged invocations non-interactive.
+    const subChoice = await select({
+      message: 'Sub-agent model',
+      choices: [
+        { name: `Same as orchestrator  ${dim}(${selectedModelId})${reset}`, value: '__same__' },
+        ...availableProviders.flatMap((p) =>
+          p.models.map((m) => ({
+            name: `${p.name} — ${m.name}`,
+            value: `${p.id}::${m.id}`,
+          }))
+        ),
+      ],
+    });
+    if (subChoice !== '__same__') {
+      const [pId, mId] = subChoice.split('::');
+      const p = getSelectedProvider(availableProviders, pId);
+      if (p) {
+        selectedSubProvider = p;
+        selectedSubModelId = mId;
+      }
+    }
   }
 
   // --- Custom OpenAI endpoint ---
@@ -254,9 +335,105 @@ async function handleInit(rawName: string | undefined, options: InitOptions): Pr
     }
   }
 
+  // Prompt for the sub-agent provider key when it's a different provider than
+  // the orchestrator (same provider → same key, nothing new to collect).
+  if (
+    selectedSubProvider.id !== selectedProvider.id &&
+    !envVars[selectedSubProvider.envVar] &&
+    process.stdin.isTTY
+  ) {
+    const key = await password({
+      message: `${selectedSubProvider.name} API key ${dim}(${selectedSubProvider.hint})${reset}`,
+    });
+    if (key) {
+      envVars[selectedSubProvider.envVar] = key;
+    } else {
+      missing.add(selectedSubProvider.envVar);
+    }
+  }
+
   // Track what's missing for the summary
   for (const envVar of template.optionalEnvVars) {
     if (!envVars[envVar]) missing.add(envVar);
+  }
+
+  // --- Config summary review loop ---
+  // Skip entirely for non-interactive / fully-flagged invocations.
+  const fullyFlagged = !!(options.template && (options.apiKey || envVars.FIRECRAWL_API_KEY) && options.provider && options.model);
+  if (process.stdin.isTTY && !fullyFlagged) {
+    let confirmed = false;
+    while (!confirmed) {
+      printConfigSummary({
+        template,
+        orchProvider: selectedProvider,
+        orchModelId: selectedModelId,
+        subProvider: selectedSubProvider,
+        subModelId: selectedSubModelId,
+        envVars,
+        missing,
+      });
+      const action = await select({
+        message: 'Review',
+        choices: [
+          { name: 'Continue', value: 'continue' },
+          { name: 'Change orchestrator model', value: 'orch' },
+          { name: 'Change sub-agent model', value: 'sub' },
+          { name: 'Cancel', value: 'cancel' },
+        ],
+      });
+      if (action === 'cancel') {
+        info('Cancelled.');
+        process.exit(0);
+      }
+      if (action === 'orch') {
+        const picked = await promptProviderAndModel(availableProviders, 'Orchestrator model');
+        const prev = selectedProvider;
+        selectedProvider = picked.provider;
+        selectedModelId = picked.modelId;
+        envVars.MODEL_PROVIDER = selectedProvider.id;
+        envVars.MODEL_ID = selectedModelId;
+        // Track missing key for the new orchestrator provider
+        if (prev.envVar !== selectedProvider.envVar) {
+          if (!envVars[selectedProvider.envVar]) {
+            const key = await password({
+              message: `${selectedProvider.name} API key ${dim}(${selectedProvider.hint})${reset}`,
+            });
+            if (key) envVars[selectedProvider.envVar] = key;
+            else missing.add(selectedProvider.envVar);
+          }
+        }
+        continue;
+      }
+      if (action === 'sub') {
+        const sameChoice = await select({
+          message: 'Sub-agent model',
+          choices: [
+            { name: `Same as orchestrator  ${dim}(${selectedModelId})${reset}`, value: '__same__' },
+            { name: 'Different provider / model', value: '__different__' },
+          ],
+        });
+        if (sameChoice === '__same__') {
+          selectedSubProvider = selectedProvider;
+          selectedSubModelId = selectedModelId;
+        } else {
+          const picked = await promptProviderAndModel(availableProviders, 'Sub-agent model');
+          selectedSubProvider = picked.provider;
+          selectedSubModelId = picked.modelId;
+          if (
+            selectedSubProvider.id !== selectedProvider.id &&
+            !envVars[selectedSubProvider.envVar]
+          ) {
+            const key = await password({
+              message: `${selectedSubProvider.name} API key ${dim}(${selectedSubProvider.hint})${reset}`,
+            });
+            if (key) envVars[selectedSubProvider.envVar] = key;
+            else missing.add(selectedSubProvider.envVar);
+          }
+        }
+        continue;
+      }
+      confirmed = true;
+    }
   }
 
   // --- Scaffold ---
@@ -271,6 +448,8 @@ async function handleInit(rawName: string | undefined, options: InitOptions): Pr
     envVars,
     selectedProvider: selectedProvider.id,
     defaultModelId: envVars.MODEL_ID,
+    subAgentProvider: selectedSubProvider.id,
+    subAgentModelId: selectedSubModelId,
     skipInstall: options.skipInstall,
   });
 
@@ -284,16 +463,18 @@ async function handleInit(rawName: string | undefined, options: InitOptions): Pr
   if (detected.length > 0) {
     info(`Keys: ${detected.join(', ')}`);
   }
-  info(`Default provider: ${selectedProvider.name} (${envVars.MODEL_ID})`);
+  info(`Orchestrator: ${selectedProvider.name} (${envVars.MODEL_ID})`);
+  if (selectedSubProvider.id === selectedProvider.id && selectedSubModelId === selectedModelId) {
+    info(`Sub-agent:    same as orchestrator`);
+  } else {
+    info(`Sub-agent:    ${selectedSubProvider.name} (${selectedSubModelId})`);
+  }
   if (missing.size > 0) {
     info(`Missing: ${Array.from(missing).join(', ')} ${dim}(add to .env later)${reset}`);
   }
   console.log('');
 
   // --- What next? ---
-  // Skip prompt entirely if running non-interactively (all flags provided)
-  const fullyFlagged = !!(options.template && (options.apiKey || envVars.FIRECRAWL_API_KEY));
-
   if (fullyFlagged || !process.stdin.isTTY) {
     console.log(`  cd ${projectName} && ${template.devCommand}`);
     console.log('');
@@ -316,4 +497,54 @@ async function handleInit(rawName: string | undefined, options: InitOptions): Pr
     console.log(`  cd ${projectName} && ${template.devCommand}`);
     console.log('');
   }
+}
+
+/**
+ * Render a compact config summary with orchestrator + sub-agent models up top,
+ * followed by template + key status. Called inside the review loop before the
+ * user picks "Continue" / "Change …".
+ */
+function printConfigSummary(args: {
+  template: TemplateEntry;
+  orchProvider: ProviderEntry;
+  orchModelId: string;
+  subProvider: ProviderEntry;
+  subModelId: string;
+  envVars: Record<string, string>;
+  missing: Set<string>;
+}): void {
+  const { template, orchProvider, orchModelId, subProvider, subModelId, envVars, missing } = args;
+  const sameAsOrch = subProvider.id === orchProvider.id && subModelId === orchModelId;
+  const mask = (v?: string) => (v ? v.slice(0, 5) + '••••' + v.slice(-4) : '');
+  console.log('');
+  console.log(`  ${bold}Config${reset}`);
+  console.log(`  ${dim}────────────────────────────────${reset}`);
+  console.log(`  Orchestrator    ${green}${orchProvider.name}${reset} ${dim}·${reset} ${orchModelId}`);
+  console.log(
+    `  Sub-agent       ${green}${subProvider.name}${reset} ${dim}·${reset} ${subModelId}` +
+      (sameAsOrch ? `   ${dim}(same as orchestrator)${reset}` : '')
+  );
+  console.log(`  Template        ${template.name}`);
+  const fcKey = envVars.FIRECRAWL_API_KEY;
+  console.log(
+    `  Firecrawl key   ${fcKey ? `${mask(fcKey)}  ${green}✓${reset}` : `${dim}(missing)${reset}  !`}`
+  );
+  const orchKey = envVars[orchProvider.envVar];
+  console.log(
+    `  ${orchProvider.name} key` +
+      ' '.repeat(Math.max(1, 14 - orchProvider.name.length - 4)) +
+      (orchKey ? `${mask(orchKey)}  ${green}✓${reset}` : `${dim}(missing)${reset}  !`)
+  );
+  if (!sameAsOrch) {
+    const subKey = envVars[subProvider.envVar];
+    console.log(
+      `  ${subProvider.name} key (sub)` +
+        ' '.repeat(Math.max(1, 8 - subProvider.name.length)) +
+        (subKey ? `${mask(subKey)}  ${green}✓${reset}` : `${dim}(missing)${reset}  !`)
+    );
+  }
+  if (missing.size > 0) {
+    console.log(`  ${dim}Other missing:  ${Array.from(missing).filter((m) => m !== orchProvider.envVar && m !== subProvider.envVar && m !== 'FIRECRAWL_API_KEY').join(', ') || '—'}${reset}`);
+  }
+  console.log('');
 }
