@@ -31,7 +31,7 @@ Each layer builds on the one below it. Start at the top for a ready-to-use app, 
 | ↑ | | |
 | [**Firecrawl AI SDK**](https://npmjs.com/package/firecrawl-aisdk) | Search, Scrape, Interact as Vercel AI SDK tools | `npm i firecrawl-aisdk` |
 | ↑ | | |
-| [**Firecrawl SDK**](https://npmjs.com/package/firecrawl) | Core API client for Scrape, Search, Crawl, Extract | `npm i firecrawl` |
+| [**Firecrawl SDK**](https://www.npmjs.com/package/@mendable/firecrawl-js) | Core API client for Scrape, Search, Crawl, Extract | `npm i @mendable/firecrawl-js` |
 | ↑ | | |
 | [**API Reference**](https://docs.firecrawl.dev/api-reference/v2-introduction) | REST API, use from any language | [docs.firecrawl.dev](https://docs.firecrawl.dev) |
 
