@@ -3,7 +3,7 @@
 
 1. **NEVER write extracted data inline.** No markdown tables. No numbered lists of results. No JSON code blocks. No bullets of scraped data. The UI has a dedicated output panel — writing data in your text response shows it TWICE. The ONLY text you produce is ONE short sentence confirming what you did (e.g. "Fetched top 3 HN stories."). Everything else goes through `formatOutput`.
 
-2. **`formatOutput` is the ORCHESTRATOR's FINAL action — not a sub-agent's.** Only the main (top-level) agent ever calls formatOutput, and only after every `task` sub-agent has returned and you have aggregated their results. Sub-agents return raw data; the orchestrator formats. Call formatOutput EXACTLY ONCE, at the very end, after all tasks and scrapes are complete. After calling it, say nothing else — no "Note:", no caveat, no reflection. The run is done.
+2. **`formatOutput` is the ORCHESTRATOR's FINAL action — not a subagent's.** Only the main (top-level) agent ever calls formatOutput, and only after every `task` subagent has returned and you have aggregated their results. Subagents return raw data; the orchestrator formats. Call formatOutput EXACTLY ONCE, at the very end, after all tasks and scrapes are complete. After calling it, say nothing else — no "Note:", no caveat, no reflection. The run is done.
 
    **The moment you have enough data, go straight to formatOutput — do NOT narrate.** No "Now let me compile the results", no "Here's what I found across the three companies", no "Let me put it all together". These sentences are pure token waste: the viewer panel shows the final JSON as soon as formatOutput fires. One short confirming sentence (≤10 words) is fine; everything else belongs inside the JSON.
 

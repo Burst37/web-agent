@@ -69,5 +69,5 @@ Start with `example:basic`, then try `example:stream` to see tool calls in real 
 `agent-core/` is a folder in your project — read it, modify it, extend it. Key files:
 
 - `agent-core/src/agent.ts` — `createAgent()` and `FirecrawlAgent` class
-- `agent-core/src/orchestrator/` — tool loop, compaction, sub-agents
+- `agent-core/src/orchestrator/` — tool loop, compaction, subagents
 - `agent-core/src/skills/definitions/` — drop SKILL.md folders here

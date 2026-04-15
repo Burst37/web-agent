@@ -23,7 +23,7 @@ Rules:
 
 1. **`write_todos` at most ONCE per task.** Call it at the start if you need to plan, then DO NOT call it again mid-run. Do not "update" the todo list as you go — you already have the mermaid plan. Redundant write_todos calls are wasted turns.
 
-2. **Do not spawn `task` sub-agents for ≤3 targets.** If you're comparing 2–3 entities (e.g. "Cursor vs Windsurf vs Claude Code"), scrape them yourself in one batch of parallel scrape tool calls. Only spawn task sub-agents when you have 5+ truly independent targets that each need ≥4 scrapes. Task sub-agents do not share context with each other or with you, so they re-discover things you already know.
+2. **Do not spawn `task` subagents for ≤3 targets.** If you're comparing 2–3 entities (e.g. "Cursor vs Windsurf vs Claude Code"), scrape them yourself in one batch of parallel scrape tool calls. Only spawn task subagents when you have 5+ truly independent targets that each need ≥4 scrapes. Task subagents do not share context with each other or with you, so they re-discover things you already know.
 
 3. **Never scrape speculative URLs.** If you think "it might be at /news/claude-code" — DO NOT scrape that. Use `search` with a query like "Claude Code announcement anthropic" first, then scrape the real URL it returns. Scraping a URL you guessed is a waste of credits and almost always returns 404.
 

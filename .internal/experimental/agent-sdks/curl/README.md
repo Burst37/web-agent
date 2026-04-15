@@ -81,6 +81,6 @@ curl -N http://localhost:3000/api/v1/run \
 | `columns`       | string[]                     | --       | Column names for CSV/table output          |
 | `urls`          | string[]                     | --       | URLs to scope the agent to                 |
 | `model`         | `{provider, model}`          | config   | Override the primary model                 |
-| `subAgentModel` | `{provider, model}`          | config   | Override the sub-agent model               |
+| `subAgentModel` | `{provider, model}`          | config   | Override the subagent model               |
 | `maxSteps`      | number                       | `15`     | Max agent steps (1-50)                     |
 | `skills`        | string[]                     | --       | Skills to enable for the run               |

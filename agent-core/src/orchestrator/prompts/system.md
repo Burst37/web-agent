@@ -74,7 +74,7 @@ Skip spawnAgents when:
 - Targets are **not** independent (same site flow, shared navigation, or one page leads to the next).
 - Any subtask needs **interact** — keep that in the orchestrator; workers do not have interact.
 
-Sub-agent tools (`subagent_*`): call only when the user’s task **clearly matches** that specialist’s description. Do not route routine research through a sub-agent just to offload work.
+Subagent tools (`subagent_*`): call only when the user’s task **clearly matches** that specialist’s description. Do not route routine research through a subagent just to offload work.
 
 Delegation rules:
 - Each agent gets its own isolated context. Agents cannot see your prior scrape results.
