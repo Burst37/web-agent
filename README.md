@@ -44,58 +44,12 @@ Each layer builds on the one below it. Start at the top for a ready-to-use app, 
 | Agent Core | [Basic](./agent-core/examples/1-basic.ts) · [Structured output](./agent-core/examples/2-structured-output.ts) · [Parallel Subagents](./agent-core/examples/3-parallel-subagents.ts) · [With Skills](./agent-core/examples/4-with-skills.ts) |
 | Firecrawl AI SDK | [npmjs.com/package/firecrawl-aisdk](https://npmjs.com/package/firecrawl-aisdk) |
 
-## Skills
-
-Skills are reusable SKILL.md files that teach the agent domain-specific procedures. Drop a folder into `agent-core/src/skills/definitions/` and it's auto-discovered at startup.
-
-```
-agent-core/src/skills/definitions/
-  competitor-analysis/
-    SKILL.md          # procedure: compare 2+ products on pricing, features, positioning
-  pricing-tracker/
-    SKILL.md          # procedure: extract and normalize pricing tiers
-  financial-research/
-    SKILL.md          # procedure: 10-K/10-Q + analyst consensus for public companies
-    sites/            # site playbooks auto-match URLs to the skill
-      sec-gov.md
-      yahoo-finance.md
-  e-commerce/
-    SKILL.md          # procedure: extract products, handle pagination
-  deep-research/
-    SKILL.md          # procedure: multi-source research with fact-checking
-  structured-extraction/
-    SKILL.md          # procedure: schema-driven extraction with validation
-```
-
-Each SKILL.md has frontmatter and a procedure:
-
-```markdown
----
-name: e-commerce
-description: Extract products, pricing, and inventory from e-commerce sites.
-category: E-commerce
----
-
-# E-commerce Extraction
-
-## General Patterns
-- Check for sitemap.xml first
-- Look for /products.json or API endpoints before scraping HTML
-- Always check total count vs extracted count
-
-## Pagination
-- Check for next/prev links, page numbers, "showing X of Y"
-- Keep going until you have all the data
-```
-
-The agent loads Skills on demand via the `load_skill` tool.
-
 ## How it works
 
 The agent combines web tools with an AI model in a loop — it plans, acts, observes, and repeats until the task is done. The harness is [Deep Agents](https://docs.langchain.com/oss/javascript/deepagents/overview) (from LangChain), which gives us the plan-act loop, parallel `task` sub-agent spawning, and on-demand SKILL.md loading out of the box. Our `agent-core` wires Firecrawl's tools into that runtime and layers on structured output, scrapeBash sandboxing, and a thin streaming shim for UIs.
 
-- **Harness** — [Deep Agents](https://docs.langchain.com/oss/javascript/deepagents/overview) / LangGraph. Provides the agent loop, sub-agent spawning, skills loading, and context management.
-- **Tools** — Search, Scrape, Interact (browser automation), scrapeBash (WASM sandbox). Powered by [firecrawl-aisdk](https://www.npmjs.com/package/firecrawl-aisdk).
+- **Harness** — [Deep Agents](https://docs.langchain.com/oss/javascript/deepagents/overview). Provides the agent loop, sub-agent spawning, skills loading, and context management.
+- **Tools** — Search, Scrape, Interact (browser automation), bash. Powered by [firecrawl-aisdk](https://www.npmjs.com/package/firecrawl-aisdk).
 - **Skills** — reusable SKILL.md playbooks. Auto-discovered from `agent-core/src/skills/definitions/`, loaded on demand via Deep Agents' skills middleware.
 - **Subagents** — parallel workers for independent tasks, spawned via Deep Agents' `task` tool. Each has its own tool set and session state (e.g. an isolated interact browser session).
 - **Output** — structured results via `formatOutput` (JSON, CSV) and data processing via `bashExec`.
