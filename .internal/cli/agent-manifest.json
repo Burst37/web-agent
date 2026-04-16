@@ -96,9 +96,9 @@
     {
       "id": "custom-openai",
       "name": "Custom (OpenAI-compatible)",
-      "envVar": "OPENAI_API_KEY",
+      "envVar": "CUSTOM_OPENAI_API_KEY",
       "hint": "Your provider's API key",
-      "endpointEnvVar": "OPENAI_BASE_URL",
+      "endpointEnvVar": "CUSTOM_OPENAI_BASE_URL",
       "models": [
         { "id": "custom", "name": "Custom model" }
       ]
