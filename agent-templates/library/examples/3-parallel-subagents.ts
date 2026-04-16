@@ -5,7 +5,7 @@ if (!process.env.FIRECRAWL_API_KEY) { console.error("\n  FIRECRAWL_API_KEY not s
 
 const agent = createAgent({
   firecrawlApiKey: process.env.FIRECRAWL_API_KEY,
-  model: { provider: "anthropic", model: "claude-sonnet-4-6" },
+  model: { provider: "google", model: "gemini-3-flash-preview" },
   maxWorkers: 5,
   workerMaxSteps: 20,
 });

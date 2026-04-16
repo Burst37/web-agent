@@ -528,11 +528,29 @@ export function createAgentFromEnv(overrides?: Partial<CreateAgentOptions>): Fir
     apiKeys["custom-openai:baseURL"] = process.env.CUSTOM_OPENAI_BASE_URL;
   }
 
+  const provider = (overrides?.model?.provider ?? process.env.MODEL_PROVIDER ?? "google") as ModelConfig["provider"];
+
+  // Early check: warn if the selected provider has no API key configured
+  const providerKeyMap: Record<string, string> = {
+    anthropic: "ANTHROPIC_API_KEY",
+    openai: "OPENAI_API_KEY",
+    google: "GOOGLE_GENERATIVE_AI_API_KEY",
+    gateway: "AI_GATEWAY_API_KEY",
+    "custom-openai": "CUSTOM_OPENAI_API_KEY",
+  };
+  const requiredEnv = providerKeyMap[provider];
+  if (requiredEnv && !apiKeys[provider]) {
+    throw new Error(
+      `${requiredEnv} not set (required for provider "${provider}"). ` +
+      `Set it in your .env file or switch providers via MODEL_PROVIDER.`,
+    );
+  }
+
   return new FirecrawlAgent({
     firecrawlApiKey,
     model: {
-      provider: (process.env.MODEL_PROVIDER ?? "google") as ModelConfig["provider"],
-      model: process.env.MODEL_ID ?? "gemini-3-flash-preview",
+      provider,
+      model: overrides?.model?.model ?? process.env.MODEL_ID ?? "gemini-3-flash-preview",
     },
     apiKeys,
     ...overrides,

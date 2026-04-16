@@ -82,6 +82,7 @@ describe("createAgentFromEnv", () => {
 
   it("defaults to google/gemini-3-flash-preview when no model env vars set", () => {
     vi.stubEnv("FIRECRAWL_API_KEY", "fc-test");
+    vi.stubEnv("GOOGLE_GENERATIVE_AI_API_KEY", "goog");
     delete process.env.MODEL_PROVIDER;
     delete process.env.MODEL_ID;
 
@@ -89,8 +90,17 @@ describe("createAgentFromEnv", () => {
     expect(agent).toBeInstanceOf(FirecrawlAgent);
   });
 
+  it("throws when provider API key is missing", () => {
+    vi.stubEnv("FIRECRAWL_API_KEY", "fc-test");
+    vi.stubEnv("MODEL_PROVIDER", "anthropic");
+    delete process.env.ANTHROPIC_API_KEY;
+
+    expect(() => createAgentFromEnv()).toThrow("ANTHROPIC_API_KEY not set");
+  });
+
   it("accepts overrides that merge with env config", () => {
     vi.stubEnv("FIRECRAWL_API_KEY", "fc-test");
+    vi.stubEnv("GOOGLE_GENERATIVE_AI_API_KEY", "goog");
 
     const agent = createAgentFromEnv({
       maxSteps: 100,
