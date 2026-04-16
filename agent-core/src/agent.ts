@@ -519,9 +519,13 @@ export function createAgentFromEnv(overrides?: Partial<CreateAgentOptions>): Fir
     OPENAI_API_KEY: "openai",
     GOOGLE_GENERATIVE_AI_API_KEY: "google",
     AI_GATEWAY_API_KEY: "gateway",
+    CUSTOM_OPENAI_API_KEY: "custom-openai",
   };
   for (const [env, id] of Object.entries(envMap)) {
     if (process.env[env]) apiKeys[id] = process.env[env]!;
+  }
+  if (process.env.CUSTOM_OPENAI_BASE_URL) {
+    apiKeys["custom-openai:baseURL"] = process.env.CUSTOM_OPENAI_BASE_URL;
   }
 
   return new FirecrawlAgent({
