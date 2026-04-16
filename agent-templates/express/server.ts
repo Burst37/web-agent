@@ -60,6 +60,10 @@ function parseModel(m: unknown): ModelConfig | undefined {
   return undefined;
 }
 
+function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 const KEY_LABELS: Record<string, string> = {
   FIRECRAWL_API_KEY: "firecrawl",
   ANTHROPIC_API_KEY: "anthropic",
@@ -143,8 +147,7 @@ app.post("/v1/plan", async (req, res) => {
     const plan = await agent.plan(prompt);
     res.json({ plan });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    res.status(500).json({ error: message });
+    res.status(500).json({ error: errorMessage(err) });
   }
 });
 
@@ -164,8 +167,7 @@ app.post("/v1/run", async (req, res) => {
       res.json(result);
     }
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    if (!res.headersSent) res.status(500).json({ error: message });
+    if (!res.headersSent) res.status(500).json({ error: errorMessage(err) });
   }
 });
 
@@ -181,12 +183,11 @@ app.use((req, res) => {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   if (res.headersSent) return;
-  const message = err instanceof Error ? err.message : String(err);
   // body-parser errors carry a `status` field with the right HTTP code
   const status = (err as { status?: number; statusCode?: number }).status
     ?? (err as { statusCode?: number }).statusCode
     ?? 500;
-  res.status(status).json({ error: message });
+  res.status(status).json({ error: errorMessage(err) });
 });
 
 function startupWarnings(): void {
