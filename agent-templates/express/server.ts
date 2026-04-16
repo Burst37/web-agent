@@ -78,7 +78,14 @@ app.get("/", (_req, res) => {
 
 app.get("/v1/skills", async (_req, res) => {
   const skills = await discoverSkills();
-  res.json(skills.map((s) => ({ name: s.name, description: s.description, category: s.category })));
+  res.json(
+    skills.map((s) => ({
+      name: s.name,
+      description: s.description,
+      category: s.category ?? "Other",
+      resources: s.resources,
+    })),
+  );
 });
 
 app.get("/v1/workers/progress", (_req, res) => {
