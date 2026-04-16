@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { randomUUID } from "crypto";
 import express from "express";
 import { createAgentFromEnv, discoverSkills, workerProgress } from "./agent-core/src";
 import type { ModelConfig } from "./agent-core/src";
@@ -10,17 +11,29 @@ app.use(express.json());
 app.use((_req, res, next) => {
   res.header("Access-Control-Allow-Origin", process.env.CORS_ORIGIN ?? "*");
   res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Request-ID");
+  res.header("Access-Control-Expose-Headers", "X-Request-ID");
   if (_req.method === "OPTIONS") return res.sendStatus(204);
   next();
 });
 
-// Request logger — prints method, path, status, duration. Disable with LOG=0
+// Request ID — echo the client's X-Request-ID if provided, otherwise
+// generate one. Makes support/debugging across distributed systems easier.
+app.use((req, res, next) => {
+  const id = (req.header("X-Request-ID") as string | undefined) ?? randomUUID();
+  res.setHeader("X-Request-ID", id);
+  (req as express.Request & { id: string }).id = id;
+  next();
+});
+
+// Request logger — prints method, path, status, duration, request ID.
+// Disable with LOG=0.
 if (process.env.LOG !== "0") {
   app.use((req, res, next) => {
     const start = Date.now();
     res.on("finish", () => {
-      console.log(`  ${req.method} ${req.path} ${res.statusCode} ${Date.now() - start}ms`);
+      const id = (req as express.Request & { id?: string }).id ?? "-";
+      console.log(`  ${req.method} ${req.path} ${res.statusCode} ${Date.now() - start}ms  ${id}`);
     });
     next();
   });
