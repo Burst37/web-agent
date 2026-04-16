@@ -84,11 +84,24 @@ app.get("/", (_req, res) => {
     model: defaultModel(),
     keys: configuredKeys(),
     routes: {
+      "GET /v1/config": "Server configuration snapshot",
       "GET /v1/skills": "List available skills",
       "GET /v1/workers/progress": "Live progress of parallel workers",
       "POST /v1/plan": "Preview the agent's execution plan",
       "POST /v1/run": "Run the agent (set stream=true for SSE)",
     },
+  });
+});
+
+app.get("/v1/config", (_req, res) => {
+  const [provider, ...rest] = defaultModel().split(":");
+  res.json({
+    provider,
+    model: rest.join(":"),
+    keys: configuredKeys(),
+    bodyLimit: process.env.BODY_LIMIT ?? "1mb",
+    port: Number(process.env.PORT) || 3000,
+    corsOrigin: process.env.CORS_ORIGIN ?? "*",
   });
 });
 

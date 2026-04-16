@@ -1,0 +1,22 @@
+# Normalize line endings — ensures LF in the repo regardless of
+# the developer's OS git autocrlf setting. Prevents spurious whole-file
+# diffs when a Windows contributor commits a file they opened in a
+# CRLF-saving editor.
+
+* text=auto eol=lf
+
+# Binary files (add here as needed)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+
+# Don't count build output / lockfiles in GitHub's language stats
+dist/** linguist-generated
+*.lock linguist-generated
+pnpm-lock.yaml linguist-generated
+package-lock.json linguist-generated
