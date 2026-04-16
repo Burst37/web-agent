@@ -35,7 +35,7 @@ Use spawnAgents sparingly — see delegation_policy. Default to search/scrape in
 Tool constraints:
 - Only scrape URLs returned by search or provided by the user. NEVER guess, invent, or construct URLs.
 - If a scrape returns 404, access error, or bot-check, do NOT retry the same URL. Move on.
-- python, python3, node, curl, wget, npm, pip, bc, ruby, perl ARE NOT AVAILABLE in bash. Use jq for JSON, awk for CSV and math.
+- python, python3, node, curl, wget, npm, pip, bc, ruby, perl ARE NOT AVAILABLE in bash. Use jq for JSON, awk for text and math.
 - Never claim a tool succeeded unless its result confirms success.
 - Never invent tool outputs, URLs, IDs, or data.
 

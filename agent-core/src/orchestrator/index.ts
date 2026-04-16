@@ -66,7 +66,7 @@ function buildFormatInstructions(schema?: Record<string, unknown>, columns?: str
     return `When finished, call formatOutput with format "json" and data that EXACTLY matches the required_schema. Every field must be present. No extra fields.`;
   }
   if (columns?.length) {
-    return `When finished, call formatOutput with format "csv" and columns: ${JSON.stringify(columns)}.`;
+    return `When finished, call formatOutput with format "json" and include data with these columns: ${JSON.stringify(columns)}.`;
   }
   return "";
 }
@@ -126,11 +126,6 @@ export async function createOrchestrator(options: OrchestratorOptions) {
   const uploadedFiles: Record<string, string> = {};
   const uploadDescriptions: string[] = [];
 
-  if (config.csvContext) {
-    uploadedFiles["/data/input.csv"] = config.csvContext;
-    uploadDescriptions.push("/data/input.csv (CSV)");
-  }
-
   if (config.uploads?.length) {
     for (const upload of config.uploads) {
       const isText =
@@ -159,7 +154,7 @@ export async function createOrchestrator(options: OrchestratorOptions) {
     contextSections.push(`<user_urls>\nStart with these URLs: ${config.urls.join(", ")}\n</user_urls>`);
   }
   if (uploadDescriptions.length > 0) {
-    contextSections.push(`<uploaded_files>\nThe user uploaded files to the bash filesystem:\n${uploadDescriptions.map((d) => `- ${d}`).join("\n")}\nUse bashExec to explore them: 'head -5 /data/file.csv', 'cat /data/file.json | jq .', 'wc -l /data/file.txt', etc.\n</uploaded_files>`);
+    contextSections.push(`<uploaded_files>\nThe user uploaded files to the bash filesystem:\n${uploadDescriptions.map((d) => `- ${d}`).join("\n")}\nUse bashExec to explore them: 'head -5 /data/file.txt', 'cat /data/file.json | jq .', 'wc -l /data/file.txt', etc.\n</uploaded_files>`);
   }
 
   // Export skill prompt (loaded when agent should save its procedure)

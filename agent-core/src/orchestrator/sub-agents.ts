@@ -29,13 +29,7 @@ const BUILTIN_SUBAGENTS: BuiltInSubAgent[] = [
     description: "Format collected data as structured JSON and save to /data/",
     maxSteps: 5,
   },
-  {
-    id: "create_csv",
-    name: "CSV Creator",
-    skill: "export-csv",
-    description: "Format collected data as a CSV table and save to /data/",
-    maxSteps: 5,
-  },
+
   {
     id: "create_markdown",
     name: "Markdown Creator",

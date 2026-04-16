@@ -7,16 +7,12 @@ import path from "path";
 
 export const formatOutput = tool({
   description:
-    "Format the final output as CSV, JSON, or text. Call this when you have collected all data and are ready to present results.",
+    "Format the final output as JSON or text. Call this when you have collected all data and are ready to present results.",
   inputSchema: z.object({
-    format: z.enum(["csv", "json", "text"]).describe("Output format"),
+    format: z.enum(["json", "text"]).describe("Output format"),
     data: z.unknown().describe("The data to format — can be a JSON string, object, array, or plain text"),
-    columns: z
-      .array(z.string())
-      .optional()
-      .describe("Column names for CSV format"),
   }),
-  execute: async ({ format, data, columns }) => {
+  execute: async ({ format, data }) => {
     switch (format) {
       case "json": {
         if (typeof data === "string") {
@@ -28,24 +24,6 @@ export const formatOutput = tool({
           }
         }
         return { format: "json", content: JSON.stringify(data, null, 2) };
-      }
-      case "csv": {
-        const Papa = await import("papaparse");
-        let rows: unknown[];
-        if (typeof data === "string") {
-          try {
-            rows = JSON.parse(data);
-            if (!Array.isArray(rows)) rows = [rows];
-          } catch {
-            return { format: "csv", content: data };
-          }
-        } else {
-          rows = Array.isArray(data) ? data : [data];
-        }
-        return {
-          format: "csv",
-          content: Papa.default.unparse(rows as Record<string, unknown>[], { columns }),
-        };
       }
       case "text":
         return {
@@ -115,12 +93,12 @@ export async function readBashFile(filePath: string): Promise<string> {
 
 export const bashExec = tool({
   description:
-    "Execute a bash command in a sandboxed environment with a persistent filesystem. Available tools: jq, awk, sed, grep, sort, uniq, wc, head, tail, cut, tr, paste, cat, echo, printf, expr, ls, mkdir, rm, cp, mv, tee, xargs. NOT available: node, python, curl, wget, npm, pip, bc. For math use awk (e.g. awk 'BEGIN{print 10*1.5}') or expr. The filesystem persists between calls — write files in one call, read them in the next. Use jq for JSON processing, awk for CSV/text processing. If a CSV was uploaded, it's at /data/input.csv.",
+    "Execute a bash command in a sandboxed environment with a persistent filesystem. Available tools: jq, awk, sed, grep, sort, uniq, wc, head, tail, cut, tr, paste, cat, echo, printf, expr, ls, mkdir, rm, cp, mv, tee, xargs. NOT available: node, python, curl, wget, npm, pip, bc. For math use awk (e.g. awk 'BEGIN{print 10*1.5}') or expr. The filesystem persists between calls — write files in one call, read them in the next. Use jq for JSON processing, awk for text processing.",
   inputSchema: z.object({
     command: z
       .string()
       .describe(
-        "The bash command to execute. Examples: 'cat /data/input.csv | head -5', 'echo data | jq .', 'awk -F, \\'NR>1{print $2}\\' /data/input.csv | sort | uniq -c | sort -rn'",
+        "The bash command to execute. Examples: 'echo data | jq .', 'awk -F, \\'NR>1{print $2}\\' /data/input.txt | sort | uniq -c | sort -rn'",
       ),
   }),
   execute: async ({ command }) => {

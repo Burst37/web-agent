@@ -56,6 +56,9 @@ export const config = {
   experimental: {
     customOpenAI: true,     // Expose a configurable OpenAI-compatible provider in Settings
     generateSkillMd: true,  // Show the SKILL.md generator UI + route
+    // ACP (Agent Communication Protocol) support is still experimental.
+    // Set to true to enable local agent discovery and routing via ACP.
+    acp: false,
   },
 
   // ─── Conversation history ───

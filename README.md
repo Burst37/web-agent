@@ -54,7 +54,7 @@ The agent combines web tools with an AI model in a loop — it plans, acts, obse
 - **Tools** — Search, Scrape, Interact (browser automation), bash. Powered by [firecrawl-aisdk](https://www.npmjs.com/package/firecrawl-aisdk).
 - **Skills** — reusable SKILL.md playbooks. Auto-discovered from `agent-core/src/skills/definitions/`, loaded on demand via Deep Agents' skills middleware.
 - **Subagents** — parallel workers for independent tasks, spawned via Deep Agents' `task` tool. Each has its own tool set and session state (e.g. an isolated interact browser session).
-- **Output** — structured results via `formatOutput` (JSON, CSV) and data processing via `bashExec`.
+- **Output** — structured results via `formatOutput` (JSON) and data processing via `bashExec`.
 
 ## Project structure
 

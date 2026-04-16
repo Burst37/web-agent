@@ -16,7 +16,7 @@ When calling exportSkill:
   - `extract` — extract structured data with FIRE-1 agent
   - `agent` — run the Firecrawl hosted agent endpoint
   - `bashExec` — data processing with jq/awk/sed
-  - `formatOutput` — format final results as JSON/CSV/text
+  - `formatOutput` — format final results as JSON/text
 - **Include the actual inputs** that worked: query strings, extraction prompts, URL patterns, code snippets.
 - **Be proportional**: A 3-step task gets a concise skill. Don't pad.
 </export_skill_policy>

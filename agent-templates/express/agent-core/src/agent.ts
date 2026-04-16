@@ -272,7 +272,7 @@ Available tools:
 - scrape: Extract content from a URL (supports query parameter for targeted extraction)
 - interact: Click buttons, fill forms, handle JavaScript-heavy pages
 - bashExec: Process data with jq, awk, sed, grep, sort, etc.
-- formatOutput: Export results as JSON, CSV, markdown
+- formatOutput: Export results as JSON or text
 - Sub-agents / spawnAgents: optional; use only when many independent targets or a specialist sub-agent clearly fits${skillList}
 
 For each step, specify:
@@ -401,7 +401,7 @@ Do not use emojis.`,
     }
     if (params.columns?.length) {
       parts.push(
-        `\n\nRequired columns: ${params.columns.join(", ")}\nCall formatOutput with format "csv" and columns: ${JSON.stringify(params.columns)} when done.`,
+        `\n\nRequired columns: ${params.columns.join(", ")}\nCall formatOutput with format "json" and include data with these columns: ${JSON.stringify(params.columns)} when done.`,
       );
     }
     if (params.format === "markdown" && !params.schema && !params.columns) {

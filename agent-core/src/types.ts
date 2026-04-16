@@ -24,7 +24,7 @@ export interface Toolkit {
 }
 
 export interface ModelConfig {
-  provider: "gateway" | "anthropic" | "openai" | "google" | "custom-openai" | "firecrawl" | "acp";
+  provider: "gateway" | "anthropic" | "openai" | "google" | "custom-openai";
   model: string;
   apiKey?: string;
   baseURL?: string;
@@ -63,7 +63,6 @@ export interface AgentConfig {
   urls?: string[];
   schema?: Record<string, unknown>;
   columns?: string[];
-  csvContext?: string;
   uploads?: UploadedFile[];
   model: ModelConfig;
   subAgentModel?: ModelConfig;
@@ -154,7 +153,7 @@ export interface RunParams {
   prompt: string;
   urls?: string[];
   schema?: Record<string, unknown>;
-  format?: "json" | "csv" | "markdown";
+  format?: "json" | "markdown";
   columns?: string[];
   uploads?: UploadedFile[];
   skills?: string[];
