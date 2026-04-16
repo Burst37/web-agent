@@ -4,6 +4,16 @@ import express from "express";
 import { createAgentFromEnv, discoverSkills, workerProgress } from "./agent-core/src";
 import type { ModelConfig } from "./agent-core/src";
 
+// Augment Express's Request so req.id is typed throughout.
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Express {
+    interface Request {
+      id: string;
+    }
+  }
+}
+
 const app = express();
 
 // 1 MB default body limit — agent requests are small (prompt + config),
@@ -23,9 +33,8 @@ app.use((_req, res, next) => {
 // Request ID — echo the client's X-Request-ID if provided, otherwise
 // generate one. Makes support/debugging across distributed systems easier.
 app.use((req, res, next) => {
-  const id = (req.header("X-Request-ID") as string | undefined) ?? randomUUID();
-  res.setHeader("X-Request-ID", id);
-  (req as express.Request & { id: string }).id = id;
+  req.id = req.header("X-Request-ID") ?? randomUUID();
+  res.setHeader("X-Request-ID", req.id);
   next();
 });
 
@@ -35,8 +44,7 @@ if (process.env.LOG !== "0") {
   app.use((req, res, next) => {
     const start = Date.now();
     res.on("finish", () => {
-      const id = (req as express.Request & { id?: string }).id ?? "-";
-      console.log(`  ${req.method} ${req.path} ${res.statusCode} ${Date.now() - start}ms  ${id}`);
+      console.log(`  ${req.method} ${req.path} ${res.statusCode} ${Date.now() - start}ms  ${req.id}`);
     });
     next();
   });
