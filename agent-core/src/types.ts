@@ -55,19 +55,38 @@ export interface SubAgentConfig {
   maxSteps?: number;
 }
 
+/**
+ * A site-specific playbook attached to a skill — matched against URL
+ * domains so the right skill loads automatically when the agent visits
+ * a known site.
+ */
 export interface SitePlaybook {
+  /** Slug of the playbook (derived from filename) */
   name: string;
+  /** Human-readable platform identifier (e.g. "Shopify", "Yahoo Finance") */
   platform: string;
+  /** Hostnames this playbook applies to — matched case-insensitively */
   domains: string[];
+  /** Absolute path to the playbook markdown file */
   filePath: string;
 }
 
+/**
+ * Discovered skill — the runtime representation of a SKILL.md playbook
+ * plus any site-specific addenda.
+ */
 export interface SkillMetadata {
+  /** Slug from the SKILL.md frontmatter (e.g. "pricing-tracker") */
   name: string;
+  /** One-line description shown to the agent when deciding to load the skill */
   description: string;
+  /** Optional grouping label (e.g. "Research", "E-commerce") */
   category?: string;
+  /** Absolute path to the skill's directory */
   directory: string;
+  /** Extra files in the skill directory that aren't SKILL.md */
   resources: string[];
+  /** Site-specific playbooks nested under the skill's sites/ subfolder */
   sitePlaybooks?: SitePlaybook[];
 }
 
