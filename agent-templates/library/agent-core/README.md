@@ -393,3 +393,34 @@ curl -X POST http://localhost:3000/v1/run \
 | `src/resolve-model.ts` | Multi-provider model resolution |
 | `src/types.ts` | TypeScript types |
 | `openapi.yaml` | HTTP API specification |
+
+## Troubleshooting
+
+### `Unknown name "const"` error with Gemini
+
+If you see a 400 error mentioning `Unknown name "const"` from Google, the Gemini API is rejecting a tool schema that uses the JSON Schema `const` keyword (which the `scrape` tool's schema contains). Switch to another provider for this run, or set a stable model ID via `MODEL=anthropic:claude-sonnet-4-6`.
+
+### `@langchain/google` / `@langchain/openai` not found at runtime
+
+The LangChain provider packages are optional peer deps — Deep Agents imports them lazily based on which provider you use. Install the one you need:
+
+```bash
+npm i @langchain/google @langchain/google-genai   # for google provider
+npm i @langchain/openai                            # for openai / custom-openai
+npm i @langchain/anthropic                         # for anthropic
+```
+
+### "prompt is required"
+
+`run()`, `stream()`, and `plan()` all reject empty or whitespace-only prompts. Pass a non-empty string.
+
+### Missing API key
+
+`createAgentFromEnv()` throws a clear error when the selected provider's API key isn't set:
+
+```
+ANTHROPIC_API_KEY not set (required for provider "anthropic").
+Set it in your .env file or switch providers via MODEL_PROVIDER.
+```
+
+Run `npm run doctor` in the templates for a fuller preflight check.
