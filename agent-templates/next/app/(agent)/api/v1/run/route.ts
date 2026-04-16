@@ -11,6 +11,9 @@ export const maxDuration = 300;
 const DEFAULT_MAX_STEPS = 50;
 const MAX_STEPS_LIMIT = 200;
 
+const errorMessage = (err: unknown): string =>
+  err instanceof Error ? err.message : String(err);
+
 /**
  * POST /api/v1/run
  *
@@ -102,10 +105,7 @@ export async function POST(req: Request) {
               send(event as unknown as Record<string, unknown>);
             }
           } catch (err) {
-            send({
-              type: "error",
-              error: err instanceof Error ? err.message : String(err),
-            });
+            send({ type: "error", error: errorMessage(err) });
           } finally {
             controller.close();
           }
@@ -125,9 +125,6 @@ export async function POST(req: Request) {
     const result = await agent.run(runParams);
     return Response.json(result);
   } catch (err) {
-    return Response.json(
-      { error: err instanceof Error ? err.message : String(err) },
-      { status: 500 },
-    );
+    return Response.json({ error: errorMessage(err) }, { status: 500 });
   }
 }
