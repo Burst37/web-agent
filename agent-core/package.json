@@ -25,6 +25,10 @@
   "bugs": {
     "url": "https://github.com/firecrawl/firecrawl-agent/issues"
   },
+  "author": "Firecrawl",
+  "engines": {
+    "node": ">=20"
+  },
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
