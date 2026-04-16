@@ -24,10 +24,15 @@ export interface Toolkit {
 }
 
 export interface ModelConfig {
+  /** LLM provider. "gateway" = Vercel AI Gateway, "custom-openai" = any OpenAI-compatible endpoint */
   provider: "gateway" | "anthropic" | "openai" | "google" | "custom-openai";
+  /** Model ID (e.g. "claude-sonnet-4-6", "gemini-3-flash-preview", "gpt-5.4") */
   model: string;
+  /** Override the provider API key for this specific model */
   apiKey?: string;
+  /** Custom endpoint URL — required for custom-openai, optional for others */
   baseURL?: string;
+  /** Reserved for future CLI/binary routing */
   bin?: string;
 }
 
@@ -133,13 +138,21 @@ export interface CreateAgentOptions {
   firecrawlOptions?: FirecrawlToolsConfig;
   /** Override the default Firecrawl toolkit with a custom one */
   toolkit?: Toolkit;
+  /** Model used by the orchestrator (plan-act loop) */
   model: ModelConfig;
+  /** Model used by parallel sub-agents. Defaults to `model` if omitted */
   subAgentModel?: ModelConfig;
+  /** Provider API keys map (e.g. { anthropic: "sk-ant-...", google: "AIza..." }) */
   apiKeys?: Record<string, string>;
+  /** Path to a custom skills directory. Defaults to the built-in definitions */
   skillsDir?: string;
+  /** Path to a custom prompts directory. Overrides built-in orchestrator/worker prompts */
   promptsDir?: string;
+  /** Max orchestrator steps (default: 50) */
   maxSteps?: number;
+  /** Max concurrent sub-agents (default: 6) */
   maxWorkers?: number;
+  /** Max steps per sub-agent (default: 15) */
   workerMaxSteps?: number;
   /**
    * App-specific prompt sections appended to the base system prompt.
