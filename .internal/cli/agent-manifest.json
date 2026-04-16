@@ -85,8 +85,8 @@
       "envVar": "GOOGLE_GENERATIVE_AI_API_KEY",
       "hint": "https://aistudio.google.com/apikey",
       "models": [
-        { "id": "gemini-3.1-pro-preview", "name": "Gemini 3.1 Pro" },
         { "id": "gemini-3-flash-preview", "name": "Gemini 3 Flash" },
+        { "id": "gemini-3.1-pro-preview", "name": "Gemini 3.1 Pro" },
         { "id": "gemini-3.1-flash-lite-preview", "name": "Gemini 3.1 Flash-Lite" }
       ]
     },
