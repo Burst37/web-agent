@@ -205,7 +205,7 @@ When handling a request:
       spawnAgents,
       formatOutput,
       bashExec,
-      exportSkill,
+      ...(config.exportSkill ? { exportSkill } : {}),
     } as ToolSet,
     stopWhen: stepCountIs(config.maxSteps ?? 50),
     prepareStep: compaction.prepareStep,
