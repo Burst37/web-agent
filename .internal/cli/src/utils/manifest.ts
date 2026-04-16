@@ -42,12 +42,11 @@ const DEFAULT_REMOTE = 'firecrawl/firecrawl-agent';
 
 export function loadManifest(): Manifest {
   if (cached) return cached;
-  const repoRoot = path.resolve(__dirname, '../../../..');
-  const manifestPath = path.join(repoRoot, 'agent-manifest.json');
+  const manifestPath = path.resolve(__dirname, '../../agent-manifest.json');
   if (fs.existsSync(manifestPath)) {
     const raw = fs.readFileSync(manifestPath, 'utf-8');
     cached = JSON.parse(raw) as Manifest;
-    cachedSourceRoot = repoRoot;
+    cachedSourceRoot = path.resolve(__dirname, '../../../..');
     return cached;
   }
   // Not running from within the repo - clone from GitHub
