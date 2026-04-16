@@ -1,20 +1,38 @@
-// Public API
+// ─── Agent factory & class ───
 export { createAgent, createAgentFromEnv, FirecrawlAgent } from "./agent";
+
+// ─── Lower-level orchestrator (if you want to bypass createAgent) ───
 export { createOrchestrator, type OrchestratorOptions } from "./orchestrator";
-export { createWorkerTool, workerProgress, type WorkerProgress, type WorkerResult } from "./worker";
 export { createSubAgentTools } from "./orchestrator/sub-agents";
+export { loadOrchestratorPrompt } from "./orchestrator/loader";
+
+// ─── Parallel workers ───
+export { createWorkerTool, workerProgress, type WorkerProgress, type WorkerResult } from "./worker";
+export { loadWorkerPrompt } from "./worker/loader";
+
+// ─── Model resolution ───
 export { resolveModel } from "./resolve-model";
+
+// ─── Skills ───
 export { discoverSkills, buildDomainIndex, getDefaultSkillsDir } from "./skills/discovery";
 export { createSkillTools } from "./skills/tools";
 export { parseSkillBody, validateSkillContent, type SkillValidationResult } from "./skills/parser";
 export { uploadSkills, type SkillUploadFile, type SkillUploadResult } from "./skills/upload";
+
+// ─── Built-in tools (formatOutput, bashExec, exportSkill) ───
 export { formatOutput, bashExec, initBashWithFiles, listBashFiles, readBashFile, createExportSkillTool } from "./tools";
+
+// ─── Firecrawl toolkit integration ───
 export { buildFirecrawlToolkit } from "./toolkit";
 export { firecrawlTools, firecrawlSystemPrompt, utilityTools } from "./firecrawl-tools";
+
+// ─── AI SDK ↔ LangChain adapter ───
 export { aiToLc, aiToolkitToLc, coerceStringifiedJson, type AISDKTool } from "./adapter";
+
+// ─── Streaming helpers (framework-agnostic) ───
 export { streamEvents, toResponse, toSSE } from "./stream-helpers";
-export { loadOrchestratorPrompt } from "./orchestrator/loader";
-export { loadWorkerPrompt } from "./worker/loader";
+
+// ─── Tool result parsing ───
 export { parseToolResult, normalizeToolOutput } from "./tool-results";
 export type {
   ParseToolResult,
@@ -29,7 +47,7 @@ export type {
   UnknownToolPayload,
 } from "./tool-results";
 
-// Types
+// ─── Public types ───
 export type {
   CreateAgentOptions,
   RunParams,
