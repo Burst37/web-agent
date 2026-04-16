@@ -45,7 +45,9 @@ app.post("/v1/run", async (req, res) => {
 
 const port = Number(process.env.PORT) || 3000;
 app.listen(port, () => {
-  const model = process.env.MODEL ?? "anthropic:claude-sonnet-4-6";
+  const provider = process.env.MODEL_PROVIDER ?? "google";
+  const modelId = process.env.MODEL_ID ?? "gemini-3-flash-preview";
+  const model = `${provider}:${modelId}`;
   const keys = ["FIRECRAWL_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GOOGLE_API_KEY"]
     .filter((k) => process.env[k])
     .map((k) => k.replace(/_API_KEY/, "").toLowerCase());
