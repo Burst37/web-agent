@@ -6,6 +6,7 @@
  *   node .internal/scripts/sync-agent-core.mjs
  *   node .internal/scripts/sync-agent-core.mjs --dry-run
  *   node .internal/scripts/sync-agent-core.mjs --target agent-templates/next
+ *   node .internal/scripts/sync-agent-core.mjs --check     # CI drift check
  *
  * Optional: materialize under /tmp only (inspect before committing):
  *   node .internal/scripts/sync-agent-core.mjs --tmp
@@ -39,10 +40,11 @@ function parseArgs() {
   const args = process.argv.slice(2);
   const dryRun = args.includes("--dry-run");
   const tmpOnly = args.includes("--tmp");
+  const check = args.includes("--check");
   const ti = args.indexOf("--target");
   const target =
     ti >= 0 && args[ti + 1] ? args[ti + 1] : null;
-  return { dryRun, tmpOnly, target };
+  return { dryRun, tmpOnly, check, target };
 }
 
 function assertSrc() {
@@ -89,9 +91,46 @@ function hasRsync() {
   }
 }
 
+function checkSync() {
+  // Sync each target into a tmp dir, diff against the live copy.
+  // Exit 1 if any differ. Used by CI to catch drift.
+  const tmpBase = path.join(fs.realpathSync("/tmp"), `agent-core-check-${Date.now()}`);
+  fs.mkdirSync(tmpBase, { recursive: true });
+  let drift = 0;
+  for (const t of DEFAULT_TARGETS) {
+    const tmpCopy = path.join(tmpBase, t);
+    fs.mkdirSync(tmpCopy, { recursive: true });
+    syncWithRsync(tmpCopy);
+    const live = path.join(REPO_ROOT, t, "agent-core");
+    try {
+      execSync(`diff -r "${tmpCopy}" "${live}"`, { stdio: "pipe" });
+      console.log(`  ✓ ${t} in sync`);
+    } catch {
+      console.error(`  ✗ ${t} out of sync with agent-core/`);
+      drift++;
+    }
+  }
+  fs.rmSync(tmpBase, { recursive: true, force: true });
+  if (drift > 0) {
+    console.error(`\n${drift} template(s) out of sync. Run:`);
+    console.error(`  node .internal/scripts/sync-agent-core.mjs`);
+    process.exit(1);
+  }
+  console.log(`\nAll templates in sync with agent-core/.`);
+}
+
 function main() {
-  const { dryRun, tmpOnly, target } = parseArgs();
+  const { dryRun, tmpOnly, check, target } = parseArgs();
   assertSrc();
+
+  if (check) {
+    if (!hasRsync()) {
+      console.error("--check requires rsync");
+      process.exit(2);
+    }
+    checkSync();
+    return;
+  }
 
   let targets;
   if (tmpOnly) {

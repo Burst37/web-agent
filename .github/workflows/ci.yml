@@ -52,3 +52,11 @@ jobs:
         run: pnpm install --no-frozen-lockfile
       - name: Typecheck
         run: pnpm run typecheck
+
+  sync-check:
+    name: templates in sync with agent-core
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check vendored agent-core is up to date
+        run: node .internal/scripts/sync-agent-core.mjs --check
