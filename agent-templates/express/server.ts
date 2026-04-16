@@ -26,7 +26,23 @@ function parseModel(m: unknown): ModelConfig | undefined {
 }
 
 app.get("/", (_req, res) => {
-  res.json({ status: "ok", version: "0.1.0" });
+  const provider = process.env.MODEL_PROVIDER ?? "google";
+  const modelId = process.env.MODEL_ID ?? "gemini-3-flash-preview";
+  const keyLabels: Record<string, string> = {
+    FIRECRAWL_API_KEY: "firecrawl",
+    ANTHROPIC_API_KEY: "anthropic",
+    OPENAI_API_KEY: "openai",
+    GOOGLE_GENERATIVE_AI_API_KEY: "google",
+  };
+  const configuredKeys = Object.entries(keyLabels)
+    .filter(([k]) => process.env[k])
+    .map(([, label]) => label);
+  res.json({
+    status: "ok",
+    version: "0.1.0",
+    model: `${provider}:${modelId}`,
+    keys: configuredKeys,
+  });
 });
 
 app.post("/v1/run", async (req, res) => {

@@ -204,7 +204,7 @@ components:
       properties:
         provider:
           type: string
-          enum: [anthropic, openai, google, gateway, firecrawl, acp]
+          enum: [anthropic, openai, google, gateway, custom-openai]
           description: LLM provider.
         model:
           type: string

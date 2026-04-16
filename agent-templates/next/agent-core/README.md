@@ -306,8 +306,10 @@ const plan = await agent.plan('compare pricing across 5 CDN providers')
 | Provider | Config |
 |----------|--------|
 | Google Gemini | `{ provider: 'google', model: 'gemini-3-flash-preview' }` |
-| Anthropic Claude | `{ provider: 'anthropic', model: 'claude-sonnet-4-20250514' }` |
-| OpenAI | `{ provider: 'openai', model: 'gpt-4o' }` |
+| Google Gemini (Pro) | `{ provider: 'google', model: 'gemini-3.1-pro-preview' }` |
+| Anthropic Claude | `{ provider: 'anthropic', model: 'claude-sonnet-4-6' }` |
+| OpenAI | `{ provider: 'openai', model: 'gpt-5.4' }` |
+| Custom (OpenAI-compat) | `{ provider: 'custom-openai', model: 'your-model', baseURL: '...' }` |
 
 Set API keys via `apiKeys` option or environment variables (`GOOGLE_GENERATIVE_AI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`).
 
