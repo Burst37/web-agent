@@ -104,9 +104,15 @@ describe("resolveModel", () => {
     expect(model).toMatchObject({ apiKey: "config-key" });
   });
 
-  it("throws for unsupported provider", async () => {
+  it("throws for unsupported provider with supported-list hint", async () => {
     await expect(
       resolveModel({ provider: "unknown" as never, model: "test" }),
-    ).rejects.toThrow("Unsupported provider");
+    ).rejects.toThrow(/Supported: anthropic, openai, google/);
+  });
+
+  it("suggests provider prefix when the 'provider' looks like a model ID", async () => {
+    await expect(
+      resolveModel({ provider: "claude-sonnet-4-6" as never, model: "test" }),
+    ).rejects.toThrow(/Did you mean MODEL="anthropic:claude-sonnet-4-6"/);
   });
 });

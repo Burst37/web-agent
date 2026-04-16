@@ -45,7 +45,15 @@ export async function resolveModel(
       const { createGoogleGenerativeAI } = await import("@ai-sdk/google");
       return createGoogleGenerativeAI({ apiKey: keyFor("google") })(config.model);
     }
-    default:
-      throw new Error(`Unsupported provider: ${config.provider}`);
+    default: {
+      // Catch the common "forgot the provider prefix" mistake.
+      // If the "provider" looks like a model ID (contains a hyphen or dot),
+      // the user probably set MODEL=my-model instead of MODEL=provider:my-model.
+      const looksLikeModelId = /[-.]/.test(config.provider);
+      const hint = looksLikeModelId
+        ? `. Did you mean MODEL="anthropic:${config.provider}" or similar? Format is "provider:model-id"`
+        : `. Supported: anthropic, openai, google, gateway, custom-openai`;
+      throw new Error(`Unsupported provider: "${config.provider}"${hint}`);
+    }
   }
 }
