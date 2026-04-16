@@ -6,6 +6,15 @@ import type { ModelConfig } from "./agent-core/src";
 const app = express();
 app.use(express.json());
 
+// CORS — allows frontend apps on other ports/domains to call this API
+app.use((_req, res, next) => {
+  res.header("Access-Control-Allow-Origin", process.env.CORS_ORIGIN ?? "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  if (_req.method === "OPTIONS") return res.sendStatus(204);
+  next();
+});
+
 function parseModel(m: unknown): ModelConfig | undefined {
   if (!m) return undefined;
   if (typeof m === "object") return m as ModelConfig;
