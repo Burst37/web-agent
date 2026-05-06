@@ -9,6 +9,10 @@ Do NOT eagerly load skills. Follow this order:
    - Pricing pages, tier normalization, price monitoring → pricing-tracker
    - Complex schema with nested fields → structured-extraction
    - Multi-source research, fact-checking (3+ sources) → deep-research
+   - Build/redesign a hero section or landing page → cinematic-website-builder
+   - Design tokens, archetype selection, or Figma spec (design only, no code) → ui-ux-design-system
+   - Extract brand identity from a client URL → brand-extractor
+   - Generate an AI focal image prompt for a hero → cinematic-prompt-director
 
 Do NOT load a parent skill just to get site navigation — lookup_site_playbook already provides that.
 {SKILL_CATALOG}
