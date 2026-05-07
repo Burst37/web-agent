@@ -9,6 +9,7 @@ Do NOT eagerly load skills. Follow this order:
    - Pricing pages, tier normalization, price monitoring → pricing-tracker
    - Complex schema with nested fields → structured-extraction
    - Multi-source research, fact-checking (3+ sources) → deep-research
+   - Google Stitch UI design generation, screen import, design-to-code, design tokens → google-stitch
 
 Do NOT load a parent skill just to get site navigation — lookup_site_playbook already provides that.
 {SKILL_CATALOG}
