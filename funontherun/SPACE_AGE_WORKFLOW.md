@@ -125,12 +125,12 @@ This document defines the exact, repeatable workflow for building any website us
 
 | Site Type | Hero Treatment | Scroll Animation | Primary Library | 3D Elements |
 |---|---|---|---|---|
-| Consumer App | Kling video loop | GSAP horizontal pin + Framer entrance | GSAP + Framer Motion | Spline (optional) |
+| Consumer App | Kling 3.0 or Seedance 2.0 video loop | GSAP horizontal pin + Framer entrance | GSAP + Framer Motion | Spline (optional) |
 | HVAC / Home Services | Static hero image, parallax | Framer fade-up reveals only | Framer Motion | None |
 | Restaurant / Food | Ambient video loop or cinemagraph | Parallax food imagery | GSAP + Lenis | None |
 | Medical / Health | Static, clean, no video | Subtle Framer fade-up | Framer Motion | None |
-| Fitness / Sport | Action video loop | GSAP scrub, kinetic text | GSAP + Framer Motion | Spline (optional) |
-| Real Estate | Property video or aerial drone | Parallax + Framer reveals | GSAP + Framer Motion | None |
+| Fitness / Sport | Kling 3.0 or Seedance 2.0 action video | GSAP scrub, kinetic text | GSAP + Framer Motion | Spline (optional) |
+| Real Estate | Kling 3.0 or Seedance 2.0 property/aerial | Parallax + Framer reveals | GSAP + Framer Motion | None |
 | E-commerce | Product hero, no video | Framer hover states dominant | Framer Motion | None |
 | Portfolio / Creative | Full-bleed image or Spline 3D | GSAP kinetic typography | GSAP + Spline + Framer | Spline (always) |
 | Law / Finance | Static, authoritative | Framer fade-up only | Framer Motion | None |
@@ -172,15 +172,21 @@ Mobile:          Disable GSAP pins under 768px, stack vertically
 
 ```
 Does the hero need motion?
-├─ YES → Generate with Kling 3.0
-│         Mode: Pro | Duration: 6-8s | AR: 16:9
-│         Start + End frames: GPT Image 2, 4K, 16:9
-│         Prompt: multi-shot cinematic, specify crowd demo, activity, lighting
+├─ YES → Choose video model:
+│         ┌─ Kling 3.0
+│         │   Mode: Pro | Duration: 6-8s | AR: 16:9
+│         │   Start + End frames: GPT Image 2, 4K, 16:9
+│         │   Best for: multi-shot cinematic, crowd scenes, narrative sequences
+│         └─ Seedance 2.0
+│             Mode: Pro | Duration: 6-8s | AR: 16:9
+│             Start + End frames: GPT Image 2, 4K, 16:9
+│             Best for: fluid motion, product/lifestyle, smooth camera movement
+│         Both require: multi-shot prompt, crowd demo, activity, lighting specified
 └─ NO  → Generate with NanoBanana Pro
           Resolution: 2k | Option: Free
 
 Is this a video-heavy page? (restaurant, fitness, app)
-├─ YES → Kling 3.0 for hero + 1 feature section video
+├─ YES → Kling 3.0 or Seedance 2.0 for hero + 1 feature section video
 └─ NO  → NanoBanana Pro for all sections
 
 Does the site need a 3D hero element?
@@ -194,7 +200,7 @@ Every build requires this asset set at minimum:
 
 | Asset | Tool | Spec |
 |---|---|---|
-| Hero background (video) | Kling 3.0 | 1920×1080, 6-8s, Pro mode |
+| Hero background (video) | Kling 3.0 OR Seedance 2.0 | 1920×1080, 6-8s, Pro mode |
 | Hero start frame | GPT Image 2 | 4K, 16:9 |
 | Hero end frame | GPT Image 2 | 4K, 16:9 |
 | Problem/pain section image | NanoBanana Pro | 2k |
@@ -333,7 +339,7 @@ For any build longer than a single session, activate the `superpowers` skill. It
 **Phase 3 — Market Read:** exa-mcp research shows competitors use stock photography, generic copy, no motion
 **Phase 4 — Strategy:** Attention=trust signal hero (not video — HVAC is trust-first), Story=seasonal pain, Trust=reviews+certifications, Conversion=form above fold
 **Phase 5 — Motion Matrix:** Static hero image, parallax scroll only, Framer fade-ups, NO glassmorphism, NO liquid glass, NO kinetic typography, NO cursor effects
-**Phase 6 — Assets:** NanoBanana Pro only (no Kling video — trust category, motion reduces credibility), technician on job site, happy homeowner, service truck
+**Phase 6 — Assets:** NanoBanana Pro only (no video — trust category, motion reduces credibility), technician on job site, happy homeowner, service truck
 **Phase 7 — Handoff:** CLAUDE.md + HANDOFF.md + RATIONALE.md produced
 **Phase 8 — Build:** Opus 4.8 or Sonnet 4.6 (low motion = Sonnet acceptable)
 **Phase 9 — QA + SEO:** `sa-local-seo-geo` critical — HVAC is hyper-local, Google local pack is primary traffic source
@@ -345,8 +351,8 @@ For any build longer than a single session, activate the `superpowers` skill. It
 **Phase 1 — Discovery:** Firecrawl funontherun.co — extracted all assets, brand colors, existing structure
 **Phase 2 — Brand DNA:** Warm black `#0A0705`, orange `#FF6B35`, warm yellow `#FFD166`, Syne 900, DM Sans 400
 **Phase 3 — Market Read:** No direct competitor owns cinematic social app space — gap to own
-**Phase 4 — Strategy:** Attention=Kling video hero, Story=loneliness problem → FOTR solution, Trust=safety + testimonials, Conversion=beta join + app download
-**Phase 5 — Motion Matrix:** Kling video hero, GSAP horizontal pin (How It Works), Framer entrances, liquid glass nav, glassmorphism cards, neumorphic stats, skeuomorphic shield
+**Phase 4 — Strategy:** Attention=cinematic video hero, Story=loneliness problem → FOTR solution, Trust=safety + testimonials, Conversion=beta join + app download
+**Phase 5 — Motion Matrix:** Kling 3.0 video hero, GSAP horizontal pin (How It Works), Framer entrances, liquid glass nav, glassmorphism cards, neumorphic stats, skeuomorphic shield
 **Phase 6 — Assets:** GPT Image 2 4K frames → Kling 3.0 hero video + 12× NanoBanana Pro 2k images
 **Phase 7 — Handoff:** CLAUDE.md + HANDOFF.md + RATIONALE.md (RATIONALE.md pending)
 **Phase 8 — Build:** Opus 4.8 mandatory (complex motion stack)
