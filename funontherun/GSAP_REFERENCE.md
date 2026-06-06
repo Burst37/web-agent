@@ -310,55 +310,137 @@ document.addEventListener("mousemove", e => xTo(e.pageX));
 
 ---
 
-## FOTR-Specific Patterns (How It Works horizontal pin)
+## Common Patterns
 
+### Horizontal Scroll Pin (steps / process / how-it-works sections)
 ```js
-// Register on mount
+// Works for any multi-step horizontal section on any site
 gsap.registerPlugin(ScrollTrigger);
 
-// Horizontal scroll pin — How It Works section
-const steps = gsap.utils.toArray(".step-card");
-const totalWidth = steps.length * stepWidth;
+const items = gsap.utils.toArray(".scroll-item"); // any repeating child selector
+const track = document.querySelector(".scroll-track");
 
-gsap.to(steps, {
-  xPercent: -100 * (steps.length - 1),
+gsap.to(items, {
+  xPercent: -100 * (items.length - 1),
   ease: "none",
   scrollTrigger: {
-    trigger: ".how-it-works",
+    trigger: ".scroll-section", // the pinned container
     pin: true,
     scrub: 1,
     start: "top top",
-    end: () => "+=" + totalWidth,
+    end: () => "+=" + track.offsetWidth,
     invalidateOnRefresh: true,
   }
 });
+```
 
-// Section entrance — staggered fade-up
-gsap.from(".stat-card", {
+### Section Entrance — Staggered Fade Up
+```js
+// Any repeating card/grid layout on any site
+gsap.from(".card", {
   opacity: 0,
   y: 40,
   duration: 0.8,
   stagger: 0.1,
   ease: "power2.out",
   scrollTrigger: {
-    trigger: ".problem-section",
+    trigger: ".section-container",
     start: "top 75%",
   }
 });
+```
 
-// Feature headline underline draw
-gsap.from(".feature-underline", {
+### Animated Underline / Line Draw on Scroll
+```js
+// Any headline accent line on any site
+gsap.from(".accent-line", {
   width: 0,
   duration: 0.6,
   ease: "power2.out",
   scrollTrigger: {
-    trigger: ".feature-row",
+    trigger: ".headline-container",
     start: "top 70%",
   }
 });
+```
 
-// Cleanup on component unmount (Next.js App Router)
-return () => {
-  ScrollTrigger.getAll().forEach(t => t.kill());
-};
+### Parallax Image on Scroll
+```js
+gsap.to(".parallax-img", {
+  yPercent: -20,
+  ease: "none",
+  scrollTrigger: {
+    trigger: ".parallax-section",
+    start: "top bottom",
+    end: "bottom top",
+    scrub: true,
+  }
+});
+```
+
+### Kinetic Typography — Character Reveal
+```js
+// Requires SplitText plugin
+gsap.registerPlugin(SplitText);
+
+const split = new SplitText(".headline", { type: "chars,words" });
+
+gsap.from(split.chars, {
+  opacity: 0,
+  y: 60,
+  rotationX: -90,
+  stagger: 0.02,
+  duration: 0.6,
+  ease: "back.out(1.7)",
+  scrollTrigger: {
+    trigger: ".headline",
+    start: "top 80%",
+  }
+});
+```
+
+### Counter / Number Animate Up
+```js
+gsap.to(".stat-number", {
+  innerHTML: 100, // replace with target number
+  duration: 2,
+  ease: "power2.out",
+  snap: { innerHTML: 1 },
+  scrollTrigger: {
+    trigger: ".stats-section",
+    start: "top 75%",
+    once: true,
+  }
+});
+```
+
+### Image Scale on Hover
+```js
+document.querySelectorAll(".hover-scale").forEach(el => {
+  el.addEventListener("mouseenter", () =>
+    gsap.to(el, { scale: 1.05, duration: 0.4, ease: "power2.out" })
+  );
+  el.addEventListener("mouseleave", () =>
+    gsap.to(el, { scale: 1, duration: 0.4, ease: "power2.out" })
+  );
+});
+```
+
+### Page Transition (Next.js App Router)
+```js
+gsap.fromTo("main",
+  { opacity: 0, y: 20 },
+  { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" }
+);
+```
+
+### Cleanup on Unmount (Next.js App Router — always required)
+```js
+useEffect(() => {
+  const ctx = gsap.context(() => {
+    // all gsap code goes inside here
+  }, containerRef);
+
+  return () => ctx.revert(); // clean up on unmount
+}, []);
 ```
