@@ -25,29 +25,28 @@ https://d8j0ntlcm91z4.cloudfront.net/user_30Zz3LHrTCA6JoAXpOu8nLQx0Ic/hf_2026060
 - Poster: hero start frame below
 - Overlay: linear-gradient(to bottom, transparent 40%, #0A0705 100%)
 
-### Hero Frames (4K GPT Image 2)
+### Hero Frames (ChatGPT Image 2.0, 4K)
 ```
 Start: https://d8j0ntlcm91z4.cloudfront.net/user_30Zz3LHrTCA6JoAXpOu8nLQx0Ic/hf_20260606_002519_66dad251-ec4c-498d-8698-1440d6ad2b87.png
 End:   https://d8j0ntlcm91z4.cloudfront.net/user_30Zz3LHrTCA6JoAXpOu8nLQx0Ic/hf_20260606_002523_58ca346d-2d00-4d82-9d37-879ec0c3c036.png
 ```
 
-### Site Images (NanoBanana Pro 2k — all Higgsfield CDN)
-Base URL: `https://d8j0ntlcm91z4.cloudfront.net/user_30Zz3LHrTCA6JoAXpOu8nLQx0Ic/`
+### Site Images (NanoBanana Pro 2k — all confirmed Higgsfield CDN URLs)
 
-| Section | Filename |
+| Section | Full URL |
 |---|---|
-| Problem (alone on couch) | `hf_20260606_003616_8697c506-9305-4bd5-831d-52450a34a418.png` |
-| Feature: Go-karts | `hf_20260606_003617_6fd50985-d2c4-4969-a57f-529ae1efbeab.png` |
-| Feature: Dinner | `hf_20260606_003618_07682e94-bff3-4afc-a5fe-011e34700cbb.jpeg` |
-| Feature: Movies | `hf_20260606_003619_7e4bbbdc-2ec4-4a04-9210-73bd24ce5f72.png` |
-| Safety/trust shield | `hf_20260606_003620_9b54772d-[full-id].png` |
-| Testimonial: Mason Mitchell | `hf_20260606_003621_29c5b233-[full-id].png` |
-| Testimonial: Sophia Taylor | `hf_20260606_003622_9fe7b7cd-[full-id].png` |
-| Testimonial: Ethan Davis | `hf_20260606_003623_b2222fbb-[full-id].png` |
-| Testimonial: Jackson Walker | `hf_20260606_003624_9da30b36-[full-id].png` |
-| Vendor hero (bar owner) | `hf_20260606_003625_b0624f39-[full-id].png` |
-| Vendor crowd | `hf_20260606_003626_1b0a9dc7-[full-id].png` |
-| Blog hero (woman at cafe) | `hf_20260606_003627_a48f6b6e-[full-id].png` |
+| Problem (alone on couch) | `https://d8j0ntlcm91z4.cloudfront.net/user_30Zz3LHrTCA6JoAXpOu8nLQx0Ic/hf_20260606_003616_8697c506-9305-4bd5-831d-52450a34a418.png` |
+| Feature: Go-karts | `https://d8j0ntlcm91z4.cloudfront.net/user_30Zz3LHrTCA6JoAXpOu8nLQx0Ic/hf_20260606_003617_6fd50985-d2c4-4969-a57f-529ae1efbeab.png` |
+| Feature: Dinner | `https://d8j0ntlcm91z4.cloudfront.net/user_30Zz3LHrTCA6JoAXpOu8nLQx0Ic/hf_20260606_003618_07682e94-bff3-4afc-a5fe-011e34700cbb.jpeg` |
+| Feature: Movies | `https://d8j0ntlcm91z4.cloudfront.net/user_30Zz3LHrTCA6JoAXpOu8nLQx0Ic/hf_20260606_003619_7e4bbbdc-2ec4-4a04-9210-73bd24ce5f72.png` |
+| Safety/trust shield | `https://d8j0ntlcm91z4.cloudfront.net/user_30Zz3LHrTCA6JoAXpOu8nLQx0Ic/hf_20260606_003640_9b54772d-f974-4b46-b12c-4efdc38f4574.png` |
+| Testimonial: Mason Mitchell | `https://d8j0ntlcm91z4.cloudfront.net/user_30Zz3LHrTCA6JoAXpOu8nLQx0Ic/hf_20260606_003633_29c5b233-d0dd-4b21-acfa-0734e245633c.png` |
+| Testimonial: Sophia Taylor | `https://d8j0ntlcm91z4.cloudfront.net/user_30Zz3LHrTCA6JoAXpOu8nLQx0Ic/hf_20260606_003635_9fe7b7cd-daa0-4847-9050-8a0be7a4402f.png` |
+| Testimonial: Ethan Davis | `https://d8j0ntlcm91z4.cloudfront.net/user_30Zz3LHrTCA6JoAXpOu8nLQx0Ic/hf_20260606_003636_b2222fbb-6cfe-40a5-85fb-8e159bd620a9.png` |
+| Testimonial: Jackson Walker | `https://d8j0ntlcm91z4.cloudfront.net/user_30Zz3LHrTCA6JoAXpOu8nLQx0Ic/hf_20260606_003637_9da30b36-25fe-40cb-a735-d2653bb453c7.png` |
+| Vendor hero (bar owner) | `https://d8j0ntlcm91z4.cloudfront.net/user_30Zz3LHrTCA6JoAXpOu8nLQx0Ic/hf_20260606_003643_b0624f39-d6c9-4973-bf99-7ad2f2cd63ba.png` |
+| Vendor crowd | `https://d8j0ntlcm91z4.cloudfront.net/user_30Zz3LHrTCA6JoAXpOu8nLQx0Ic/hf_20260606_003645_1b0a9dc7-7008-4461-8910-7d2ce2d0e656.png` |
+| Blog hero (woman at cafe) | `https://d8j0ntlcm91z4.cloudfront.net/user_30Zz3LHrTCA6JoAXpOu8nLQx0Ic/hf_20260606_003647_a48f6b6e-4565-473c-8472-53720c966801.png` |
 
 ### Local Assets (`/assets/` directory)
 ```
