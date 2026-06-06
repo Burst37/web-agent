@@ -175,19 +175,20 @@ Does the hero need motion?
 ├─ YES → Choose video model:
 │         ┌─ Kling 3.0
 │         │   Mode: Pro | Duration: 6-8s | AR: 16:9
-│         │   Start + End frames: GPT Image 2, 4K, 16:9
+│         │   Start + End frames: ChatGPT Image 2.0, 4K, 16:9
 │         │   Best for: multi-shot cinematic, crowd scenes, narrative sequences
 │         └─ Seedance 2.0
 │             Mode: Pro | Duration: 6-8s | AR: 16:9
-│             Start + End frames: GPT Image 2, 4K, 16:9
+│             Start + End frames: ChatGPT Image 2.0, 4K, 16:9
 │             Best for: fluid motion, product/lifestyle, smooth camera movement
 │         Both require: multi-shot prompt, crowd demo, activity, lighting specified
-└─ NO  → Generate with NanoBanana Pro
-          Resolution: 2k | Option: Free
+└─ NO  → Choose image model:
+          ┌─ ChatGPT Image 2.0 — photorealistic, complex scenes, faces
+          └─ NanoBanana Pro    — 2k, free option, stylized/lifestyle
 
 Is this a video-heavy page? (restaurant, fitness, app)
 ├─ YES → Kling 3.0 or Seedance 2.0 for hero + 1 feature section video
-└─ NO  → NanoBanana Pro for all sections
+└─ NO  → ChatGPT Image 2.0 or NanoBanana Pro for all sections
 
 Does the site need a 3D hero element?
 ├─ YES → Spline (via sa-figma-framer-spline skill)
@@ -201,13 +202,13 @@ Every build requires this asset set at minimum:
 | Asset | Tool | Spec |
 |---|---|---|
 | Hero background (video) | Kling 3.0 OR Seedance 2.0 | 1920×1080, 6-8s, Pro mode |
-| Hero start frame | GPT Image 2 | 4K, 16:9 |
-| Hero end frame | GPT Image 2 | 4K, 16:9 |
-| Problem/pain section image | NanoBanana Pro | 2k |
-| Feature image ×3 | NanoBanana Pro | 2k each |
-| Trust/safety image | NanoBanana Pro | 2k |
-| Testimonial avatars ×3-4 | NanoBanana Pro | 2k each |
-| Secondary page hero | NanoBanana Pro | 2k |
+| Hero start frame | ChatGPT Image 2.0 | 4K, 16:9 |
+| Hero end frame | ChatGPT Image 2.0 | 4K, 16:9 |
+| Problem/pain section image | ChatGPT Image 2.0 or NanoBanana Pro | 2k |
+| Feature image ×3 | ChatGPT Image 2.0 or NanoBanana Pro | 2k each |
+| Trust/safety image | ChatGPT Image 2.0 or NanoBanana Pro | 2k |
+| Testimonial avatars ×3-4 | ChatGPT Image 2.0 or NanoBanana Pro | 2k each |
+| Secondary page hero | ChatGPT Image 2.0 or NanoBanana Pro | 2k |
 
 **All CDN URLs must be confirmed working before handoff. No `[full-id]` placeholders.**
 
@@ -339,7 +340,7 @@ For any build longer than a single session, activate the `superpowers` skill. It
 **Phase 3 — Market Read:** exa-mcp research shows competitors use stock photography, generic copy, no motion
 **Phase 4 — Strategy:** Attention=trust signal hero (not video — HVAC is trust-first), Story=seasonal pain, Trust=reviews+certifications, Conversion=form above fold
 **Phase 5 — Motion Matrix:** Static hero image, parallax scroll only, Framer fade-ups, NO glassmorphism, NO liquid glass, NO kinetic typography, NO cursor effects
-**Phase 6 — Assets:** NanoBanana Pro only (no video — trust category, motion reduces credibility), technician on job site, happy homeowner, service truck
+**Phase 6 — Assets:** ChatGPT Image 2.0 or NanoBanana Pro (no video — trust category, motion reduces credibility), technician on job site, happy homeowner, service truck
 **Phase 7 — Handoff:** CLAUDE.md + HANDOFF.md + RATIONALE.md produced
 **Phase 8 — Build:** Opus 4.8 or Sonnet 4.6 (low motion = Sonnet acceptable)
 **Phase 9 — QA + SEO:** `sa-local-seo-geo` critical — HVAC is hyper-local, Google local pack is primary traffic source
@@ -353,7 +354,7 @@ For any build longer than a single session, activate the `superpowers` skill. It
 **Phase 3 — Market Read:** No direct competitor owns cinematic social app space — gap to own
 **Phase 4 — Strategy:** Attention=cinematic video hero, Story=loneliness problem → FOTR solution, Trust=safety + testimonials, Conversion=beta join + app download
 **Phase 5 — Motion Matrix:** Kling 3.0 video hero, GSAP horizontal pin (How It Works), Framer entrances, liquid glass nav, glassmorphism cards, neumorphic stats, skeuomorphic shield
-**Phase 6 — Assets:** GPT Image 2 4K frames → Kling 3.0 hero video + 12× NanoBanana Pro 2k images
+**Phase 6 — Assets:** ChatGPT Image 2.0 4K frames → Kling 3.0 hero video + 12× ChatGPT Image 2.0 or NanoBanana Pro 2k site images
 **Phase 7 — Handoff:** CLAUDE.md + HANDOFF.md + RATIONALE.md (RATIONALE.md pending)
 **Phase 8 — Build:** Opus 4.8 mandatory (complex motion stack)
 **Phase 9 — QA + SEO:** `sa-local-seo-geo` for app store + GEO citations
