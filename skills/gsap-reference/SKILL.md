@@ -2,7 +2,8 @@
 name: gsap-reference
 description: >
   Complete GSAP animation reference for any web build. Covers tweens, timelines,
-  ScrollTrigger, eases, plugins, utility methods, and universal ready-to-drop patterns
+  ScrollTrigger (full API — config, instance methods, static methods, callbacks),
+  eases, plugins, utility methods, and universal ready-to-drop patterns
   for horizontal scroll pins, staggered entrances, parallax, kinetic typography, counters,
   hover scales, page transitions, and Next.js cleanup. Apply to any site type — consumer
   app, HVAC, portfolio, SaaS, landing page. Trigger on: "gsap", "scrolltrigger",
@@ -11,6 +12,7 @@ description: >
 source:
   - https://github.com/greensock/GSAP.git
   - https://github.com/greensock/gsap-skills.git
+  - https://gsap.com/docs/v3/Plugins/ScrollTrigger/
 author: GreenSock
 version: gsap@3.x
 ---
@@ -198,46 +200,160 @@ CustomEase, CustomWiggle, CustomBounce
 
 ## ScrollTrigger
 
+### Config Object (full)
+
 ```js
 scrollTrigger: {
-  trigger: ".selector",       // selector or element
-  start: "top center",        // [trigger] [scroller] positions
-  end: "20px 80%",            // [trigger] [scroller] positions
-  // or relative amount: "+=500"
-  scrub: true,                // or time (in seconds) to catch up
-  pin: true,                  // or selector or element to pin
-  markers: true,              // only during development!
-  toggleActions: "play pause resume reset",
-  // other actions: complete reverse none
-  toggleClass: "active",
-  fastScrollEnd: true,        // or velocity number
-  containerAnimation: tween, // linear animation
-  id: "my-id",
-  anticipatePin: 1,           // may help avoid jump
+  trigger: ".selector",         // element whose position determines start
+  start: "top bottom",          // default — [trigger edge] [scroller edge]
+  end: "bottom top",            // default — [trigger edge] [scroller edge]
+  // start/end also accept: px number, "+=500" relative, or a function
+
+  scrub: true,                  // true = links directly; number = seconds to catch up
+  pin: true,                    // pin trigger element; or pass selector/element
+  markers: true,                // dev only — visualize start/end positions
+
+  // toggleActions: onEnter onLeave onEnterBack onLeaveBack
+  // values: play pause resume reset reverse complete none
+  toggleActions: "play none none none",
+
+  toggleClass: "active",        // or { targets: ".el", className: "active" }
+
+  anticipatePin: 1,             // monitors scroll velocity to avoid jump at pin
+  fastScrollEnd: true,          // or velocity (px/s) — complete anim if scrolled past fast
+  containerAnimation: tween,    // for elements inside a horizontally-scrolling container
+  id: "my-id",                  // retrieve with ScrollTrigger.getById()
+
   snap: {
-    snapTo: 1 / 10,           // progress increment
-    // or "labels" or function or Array
-    duration: 0.5,
-    directional: true,
+    snapTo: 1 / 10,             // progress increment; or "labels"; or Array; or Function
+    duration: { min: 0.2, max: 3 },
+    delay: 0.1,
+    directional: true,          // snaps toward last scroll direction
     ease: "power3",
+    inertia: true,
+    onStart: callback,
+    onInterrupt: callback,
     onComplete: callback,
-    // other callbacks: onStart, onInterrupt
   },
-  pinReparent: true,          // moves to documentElement during pin
-  pinSpacing: false,
-  pinType: "transform",       // or "fixed"
-  pinnedContainer: ".selector",
-  preventOverlaps: true,      // or arbitrary string
-  once: true,
-  endTrigger: ".selector",
-  horizontal: true,           // switches mode
-  invalidateOnRefresh: true,  // clears start values on refresh
-  refreshPriority: 1,         // influence refresh order
-  onEnter: callback
-  // other callbacks:
-  // onLeave, onEnterBack, onLeaveBack, onUpdate,
-  // onToggle, onRefresh, onRefreshInit, onScrubComplete
+
+  pin: true,
+  pinReparent: true,            // reparents to <body> during pin (fixes stacking contexts)
+  pinSpacing: true,             // default — adds padding to push content below pinned element
+  pinType: "transform",         // "transform" or "fixed"
+  pinnedContainer: ".parent",   // if trigger is inside another pinned element
+
+  scroller: window,             // or selector/element for custom scroll containers
+  horizontal: true,             // switches to horizontal scroll mode
+  endTrigger: ".other",         // different element for end calculation
+
+  once: true,                   // self-kills after first activation
+  preventOverlaps: true,        // or label string — forces prior anims to end state
+  refreshPriority: 0,           // higher = refreshes first
+  invalidateOnRefresh: true,    // calls animation.invalidate() on window resize
+
+  // callbacks — all receive the ScrollTrigger instance as argument
+  onEnter: (self) => {},        // forward past start
+  onLeave: (self) => {},        // forward past end
+  onEnterBack: (self) => {},    // backward past end
+  onLeaveBack: (self) => {},    // backward past start
+  onUpdate: (self) => {},       // every progress change (self.progress, self.direction, self.getVelocity())
+  onToggle: (self) => {},       // active ↔ inactive
+  onRefresh: (self) => {},      // window resize / ScrollTrigger.refresh()
+  onScrubComplete: (self) => {},// scrub tween finished catching up
+  onSnapComplete: (self) => {}, // snap animation complete
 }
+```
+
+### Instance Properties
+
+```js
+const st = ScrollTrigger.getById("my-id");
+
+st.animation    // the associated Tween or Timeline
+st.direction    // 1 = forward, -1 = backward (current scroll direction)
+st.end          // end scroll position in px
+st.isActive     // true when between start and end
+st.pin          // pinned element reference
+st.progress     // 0–1
+st.scroller     // scroller element or window
+st.start        // start scroll position in px
+st.trigger      // trigger element reference
+st.vars         // original config object
+```
+
+### Instance Methods
+
+```js
+st.disable(revert, allowAnimation)  // unpins, restores DOM, pauses tracking
+st.enable(reset)                    // re-enables a disabled instance
+st.getTween(snap)                   // returns scrub tween (or snap tween if true)
+st.getVelocity()                    // px/sec at current moment
+st.kill(revert, allowAnimation)     // destroy + eligible for GC
+st.labelToScroll("myLabel")         // converts timeline label → scroll position
+st.next()                           // next instance in refresh order
+st.previous()                       // previous instance in refresh order
+st.refresh()                        // recalculate start/end positions
+st.scroll()                         // get scroll position
+st.scroll(300)                      // set scroll position
+```
+
+### Static Methods
+
+```js
+ScrollTrigger.addEventListener("scrollStart", cb)   // global events: scrollStart, scrollEnd, refresh, refreshInit
+ScrollTrigger.removeEventListener("scrollStart", cb)
+
+ScrollTrigger.batch(".card", {                       // coordinated group — batches callbacks by viewport
+  onEnter: (elements) => gsap.to(elements, { opacity: 1, stagger: 0.1 }),
+  onLeave: (elements) => gsap.set(elements, { opacity: 0 }),
+  start: "top 85%",
+  batchMax: 5,                                       // max per batch
+});
+
+ScrollTrigger.config({
+  limitCallbacks: true,      // only fire in/out callbacks (no onUpdate) — perf
+  syncInterval: 40,          // ms between scroll syncs
+  ignoreMobileResize: true,  // ignore vertical resize on mobile (address bar)
+  autoRefreshEvents: "visibilitychange,DOMContentLoaded,load,resize",
+});
+
+ScrollTrigger.create({ /* vars */ });        // standalone (no animation attached)
+ScrollTrigger.defaults({ scroller: "#app" });// set defaults for all instances
+ScrollTrigger.getAll();                      // Array of all instances
+ScrollTrigger.getById("my-id");              // single instance by id
+ScrollTrigger.isInViewport(el, 0.5);        // true if 50%+ of el is visible
+ScrollTrigger.isScrolling();                 // any scroller currently scrolling?
+ScrollTrigger.killAll();                     // kill every instance
+ScrollTrigger.matchMedia({ "(max-width: 768px)": () => { /* ... */ } });
+ScrollTrigger.maxScroll(window);             // max scrollable px
+ScrollTrigger.normalizeScroll(true);         // force JS-thread scroll sync (fixes lag on touch)
+ScrollTrigger.positionInViewport(el, "top"); // 0–1 position of element in viewport
+ScrollTrigger.refresh(safe);                 // recalculate all instances
+ScrollTrigger.saveStyles(".el, .other");     // snapshot inline styles before ScrollTrigger changes them
+ScrollTrigger.scrollerProxy("#scroller", {   // custom scroll container (e.g. Lenis, Locomotive)
+  scrollTop(value) {
+    return arguments.length
+      ? locoScroll.scrollTo(value, 0, 0)
+      : locoScroll.scroll.instance.scroll.y;
+  },
+  getBoundingClientRect() {
+    return { top: 0, left: 0, width: window.innerWidth, height: window.innerHeight };
+  },
+});
+ScrollTrigger.sort();                        // sort instances by refreshPriority / position
+ScrollTrigger.update();                      // force-update progress + fire callbacks
+```
+
+### Lenis + ScrollTrigger Integration
+
+```js
+// Required when using Lenis smooth scroll
+const lenis = new Lenis({ lerp: 0.1, duration: 1.2 });
+
+lenis.on('scroll', ScrollTrigger.update);
+
+gsap.ticker.add((time) => lenis.raf(time * 1000));
+gsap.ticker.lagSmoothing(0);
 ```
 
 ---
@@ -492,6 +608,7 @@ skills/gsap-reference/
 Source repos:
 - https://github.com/greensock/GSAP.git
 - https://github.com/greensock/gsap-skills.git
+- https://gsap.com/docs/v3/Plugins/ScrollTrigger/
 
 ---
 
