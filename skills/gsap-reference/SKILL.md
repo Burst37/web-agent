@@ -964,7 +964,13 @@ Flip.from(state, { duration: 0.5, ease: "power2.inOut", nested: true });
 
 ```
 skills/gsap-reference/
-  SKILL.md    This file
+  SKILL.md                      This file
+  fame-estate-reference.md      Real-world Lenis/scroll-trigger/parallax pattern
+                                mining + build reference, sourced from a live
+                                Nuxt + Lenis luxury real-estate site (no GSAP,
+                                but directly portable patterns: eases, fluid
+                                viewport-ratio scaling, scroll-trigger strings,
+                                --speed-factor parallax convention, section anatomy)
 
 Source zip contents (esm/):
   gsap-core.js  CSSPlugin.js  ScrollTrigger.js  ScrollSmoother.js
