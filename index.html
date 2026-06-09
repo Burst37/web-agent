@@ -9,11 +9,15 @@
     @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
 
     :root {
-      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease: cubic-bezier(0.16, 1, 0.3, 1);
+      /* crystal emerald palette */
+      --c1: rgba(134,239,172,0.95);   /* bright top rim  */
+      --c2: rgba(52,211,153,0.55);    /* mid rim         */
+      --c3: rgba(16,185,129,0.35);    /* inner mid       */
+      --c4: rgba(52,211,153,0.90);    /* bottom rim      */
     }
 
     *, *::before, *::after { box-sizing: border-box; }
-
     html { scroll-behavior: smooth; }
 
     body {
@@ -29,98 +33,106 @@
       line-height: 0.88;
     }
 
-    /* ════════════════════════════════════════════
-       LIQUID GLASS
-       Requires colorful blobs behind each panel.
-       We inject those blobs as ::before pseudo-els
-       on the section, so every card has vivid color
-       to refract through backdrop-filter.
-    ════════════════════════════════════════════ */
-    .glass {
-      position: relative;
-      background: rgba(255,255,255,0.06);
-      backdrop-filter: blur(28px) saturate(180%) brightness(1.1);
-      -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.1);
-      border: 1px solid rgba(255,255,255,0.14);
-      /* top-edge light catch */
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.18),
-        inset 0 -1px 0 rgba(0,0,0,0.2),
-        0 8px 40px rgba(0,0,0,0.45);
-    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #060a06; }
+    ::-webkit-scrollbar-thumb { background: #1a2e1a; border-radius: 3px; }
 
-    /* shimmer highlight layer */
-    .glass::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: inherit;
-      background: linear-gradient(
-        135deg,
-        rgba(255,255,255,0.13) 0%,
-        rgba(255,255,255,0.04) 30%,
-        transparent 60%
-      );
-      pointer-events: none;
-    }
-
-    .glass:hover {
-      background: rgba(255,255,255,0.1);
-      border-color: rgba(52,211,153,0.35);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.25),
-        inset 0 -1px 0 rgba(0,0,0,0.2),
-        0 16px 60px rgba(0,0,0,0.55),
-        0 0 0 1px rgba(52,211,153,0.15);
-      transition: all 0.4s var(--ease-out-expo);
-    }
-
-    /* ════════════════════════════════════════════
-       AMBIENT BLOBS — the secret sauce for glass
-       These colorful radial gradients sit BEHIND
-       cards so backdrop-filter has color to refract.
-    ════════════════════════════════════════════ */
-    .blob-field {
+    /* ═══════════════════════════════════════════════════
+       CRYSTAL LIQUID GLASS — shared base
+       The secret: gradient border-box gives the colored
+       rim; layered box-shadows give depth + outer glow;
+       ::before = top specular highlight;
+       ::after  = bottom internal color bounce.
+    ═══════════════════════════════════════════════════ */
+    .crystal {
       position: relative;
       isolation: isolate;
+      /* dark gel body + gradient border in one declaration */
+      background:
+        linear-gradient(180deg,
+          rgba(255,255,255,0.06)  0%,
+          rgba(8,14,8,0.97)      12%,
+          rgba(5,10,5,0.99)      65%,
+          rgba(12,20,12,0.95)   100%
+        ) padding-box,
+        linear-gradient(175deg,
+          var(--c1)  0%,
+          var(--c2) 28%,
+          var(--c3) 55%,
+          var(--c4) 100%
+        ) border-box;
+      border: 1.5px solid transparent;
+      /* outer glow + physical depth */
+      box-shadow:
+        0 0 18px  rgba(52,211,153,0.30),
+        0 0 55px  rgba(52,211,153,0.10),
+        0 10px 40px rgba(0,0,0,0.65),
+        inset 0 1px  0   rgba(255,255,255,0.14),
+        inset 0 -2px 10px rgba(0,0,0,0.55);
+      transition:
+        box-shadow .4s var(--ease),
+        transform  .4s var(--ease),
+        background .4s ease;
     }
 
-    .blob-field::before,
-    .blob-field::after {
+    /* top specular gloss streak */
+    .crystal::before {
       content: '';
       position: absolute;
-      border-radius: 50%;
-      filter: blur(90px);
+      top: 1.5px; left: 8%; right: 8%;
+      height: 38%;
+      background: linear-gradient(180deg,
+        rgba(255,255,255,0.20) 0%,
+        rgba(255,255,255,0.04) 60%,
+        transparent 100%
+      );
+      border-radius: inherit;
       pointer-events: none;
-      z-index: 0;
+      z-index: 1;
     }
 
-    .blob-field::before {
-      width: 700px; height: 700px;
-      background: radial-gradient(circle, rgba(16,185,129,0.28) 0%, rgba(5,150,105,0.12) 50%, transparent 70%);
-      top: -180px; left: -200px;
+    /* bottom internal emerald bounce */
+    .crystal::after {
+      content: '';
+      position: absolute;
+      bottom: 2px; left: 18%; right: 18%;
+      height: 30%;
+      background: linear-gradient(0deg,
+        rgba(52,211,153,0.18) 0%,
+        transparent 100%
+      );
+      border-radius: inherit;
+      pointer-events: none;
+      z-index: 1;
     }
 
-    .blob-field::after {
-      width: 600px; height: 600px;
-      background: radial-gradient(circle, rgba(52,211,153,0.22) 0%, rgba(16,185,129,0.1) 50%, transparent 70%);
-      bottom: -150px; right: -150px;
+    .crystal:hover {
+      box-shadow:
+        0 0 30px  rgba(52,211,153,0.55),
+        0 0 80px  rgba(52,211,153,0.18),
+        0 16px 60px rgba(0,0,0,0.70),
+        inset 0 1px  0    rgba(255,255,255,0.20),
+        inset 0 -2px 12px rgba(0,0,0,0.60);
+      transform: translateY(-4px);
     }
 
-    .blob-field > * { position: relative; z-index: 1; }
-
-    /* Alternate tint blobs for variety */
-    .blob-field-alt::before {
-      background: radial-gradient(circle, rgba(6,182,212,0.2) 0%, rgba(16,185,129,0.12) 50%, transparent 70%);
-    }
-    .blob-field-alt::after {
-      background: radial-gradient(circle, rgba(52,211,153,0.25) 0%, rgba(6,182,212,0.08) 50%, transparent 70%);
-      top: -100px; right: -100px; bottom: auto; left: auto;
+    /* ── CRYSTAL CARD (panels) ───────────────────── */
+    .crystal-card {
+      border-radius: 1.5rem;
+      transition: transform .45s var(--ease), box-shadow .45s ease;
     }
 
-    /* ════════════════════════════════════════════
-       LIQUID GLASS BUTTONS
-    ════════════════════════════════════════════ */
+    .crystal-card:hover {
+      transform: translateY(-8px) scale(1.012);
+      box-shadow:
+        0 0 40px  rgba(52,211,153,0.40),
+        0 0 90px  rgba(52,211,153,0.12),
+        0 24px 70px rgba(0,0,0,0.70),
+        inset 0 1px  0    rgba(255,255,255,0.18),
+        inset 0 -2px 12px rgba(0,0,0,0.55);
+    }
+
+    /* ── CRYSTAL BUTTONS ─────────────────────────── */
     .btn {
       display: inline-flex;
       align-items: center;
@@ -128,293 +140,301 @@
       position: relative;
       overflow: hidden;
       border-radius: 9999px;
-      padding: 0.85rem 2rem;
-      font-size: 0.875rem;
+      padding: .9rem 2.2rem;
+      font-size: .875rem;
       font-weight: 700;
-      letter-spacing: 0.06em;
+      letter-spacing: .07em;
       text-transform: uppercase;
       cursor: pointer;
-      transition:
-        transform 0.3s var(--ease-out-expo),
-        box-shadow 0.35s ease,
-        background 0.35s ease,
-        border-color 0.35s ease;
+      text-decoration: none;
       -webkit-user-select: none;
       user-select: none;
-      isolation: isolate;
-      text-decoration: none;
+      transition: transform .35s var(--ease), box-shadow .35s ease;
     }
 
-    /* Ghost liquid glass variant */
-    .btn-glass {
-      background: rgba(255,255,255,0.08);
-      backdrop-filter: blur(20px) saturate(200%);
-      -webkit-backdrop-filter: blur(20px) saturate(200%);
-      border: 1px solid rgba(255,255,255,0.2);
-      color: #fff;
+    .btn:active { transform: translateY(1px) scale(.97) !important; }
+
+    /* Ghost crystal — dark body, colored rim */
+    .btn-ghost {
+      color: #d1fae5;
+      background:
+        linear-gradient(180deg,
+          rgba(255,255,255,0.055) 0%,
+          rgba(8,14,8,0.97)     10%,
+          rgba(5,10,5,0.99)     68%,
+          rgba(12,20,12,0.94)  100%
+        ) padding-box,
+        linear-gradient(175deg,
+          var(--c1) 0%,
+          var(--c2) 28%,
+          var(--c3) 55%,
+          var(--c4) 100%
+        ) border-box;
+      border: 1.5px solid transparent;
       box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.2),
-        0 4px 20px rgba(0,0,0,0.3);
+        0 0 16px  rgba(52,211,153,0.28),
+        0 0 44px  rgba(52,211,153,0.08),
+        0 8px 32px rgba(0,0,0,0.60),
+        inset 0 1px  0    rgba(255,255,255,0.14),
+        inset 0 -1px 8px  rgba(0,0,0,0.50);
     }
 
-    .btn-glass::before {
+    .btn-ghost::before {
       content: '';
       position: absolute;
-      inset: 0;
+      top: 2px; left: 10%; right: 10%;
+      height: 38%;
+      background: linear-gradient(180deg,rgba(255,255,255,0.18) 0%,transparent 100%);
       border-radius: inherit;
-      background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
-      opacity: 0;
-      transition: opacity 0.35s ease;
       pointer-events: none;
     }
 
-    .btn-glass:hover {
-      background: rgba(255,255,255,0.14);
-      border-color: rgba(52,211,153,0.5);
+    .btn-ghost::after {
+      content: '';
+      position: absolute;
+      bottom: 2px; left: 20%; right: 20%;
+      height: 28%;
+      background: linear-gradient(0deg,rgba(52,211,153,0.16) 0%,transparent 100%);
+      border-radius: inherit;
+      pointer-events: none;
+    }
+
+    .btn-ghost:hover {
+      color: #fff;
       box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.3),
-        0 8px 40px rgba(52,211,153,0.2),
-        0 0 0 1px rgba(52,211,153,0.2);
+        0 0 28px  rgba(52,211,153,0.50),
+        0 0 70px  rgba(52,211,153,0.14),
+        0 14px 50px rgba(0,0,0,0.65),
+        inset 0 1px  0    rgba(255,255,255,0.22),
+        inset 0 -1px 10px rgba(0,0,0,0.55);
       transform: translateY(-3px);
     }
 
-    .btn-glass:hover::before { opacity: 1; }
-
-    /* Solid emerald primary */
+    /* Solid emerald primary crystal */
     .btn-primary {
-      background: linear-gradient(145deg, #10b981 0%, #059669 60%, #047857 100%);
-      border: 1px solid rgba(52,211,153,0.5);
       color: #022c1a;
+      background:
+        linear-gradient(180deg,
+          rgba(167,243,208,0.20)  0%,
+          rgba(16,185,129,0.90)  12%,
+          rgba(5,150,105,0.95)   65%,
+          rgba(16,185,129,0.88) 100%
+        ) padding-box,
+        linear-gradient(175deg,
+          rgba(220,255,235,0.98)  0%,
+          rgba(52,211,153,0.60)  30%,
+          rgba(5,150,105,0.45)   60%,
+          rgba(220,255,235,0.95) 100%
+        ) border-box;
+      border: 1.5px solid transparent;
+      font-weight: 800;
       box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.3),
-        0 4px 24px rgba(16,185,129,0.35),
-        0 1px 4px rgba(0,0,0,0.3);
+        0 0 22px  rgba(52,211,153,0.50),
+        0 0 60px  rgba(52,211,153,0.16),
+        0 8px 32px rgba(0,0,0,0.50),
+        inset 0 1px  0    rgba(255,255,255,0.45),
+        inset 0 -2px 12px rgba(0,80,40,0.40);
     }
 
     .btn-primary::before {
       content: '';
       position: absolute;
-      inset: 0;
+      top: 2px; left: 8%; right: 8%;
+      height: 42%;
+      background: linear-gradient(180deg,rgba(255,255,255,0.30) 0%,transparent 100%);
       border-radius: inherit;
-      background: radial-gradient(ellipse at 30% 30%, rgba(255,255,255,0.25) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .btn-primary::after {
+      content: '';
+      position: absolute;
+      bottom: 2px; left: 18%; right: 18%;
+      height: 32%;
+      background: linear-gradient(0deg,rgba(167,243,208,0.20) 0%,transparent 100%);
+      border-radius: inherit;
       pointer-events: none;
     }
 
     .btn-primary:hover {
-      background: linear-gradient(145deg, #34d399 0%, #10b981 60%, #059669 100%);
+      color: #011c10;
       box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.4),
-        0 8px 48px rgba(52,211,153,0.5),
-        0 2px 8px rgba(0,0,0,0.3);
+        0 0 38px  rgba(52,211,153,0.70),
+        0 0 90px  rgba(52,211,153,0.22),
+        0 14px 50px rgba(0,0,0,0.55),
+        inset 0 1px  0    rgba(255,255,255,0.55),
+        inset 0 -2px 14px rgba(0,80,40,0.45);
       transform: translateY(-3px) scale(1.02);
     }
 
-    .btn:active { transform: translateY(0) scale(0.97) !important; }
-
-    /* Click ripple */
+    /* Ripple on click */
     .btn-ripple {
       position: absolute;
       border-radius: 50%;
-      background: rgba(255,255,255,0.25);
-      transform: translate(-50%, -50%) scale(0);
-      animation: ripple 0.55s ease-out forwards;
+      background: rgba(255,255,255,0.22);
+      transform: translate(-50%,-50%) scale(0);
+      animation: ripple .55s ease-out forwards;
       pointer-events: none;
+      z-index: 10;
     }
 
-    @keyframes ripple {
-      to { transform: translate(-50%, -50%) scale(4); opacity: 0; }
+    @keyframes ripple { to { transform: translate(-50%,-50%) scale(4); opacity:0; } }
+
+    /* ── CRYSTAL INPUTS ──────────────────────────── */
+    .crystal-input {
+      width: 100%;
+      position: relative;
+      background:
+        linear-gradient(180deg,
+          rgba(255,255,255,0.04) 0%,
+          rgba(5,10,5,0.97)     100%
+        ) padding-box,
+        linear-gradient(175deg,
+          var(--c1)  0%,
+          var(--c2) 35%,
+          var(--c3) 65%,
+          var(--c4) 100%
+        ) border-box;
+      border: 1.5px solid transparent;
+      border-radius: .75rem;
+      padding: .85rem 1rem;
+      font-size: .875rem;
+      color: #d1fae5;
+      font-family: inherit;
+      outline: none;
+      box-shadow:
+        0 0 10px rgba(52,211,153,0.15),
+        0 4px 20px rgba(0,0,0,0.50),
+        inset 0 1px 0   rgba(255,255,255,0.10),
+        inset 0 -1px 6px rgba(0,0,0,0.40);
+      transition: box-shadow .3s ease, background .3s ease;
+      -webkit-appearance: none;
     }
 
-    /* ════════════════════════════════════════════
-       NAV
-    ════════════════════════════════════════════ */
+    .crystal-input::placeholder { color: rgba(167,243,208,0.35); }
+
+    .crystal-input:focus {
+      box-shadow:
+        0 0 22px rgba(52,211,153,0.45),
+        0 0 55px rgba(52,211,153,0.12),
+        0 6px 28px rgba(0,0,0,0.55),
+        inset 0 1px 0    rgba(255,255,255,0.16),
+        inset 0 -1px 8px rgba(0,0,0,0.45);
+    }
+
+    /* ── NAV PILL ────────────────────────────────── */
     .nav-pill {
-      background: rgba(6,10,6,0.65);
-      backdrop-filter: blur(32px) saturate(200%);
-      -webkit-backdrop-filter: blur(32px) saturate(200%);
-      border: 1px solid rgba(255,255,255,0.1);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 8px 32px rgba(0,0,0,0.4);
-      transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+      background:
+        rgba(6,10,6,0.70) padding-box,
+        linear-gradient(135deg, rgba(52,211,153,0.35) 0%, rgba(16,185,129,0.10) 50%, rgba(52,211,153,0.28) 100%) border-box;
+      border: 1px solid transparent;
+      backdrop-filter: blur(30px) saturate(180%);
+      -webkit-backdrop-filter: blur(30px) saturate(180%);
+      box-shadow:
+        0 0 18px rgba(52,211,153,0.10),
+        0 8px 32px rgba(0,0,0,0.50),
+        inset 0 1px 0 rgba(255,255,255,0.10);
+      transition: all .35s ease;
     }
 
     .nav-pill.scrolled {
-      background: rgba(6,10,6,0.88);
-      border-color: rgba(52,211,153,0.2);
-      box-shadow: inset 0 1px 0 rgba(52,211,153,0.08), 0 8px 40px rgba(0,0,0,0.6);
-    }
-
-    /* ════════════════════════════════════════════
-       SCROLL TRIGGER STATES
-       Single system — GSAP only. CSS just hides.
-    ════════════════════════════════════════════ */
-    .st-up    { opacity: 0; transform: translateY(72px); }
-    .st-left  { opacity: 0; transform: translateX(-60px); }
-    .st-scale { opacity: 0; transform: scale(0.88) translateY(32px); }
-
-    /* ════════════════════════════════════════════
-       SERVICE CARDS
-    ════════════════════════════════════════════ */
-    .service-card {
-      transition:
-        transform 0.45s var(--ease-out-expo),
-        box-shadow 0.45s ease,
-        background 0.4s ease,
-        border-color 0.4s ease;
-    }
-
-    .service-card:hover {
-      transform: translateY(-8px) scale(1.015);
-      background: rgba(255,255,255,0.1);
-      border-color: rgba(52,211,153,0.3);
+      background:
+        rgba(4,8,4,0.92) padding-box,
+        linear-gradient(135deg, rgba(52,211,153,0.55) 0%, rgba(16,185,129,0.20) 50%, rgba(52,211,153,0.45) 100%) border-box;
       box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.25),
-        0 32px 80px rgba(0,0,0,0.6),
-        0 0 0 1px rgba(52,211,153,0.15);
+        0 0 28px rgba(52,211,153,0.18),
+        0 8px 40px rgba(0,0,0,0.65),
+        inset 0 1px 0 rgba(255,255,255,0.12);
     }
 
+    /* ── SERVICE CARD EXTRAS ─────────────────────── */
     .svc-num {
-      transition: background 0.4s ease, color 0.4s ease, transform 0.5s var(--ease-out-expo), box-shadow 0.4s ease;
+      transition: transform .45s var(--ease), filter .4s ease, color .4s ease, background .4s ease;
     }
-
-    .service-card:hover .svc-num {
-      background: rgba(52,211,153,0.2);
-      color: #6ee7b7;
+    .crystal-card:hover .svc-num {
       transform: rotate(-8deg) scale(1.15);
-      box-shadow: 0 0 24px rgba(52,211,153,0.3);
+      filter: drop-shadow(0 0 10px rgba(52,211,153,0.7));
+      color: #6ee7b7;
     }
 
     .svc-arrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: transform 0.35s var(--ease-out-expo), color 0.3s ease;
+      display: inline-flex; align-items: center; gap: 6px;
+      transition: transform .35s var(--ease), color .3s ease;
     }
+    .crystal-card:hover .svc-arrow { transform: translateX(7px); color: #6ee7b7; }
 
-    .service-card:hover .svc-arrow {
-      transform: translateX(6px);
-      color: #6ee7b7;
-    }
-
-    /* ════════════════════════════════════════════
-       PROCESS STEPS
-    ════════════════════════════════════════════ */
+    /* ── PROCESS STEP CARDS ──────────────────────── */
     .step-card {
       border-left: 3px solid transparent;
-      transition:
-        transform 0.4s var(--ease-out-expo),
-        box-shadow 0.4s ease,
-        border-color 0.4s ease,
-        background 0.4s ease;
+      transition: transform .4s var(--ease), box-shadow .4s ease, border-color .4s ease;
     }
-
     .step-card:hover {
       transform: translateX(10px);
       border-color: #10b981;
-      background: rgba(255,255,255,0.09);
       box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.15),
-        0 24px 60px rgba(0,0,0,0.5),
-        -4px 0 24px rgba(16,185,129,0.15);
+        0 0 35px rgba(52,211,153,0.35),
+        0 0 80px rgba(52,211,153,0.10),
+        0 20px 60px rgba(0,0,0,0.65),
+        -6px 0 28px rgba(16,185,129,0.18),
+        inset 0 1px 0 rgba(255,255,255,0.16),
+        inset 0 -2px 10px rgba(0,0,0,0.50);
     }
 
     .step-num {
-      transition: transform 0.45s var(--ease-out-expo), box-shadow 0.4s ease;
+      transition: transform .45s var(--ease), box-shadow .4s ease;
     }
-
     .step-card:hover .step-num {
-      transform: rotate(15deg) scale(1.1);
-      box-shadow: 0 0 36px rgba(16,185,129,0.6);
+      transform: rotate(14deg) scale(1.12);
+      box-shadow: 0 0 40px rgba(16,185,129,0.65), 0 0 12px rgba(52,211,153,0.8);
     }
 
-    /* ════════════════════════════════════════════
-       WHY-US CARDS
-    ════════════════════════════════════════════ */
-    .why-card {
-      transition: transform 0.4s var(--ease-out-expo), box-shadow 0.4s ease, border-color 0.4s ease;
-    }
-
-    .why-card:hover {
-      transform: translateY(-10px);
-      border-color: rgba(52,211,153,0.35);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,0.2),
-        0 32px 80px rgba(0,0,0,0.55),
-        0 0 60px rgba(16,185,129,0.08);
-    }
-
+    /* ── WHY CARDS ───────────────────────────────── */
     .why-icon {
-      transition: transform 0.4s var(--ease-out-expo), filter 0.4s ease;
+      display: inline-block;
+      transition: transform .45s var(--ease), filter .4s ease;
+    }
+    .crystal-card:hover .why-icon {
+      transform: scale(1.25) translateY(-5px);
+      filter: drop-shadow(0 0 14px rgba(52,211,153,0.60));
     }
 
-    .why-card:hover .why-icon {
-      transform: scale(1.2) translateY(-4px);
-      filter: drop-shadow(0 0 12px rgba(52,211,153,0.5));
-    }
+    /* ── SCROLL TRIGGER INITIAL STATES ──────────── */
+    .st-up    { opacity: 0; transform: translateY(70px); }
+    .st-left  { opacity: 0; transform: translateX(-60px); }
+    .st-scale { opacity: 0; transform: scale(0.87) translateY(28px); }
 
-    /* ════════════════════════════════════════════
-       MARQUEE
-    ════════════════════════════════════════════ */
-    @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-    .marquee-inner { display: flex; width: max-content; animation: marquee 22s linear infinite; }
-    .marquee-inner:hover { animation-play-state: paused; }
+    /* ── MARQUEE ─────────────────────────────────── */
+    @keyframes marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+    .marquee-inner { display:flex; width:max-content; animation: marquee 22s linear infinite; }
+    .marquee-inner:hover { animation-play-state:paused; }
 
-    /* ════════════════════════════════════════════
-       FORM
-    ════════════════════════════════════════════ */
-    .field {
-      width: 100%;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 0.75rem;
-      padding: 0.85rem 1rem;
-      font-size: 0.875rem;
-      color: #fff;
-      outline: none;
-      transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
-      -webkit-appearance: none;
-      font-family: inherit;
-    }
-
-    .field::placeholder { color: rgba(156,163,175,0.5); }
-
-    .field:focus {
-      border-color: rgba(52,211,153,0.55);
-      background: rgba(255,255,255,0.08);
-      box-shadow: 0 0 0 3px rgba(52,211,153,0.12), inset 0 1px 0 rgba(255,255,255,0.06);
-    }
-
-    /* ════════════════════════════════════════════
-       MISC
-    ════════════════════════════════════════════ */
+    /* ── MISC ────────────────────────────────────── */
     @keyframes pulse-ring {
-      0%,100% { box-shadow: 0 0 0 0 rgba(52,211,153,0.5); }
-      50%      { box-shadow: 0 0 0 7px rgba(52,211,153,0); }
+      0%,100%{box-shadow:0 0 0 0 rgba(52,211,153,0.55)}
+      50%    {box-shadow:0 0 0 7px rgba(52,211,153,0)}
     }
     .pulse { animation: pulse-ring 2.8s ease-in-out infinite; }
 
     @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(6px)} }
-    .bob { animation: bob 1.6s ease-in-out infinite; }
+    .bob { animation: bob 1.7s ease-in-out infinite; }
 
     @keyframes slide-up-in { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
-    .mobile-bar { animation: slide-up-in 0.6s 1.2s var(--ease-out-expo) both; }
+    .mobile-bar { animation: slide-up-in .6s 1.2s var(--ease) both; }
 
     .divider {
       height: 1px;
-      background: linear-gradient(to right, transparent, rgba(52,211,153,0.25), transparent);
+      background: linear-gradient(to right, transparent, rgba(52,211,153,0.22), transparent);
     }
-
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #060a06; }
-    ::-webkit-scrollbar-thumb { background: #1a2e1a; border-radius: 3px; }
   </style>
 </head>
 <body>
 
-  <!-- ══════════════ NAV ══════════════ -->
+  <!-- ══════ NAV ══════ -->
   <nav class="fixed top-0 inset-x-0 z-50 px-4 py-4" id="navbar">
     <div class="max-w-7xl mx-auto flex items-center justify-between nav-pill rounded-full px-6 py-3" id="nav-pill">
       <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-emerald-700 flex items-center justify-center font-bold text-xs shadow-lg shadow-green-900/40">F</div>
+        <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs text-[#022c1a]"
+          style="background:linear-gradient(145deg,#34d399,#059669);box-shadow:0 0 16px rgba(52,211,153,0.6),inset 0 1px 0 rgba(255,255,255,0.4)">F</div>
         <span class="font-display font-bold text-lg text-white uppercase">Frank's</span>
       </div>
       <div class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
@@ -429,47 +449,51 @@
     </div>
   </nav>
 
-  <!-- ══════════════ HERO ══════════════ -->
-  <section class="relative w-full h-screen flex items-center overflow-hidden px-6 md:px-12 blob-field" id="hero">
-    <!-- Parallax video -->
+  <!-- ══════ HERO ══════ -->
+  <section class="relative w-full h-screen flex items-center overflow-hidden px-6 md:px-12" id="hero">
     <div class="absolute inset-0 z-0" id="hero-bg">
       <video autoplay muted loop playsinline
         poster="https://images.unsplash.com/photo-1533460004989-cef01064af7e?auto=format&fit=crop&q=80&w=2000"
         class="w-full h-full object-cover" id="hero-video">
         <source src="hero-video.mp4" type="video/mp4">
       </video>
-      <div class="absolute inset-0 bg-gradient-to-t from-[#060a06] via-black/55 to-black/50 z-10"></div>
-      <div class="absolute inset-0 bg-gradient-to-r from-[#060a06]/85 via-[#060a06]/30 to-transparent z-10"></div>
+      <div class="absolute inset-0 bg-gradient-to-t from-[#060a06] via-black/55 to-black/40 z-10"></div>
+      <div class="absolute inset-0 bg-gradient-to-r from-[#060a06]/80 via-[#060a06]/25 to-transparent z-10"></div>
     </div>
 
-    <div class="max-w-7xl mx-auto w-full z-20 relative pt-20 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-      <div class="lg:col-span-8 space-y-7" id="hero-content">
-        <div class="inline-flex items-center gap-2 px-3 py-1.5 glass rounded-full text-xs font-semibold text-emerald-400 uppercase tracking-widest st-up" id="hero-badge">
+    <!-- Colored ambient light blobs (make glass refract) -->
+    <div class="absolute inset-0 z-5 pointer-events-none overflow-hidden">
+      <div style="position:absolute;width:700px;height:700px;top:-200px;left:-200px;border-radius:50%;background:radial-gradient(circle,rgba(16,185,129,0.30) 0%,transparent 65%);filter:blur(80px)"></div>
+      <div style="position:absolute;width:600px;height:600px;bottom:-150px;right:-150px;border-radius:50%;background:radial-gradient(circle,rgba(52,211,153,0.22) 0%,transparent 65%);filter:blur(80px)"></div>
+    </div>
+
+    <div class="max-w-7xl mx-auto w-full relative z-20 pt-20 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+      <div class="lg:col-span-8 space-y-7">
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 crystal rounded-full text-xs font-semibold text-emerald-300 uppercase tracking-widest st-up" id="hero-badge">
           <span class="w-2 h-2 rounded-full bg-emerald-400 pulse"></span>
           Commercial &amp; Residential Architecture
         </div>
-        <h1 class="font-display text-white font-bold text-[clamp(3rem,8.5vw,7.5rem)] uppercase st-up" id="hero-h1" style="--delay:.08s">
+        <h1 class="font-display text-white font-bold text-[clamp(3rem,8.5vw,7.5rem)] uppercase st-up" id="hero-h1">
           Frank's<br>
-          <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-green-300 to-emerald-500">Lawn Service</span>
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-green-200 to-emerald-400">Lawn Service</span>
         </h1>
-        <p class="text-gray-300 text-base md:text-xl max-w-lg leading-relaxed st-up" id="hero-sub" style="--delay:.18s">
+        <p class="text-gray-300 text-base md:text-xl max-w-lg leading-relaxed st-up" id="hero-sub">
           Engineered landscape architecture and precision styling tailored for high-value residential properties. Beautiful lawns, structurally executed.
         </p>
-        <div class="flex flex-col sm:flex-row gap-4 pt-2 st-up" id="hero-ctas" style="--delay:.28s">
+        <div class="flex flex-col sm:flex-row gap-4 pt-2 st-up" id="hero-ctas">
           <a href="#contact" class="btn btn-primary">Schedule Service</a>
-          <a href="#services" class="btn btn-glass">Our Services</a>
+          <a href="#services" class="btn btn-ghost">Our Services</a>
         </div>
       </div>
 
-      <!-- Glass widget — has blob behind it from blob-field -->
-      <div class="hidden lg:flex lg:col-span-4 glass rounded-3xl p-6 flex-col gap-4 st-up" id="hero-widget" style="--delay:.4s">
+      <!-- Crystal glass widget -->
+      <div class="hidden lg:flex lg:col-span-4 crystal crystal-card p-6 flex-col gap-4 st-up" id="hero-widget">
         <div class="text-xs font-bold uppercase tracking-widest text-emerald-400">Campaign Status</div>
         <div class="font-display text-2xl font-bold text-white uppercase">A Cut Above The Rest</div>
         <p class="text-sm text-gray-400 leading-relaxed">Keeping elite properties manicured to structural perfection across the entire region.</p>
-        <div class="h-px bg-white/10"></div>
+        <div class="h-px" style="background:linear-gradient(to right,transparent,rgba(52,211,153,0.3),transparent)"></div>
         <div class="flex items-center justify-between text-xs font-semibold text-gray-300">
-          <span>🌟 Elite Rating</span>
-          <span class="text-white">4.9 / 5.0</span>
+          <span>🌟 Elite Rating</span><span class="text-emerald-300">4.9 / 5.0</span>
         </div>
       </div>
     </div>
@@ -479,126 +503,140 @@
     </div>
   </section>
 
-  <!-- ══════════════ MARQUEE ══════════════ -->
-  <div class="bg-[#060f06] border-y border-white/5 py-5 overflow-hidden">
-    <div class="marquee-inner gap-0">
-      <!-- duplicate for loop -->
-      <template id="marquee-tpl">
-        <div class="flex items-center gap-0 flex-shrink-0">
+  <!-- ══════ MARQUEE ══════ -->
+  <div class="border-y py-5 overflow-hidden"
+    style="background:rgba(4,8,4,0.95);border-color:rgba(52,211,153,0.12)">
+    <div class="marquee-inner">
+      <template id="tpl">
+        <div class="flex items-center flex-shrink-0">
           <div class="px-10 text-center">
-            <div class="text-white text-lg font-bold font-display">100%</div>
+            <div class="text-white text-lg font-bold font-display" style="text-shadow:0 0 12px rgba(52,211,153,0.5)">100%</div>
             <div class="text-gray-500 text-[10px] uppercase tracking-widest mt-0.5">Reliability</div>
           </div>
-          <div class="w-px h-7 bg-white/10"></div>
+          <div class="w-px h-7" style="background:rgba(52,211,153,0.18)"></div>
           <div class="px-10 text-center">
-            <div class="text-white text-lg font-bold font-display">5★ Rating</div>
+            <div class="text-white text-lg font-bold font-display" style="text-shadow:0 0 12px rgba(52,211,153,0.5)">5★ Rating</div>
             <div class="text-gray-500 text-[10px] uppercase tracking-widest mt-0.5">Google Certified</div>
           </div>
-          <div class="w-px h-7 bg-white/10"></div>
+          <div class="w-px h-7" style="background:rgba(52,211,153,0.18)"></div>
           <div class="px-10 text-center">
-            <div class="text-white text-lg font-bold font-display">Premium</div>
-            <div class="text-gray-500 text-[10px] uppercase tracking-widest mt-0.5">Commercial Equipment</div>
+            <div class="text-white text-lg font-bold font-display" style="text-shadow:0 0 12px rgba(52,211,153,0.5)">Premium</div>
+            <div class="text-gray-500 text-[10px] uppercase tracking-widest mt-0.5">Equipment</div>
           </div>
-          <div class="w-px h-7 bg-white/10"></div>
+          <div class="w-px h-7" style="background:rgba(52,211,153,0.18)"></div>
           <div class="px-10 text-center">
-            <div class="text-white text-lg font-bold font-display">500+</div>
-            <div class="text-gray-500 text-[10px] uppercase tracking-widest mt-0.5">Properties Serviced</div>
+            <div class="text-white text-lg font-bold font-display" style="text-shadow:0 0 12px rgba(52,211,153,0.5)">500+</div>
+            <div class="text-gray-500 text-[10px] uppercase tracking-widest mt-0.5">Properties</div>
           </div>
-          <div class="w-px h-7 bg-white/10"></div>
+          <div class="w-px h-7" style="background:rgba(52,211,153,0.18)"></div>
           <div class="px-10 text-center">
-            <div class="text-white text-lg font-bold font-display">12 Yrs</div>
+            <div class="text-white text-lg font-bold font-display" style="text-shadow:0 0 12px rgba(52,211,153,0.5)">12 Yrs</div>
             <div class="text-gray-500 text-[10px] uppercase tracking-widest mt-0.5">In Operation</div>
           </div>
-          <div class="w-px h-7 bg-white/10"></div>
+          <div class="w-px h-7" style="background:rgba(52,211,153,0.18)"></div>
         </div>
       </template>
     </div>
   </div>
 
-  <!-- ══════════════ SERVICES ══════════════ -->
-  <section id="services" class="py-28 px-6 md:px-12 blob-field relative">
-    <div class="max-w-7xl mx-auto space-y-14 relative z-10">
+  <!-- ══════ SERVICES ══════ -->
+  <section id="services" class="py-28 px-6 md:px-12 relative overflow-hidden">
+    <!-- Ambient blobs so crystal panels have color to refract -->
+    <div class="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+      <div style="position:absolute;width:800px;height:800px;top:-200px;left:-250px;border-radius:50%;background:radial-gradient(circle,rgba(16,185,129,0.25) 0%,transparent 60%);filter:blur(100px)"></div>
+      <div style="position:absolute;width:700px;height:700px;bottom:-200px;right:-200px;border-radius:50%;background:radial-gradient(circle,rgba(52,211,153,0.20) 0%,transparent 60%);filter:blur(100px)"></div>
+    </div>
 
+    <div class="max-w-7xl mx-auto space-y-14 relative z-10">
       <div class="max-w-3xl space-y-3 st-left">
         <div class="text-xs font-bold uppercase tracking-widest text-emerald-400">Premium Capabilities</div>
         <h2 class="font-display text-4xl md:text-6xl text-white font-bold uppercase">Architectural<br>Excellence</h2>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-
-        <div class="md:col-span-2 glass service-card rounded-3xl p-8 flex flex-col justify-between min-h-[380px] st-up">
+        <div class="md:col-span-2 crystal crystal-card p-8 flex flex-col justify-between min-h-[380px] st-up">
           <div class="space-y-4">
-            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-bold text-xl svc-num font-display">01</div>
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-emerald-300 font-bold text-xl svc-num font-display"
+              style="background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 0 12px rgba(52,211,153,0.15)">01</div>
             <h3 class="font-display text-2xl font-bold text-white uppercase">Precision Lawn Sculpting</h3>
             <p class="text-gray-400 text-sm leading-relaxed max-w-md">Meticulous uniform cut lines on precise intervals using industrial multi-blade systems to guarantee perfect spatial leveling across every square foot.</p>
           </div>
           <div class="text-xs font-bold uppercase text-emerald-400 tracking-wider pt-6 svc-arrow">Explore Detail <span>→</span></div>
         </div>
 
-        <div class="glass service-card rounded-3xl p-8 flex flex-col justify-between min-h-[380px] st-up" style="--delay:.1s">
+        <div class="crystal crystal-card p-8 flex flex-col justify-between min-h-[380px] st-up" style="--delay:.08s">
           <div class="space-y-4">
-            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-bold text-xl svc-num font-display">02</div>
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-emerald-300 font-bold text-xl svc-num font-display"
+              style="background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 0 12px rgba(52,211,153,0.15)">02</div>
             <h3 class="font-display text-2xl font-bold text-white uppercase">Hedge Architecture</h3>
-            <p class="text-gray-400 text-sm leading-relaxed">Sharp geometric edge pruning and formal shaping to create structural botanical containment fields along property lines.</p>
+            <p class="text-gray-400 text-sm leading-relaxed">Sharp geometric pruning and formal shaping to create structural botanical containment fields along property lines.</p>
           </div>
           <div class="text-xs font-bold uppercase text-emerald-400 tracking-wider pt-6 svc-arrow">Explore Detail <span>→</span></div>
         </div>
 
-        <div class="glass service-card rounded-3xl p-8 flex flex-col justify-between min-h-[320px] st-up" style="--delay:.15s">
+        <div class="crystal crystal-card p-8 flex flex-col justify-between min-h-[320px] st-up" style="--delay:.14s">
           <div class="space-y-4">
-            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-bold text-xl svc-num font-display">03</div>
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-emerald-300 font-bold text-xl svc-num font-display"
+              style="background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 0 12px rgba(52,211,153,0.15)">03</div>
             <h3 class="font-display text-2xl font-bold text-white uppercase">Mulching &amp; Feeding</h3>
             <p class="text-gray-400 text-sm leading-relaxed">Premium moisture containment with systemic compound updates to enrich and frame focal turf layers.</p>
           </div>
           <div class="text-xs font-bold uppercase text-emerald-400 tracking-wider pt-6 svc-arrow">Explore Detail <span>→</span></div>
         </div>
 
-        <div class="md:col-span-2 glass service-card rounded-3xl p-8 flex flex-col justify-between min-h-[320px] st-up" style="--delay:.2s">
+        <div class="md:col-span-2 crystal crystal-card p-8 flex flex-col justify-between min-h-[320px] st-up" style="--delay:.20s">
           <div class="space-y-4">
-            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-bold text-xl svc-num font-display">04</div>
+            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-emerald-300 font-bold text-xl svc-num font-display"
+              style="background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.2);box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 0 12px rgba(52,211,153,0.15)">04</div>
             <h3 class="font-display text-2xl font-bold text-white uppercase">Seasonal Property Overhauls</h3>
             <p class="text-gray-400 text-sm leading-relaxed max-w-md">Complete architectural grid sweeps, clearing natural waste and restoring structural clean slates before each season.</p>
           </div>
           <div class="text-xs font-bold uppercase text-emerald-400 tracking-wider pt-6 svc-arrow">Explore Detail <span>→</span></div>
         </div>
-
       </div>
     </div>
   </section>
 
   <div class="divider mx-10"></div>
 
-  <!-- ══════════════ PROCESS ══════════════ -->
-  <section id="process" class="py-28 px-6 md:px-12 blob-field blob-field-alt relative">
-    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-start relative z-10">
+  <!-- ══════ PROCESS ══════ -->
+  <section id="process" class="py-28 px-6 md:px-12 relative overflow-hidden">
+    <div class="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+      <div style="position:absolute;width:700px;height:700px;top:-100px;right:-200px;border-radius:50%;background:radial-gradient(circle,rgba(6,182,212,0.18) 0%,rgba(16,185,129,0.12) 40%,transparent 65%);filter:blur(90px)"></div>
+      <div style="position:absolute;width:600px;height:600px;bottom:-100px;left:-150px;border-radius:50%;background:radial-gradient(circle,rgba(52,211,153,0.20) 0%,transparent 60%);filter:blur(90px)"></div>
+    </div>
 
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-start relative z-10">
       <div class="lg:col-span-4 lg:sticky top-28 space-y-5 st-left">
         <div class="text-xs font-bold uppercase tracking-widest text-emerald-400">Our Protocol</div>
         <h2 class="font-display text-4xl md:text-5xl text-white font-bold uppercase">Manicured In Three Steps</h2>
         <p class="text-gray-400 text-sm leading-relaxed max-w-sm">We treat property care as structured project management. No loose cuts, no missed frames.</p>
-        <div class="hidden lg:block w-px h-40 bg-gradient-to-b from-emerald-500/60 to-transparent ml-6"></div>
+        <div class="hidden lg:block w-px h-40 ml-6" style="background:linear-gradient(to bottom,rgba(52,211,153,0.6),transparent)"></div>
       </div>
 
       <div class="lg:col-span-8 space-y-6">
-        <div class="glass step-card rounded-3xl p-8 flex flex-col sm:flex-row gap-6 items-start st-up">
-          <div class="w-12 h-12 rounded-full bg-emerald-500 text-neutral-950 font-bold text-lg flex items-center justify-center flex-shrink-0 font-display shadow-lg shadow-emerald-500/30 step-num">01</div>
+        <div class="crystal step-card crystal-card p-8 flex flex-col sm:flex-row gap-6 items-start st-up">
+          <div class="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-[#022c1a] font-bold text-lg font-display step-num"
+            style="background:linear-gradient(145deg,#34d399,#059669);box-shadow:0 0 24px rgba(52,211,153,0.55),inset 0 1px 0 rgba(255,255,255,0.4)">01</div>
           <div>
-            <h4 class="text-xl font-bold text-white uppercase font-display mb-2">Site Analysis &amp; Estimate</h4>
+            <h4 class="font-display text-xl font-bold text-white uppercase mb-2">Site Analysis &amp; Estimate</h4>
             <p class="text-gray-400 text-sm leading-relaxed">We audit your property footprint, assess lawn densities, geometric edging risks, and map exact pricing configurations before a single blade touches the ground.</p>
           </div>
         </div>
-        <div class="glass step-card rounded-3xl p-8 flex flex-col sm:flex-row gap-6 items-start st-up" style="--delay:.12s">
-          <div class="w-12 h-12 rounded-full bg-emerald-500 text-neutral-950 font-bold text-lg flex items-center justify-center flex-shrink-0 font-display shadow-lg shadow-emerald-500/30 step-num">02</div>
+        <div class="crystal step-card crystal-card p-8 flex flex-col sm:flex-row gap-6 items-start st-up" style="--delay:.12s">
+          <div class="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-[#022c1a] font-bold text-lg font-display step-num"
+            style="background:linear-gradient(145deg,#34d399,#059669);box-shadow:0 0 24px rgba(52,211,153,0.55),inset 0 1px 0 rgba(255,255,255,0.4)">02</div>
           <div>
-            <h4 class="text-xl font-bold text-white uppercase font-display mb-2">Precision Execution Loop</h4>
-            <p class="text-gray-400 text-sm leading-relaxed">Our crews arrive on precise regular schedules. Verified razor alignments sweep your property grids to perfection — no structural compromises, zero shortcuts.</p>
+            <h4 class="font-display text-xl font-bold text-white uppercase mb-2">Precision Execution Loop</h4>
+            <p class="text-gray-400 text-sm leading-relaxed">Our crews arrive on precise regular schedules with verified razor alignments, sweeping property grids to perfection — no compromises, no shortcuts.</p>
           </div>
         </div>
-        <div class="glass step-card rounded-3xl p-8 flex flex-col sm:flex-row gap-6 items-start st-up" style="--delay:.24s">
-          <div class="w-12 h-12 rounded-full bg-emerald-500 text-neutral-950 font-bold text-lg flex items-center justify-center flex-shrink-0 font-display shadow-lg shadow-emerald-500/30 step-num">03</div>
+        <div class="crystal step-card crystal-card p-8 flex flex-col sm:flex-row gap-6 items-start st-up" style="--delay:.24s">
+          <div class="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 text-[#022c1a] font-bold text-lg font-display step-num"
+            style="background:linear-gradient(145deg,#34d399,#059669);box-shadow:0 0 24px rgba(52,211,153,0.55),inset 0 1px 0 rgba(255,255,255,0.4)">03</div>
           <div>
-            <h4 class="text-xl font-bold text-white uppercase font-display mb-2">Clean Verification Signature</h4>
-            <p class="text-gray-400 text-sm leading-relaxed">We clear all clipping lines off hardscape, run a diagnostic edge check, and leave your property looking profile-worthy every single time.</p>
+            <h4 class="font-display text-xl font-bold text-white uppercase mb-2">Clean Verification Signature</h4>
+            <p class="text-gray-400 text-sm leading-relaxed">We clear all clipping lines off hardscape, run a diagnostic edge check, and leave your property profile-worthy every single visit.</p>
           </div>
         </div>
       </div>
@@ -607,65 +645,72 @@
 
   <div class="divider mx-10"></div>
 
-  <!-- ══════════════ WHY US ══════════════ -->
-  <section id="why-us" class="py-28 px-6 md:px-12 blob-field relative">
+  <!-- ══════ WHY US ══════ -->
+  <section id="why-us" class="py-28 px-6 md:px-12 relative overflow-hidden">
+    <div class="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+      <div style="position:absolute;width:900px;height:900px;top:-300px;left:50%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(circle,rgba(16,185,129,0.18) 0%,transparent 55%);filter:blur(100px)"></div>
+    </div>
     <div class="max-w-7xl mx-auto relative z-10">
       <div class="text-center space-y-3 mb-16 st-up">
         <div class="text-xs font-bold uppercase tracking-widest text-emerald-400">The Frank's Difference</div>
         <h2 class="font-display text-4xl md:text-6xl text-white font-bold uppercase">Built Different</h2>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="glass why-card rounded-3xl p-8 text-center space-y-4 st-scale">
-          <div class="text-5xl why-icon inline-block">⚡</div>
+        <div class="crystal crystal-card p-8 text-center space-y-4 st-scale">
+          <div class="text-5xl why-icon">⚡</div>
           <h3 class="font-display text-xl font-bold text-white uppercase">Same-Day Response</h3>
-          <p class="text-gray-400 text-sm leading-relaxed">Quote requests processed same business day. No waiting, no chasing — just precision scheduling.</p>
+          <p class="text-gray-400 text-sm leading-relaxed">Quote requests processed same business day — no waiting, no chasing, just precision scheduling.</p>
         </div>
-        <div class="glass why-card rounded-3xl p-8 text-center space-y-4 st-scale" style="--delay:.1s">
-          <div class="text-5xl why-icon inline-block">🛡️</div>
+        <div class="crystal crystal-card p-8 text-center space-y-4 st-scale" style="--delay:.1s">
+          <div class="text-5xl why-icon">🛡️</div>
           <h3 class="font-display text-xl font-bold text-white uppercase">Fully Insured</h3>
-          <p class="text-gray-400 text-sm leading-relaxed">Complete liability coverage on every job. Your property is protected from first blade to last sweep.</p>
+          <p class="text-gray-400 text-sm leading-relaxed">Complete liability coverage on every job. Your property protected from first blade to last sweep.</p>
         </div>
-        <div class="glass why-card rounded-3xl p-8 text-center space-y-4 st-scale" style="--delay:.2s">
-          <div class="text-5xl why-icon inline-block">🌱</div>
+        <div class="crystal crystal-card p-8 text-center space-y-4 st-scale" style="--delay:.2s">
+          <div class="text-5xl why-icon">🌱</div>
           <h3 class="font-display text-xl font-bold text-white uppercase">Eco-Conscious</h3>
-          <p class="text-gray-400 text-sm leading-relaxed">Low-emission equipment and organic treatment options available — premium results without compromise.</p>
+          <p class="text-gray-400 text-sm leading-relaxed">Low-emission equipment and organic treatment options — premium results without compromise.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ══════════════ CONTACT ══════════════ -->
-  <section id="contact" class="py-28 px-6 md:px-12 blob-field blob-field-alt relative">
+  <!-- ══════ CONTACT ══════ -->
+  <section id="contact" class="py-28 px-6 md:px-12 relative overflow-hidden">
+    <div class="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
+      <div style="position:absolute;width:800px;height:800px;bottom:-200px;left:-200px;border-radius:50%;background:radial-gradient(circle,rgba(52,211,153,0.22) 0%,transparent 60%);filter:blur(100px)"></div>
+      <div style="position:absolute;width:700px;height:700px;top:-150px;right:-150px;border-radius:50%;background:radial-gradient(circle,rgba(6,182,212,0.15) 0%,rgba(52,211,153,0.10) 40%,transparent 65%);filter:blur(90px)"></div>
+    </div>
     <div class="max-w-4xl mx-auto text-center space-y-10 relative z-10">
       <div class="space-y-3 st-up">
         <div class="text-xs font-bold uppercase tracking-widest text-emerald-400">Lock In Your Property</div>
-        <h2 class="font-display text-4xl md:text-7xl text-white font-bold uppercase leading-none">Let's Sculpt Your Turf</h2>
+        <h2 class="font-display text-4xl md:text-7xl text-white font-bold uppercase leading-none">Let's Sculpt<br>Your Turf</h2>
         <p class="text-gray-400 text-base md:text-lg max-w-xl mx-auto">Input your site details. Our dispatch team will review your property and send a custom estimate.</p>
       </div>
 
-      <div class="glass rounded-3xl p-8 md:p-10 text-left max-w-2xl mx-auto st-scale" style="--delay:.15s">
+      <div class="crystal crystal-card p-8 md:p-10 text-left max-w-2xl mx-auto st-scale" style="--delay:.15s">
         <form id="quote-form" class="space-y-6">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div class="space-y-1.5">
-              <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Full Name</label>
-              <input type="text" placeholder="Frank Smith" required class="field">
+              <label class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Full Name</label>
+              <input type="text" placeholder="Frank Smith" required class="crystal-input">
             </div>
             <div class="space-y-1.5">
-              <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Phone Number</label>
-              <input type="tel" placeholder="(555) 000-0000" required class="field">
+              <label class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Phone Number</label>
+              <input type="tel" placeholder="(555) 000-0000" required class="crystal-input">
             </div>
           </div>
           <div class="space-y-1.5">
-            <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Property Address</label>
-            <input type="text" placeholder="123 Immaculate Drive" required class="field">
+            <label class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Property Address</label>
+            <input type="text" placeholder="123 Immaculate Drive" required class="crystal-input">
           </div>
           <div class="space-y-1.5">
-            <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Primary Service</label>
-            <select class="field" style="background:rgba(6,10,6,0.9);cursor:pointer">
-              <option>Full-Scale Recurring Maintenance</option>
-              <option>Hedge Architectural Overhaul</option>
-              <option>Seasonal Property Cleanup</option>
-              <option>Other / Landscape Build</option>
+            <label class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Primary Service</label>
+            <select class="crystal-input" style="cursor:pointer">
+              <option style="background:#060a06">Full-Scale Recurring Maintenance</option>
+              <option style="background:#060a06">Hedge Architectural Overhaul</option>
+              <option style="background:#060a06">Seasonal Property Cleanup</option>
+              <option style="background:#060a06">Other / Landscape Build</option>
             </select>
           </div>
           <button type="submit" class="btn btn-primary w-full" id="submit-btn">
@@ -676,69 +721,64 @@
     </div>
   </section>
 
-  <!-- ══════════════ FOOTER ══════════════ -->
-  <footer class="bg-[#040704] border-t border-white/5 py-10 px-6">
+  <!-- ══════ FOOTER ══════ -->
+  <footer class="border-t py-10 px-6" style="background:#040704;border-color:rgba(52,211,153,0.10)">
     <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-5 text-xs text-gray-500">
       <div class="flex items-center gap-2">
-        <div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-[10px]">F</div>
+        <div class="w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] text-[#022c1a]"
+          style="background:linear-gradient(145deg,#34d399,#059669);box-shadow:0 0 10px rgba(52,211,153,0.4)">F</div>
         <span class="font-display font-bold text-sm text-white uppercase">Frank's Lawn Service</span>
       </div>
       <div class="flex flex-wrap justify-center gap-6 text-gray-400">
         <span>© 2026 Frank's Lawn Service. All Rights Reserved.</span>
-        <a href="#services" class="hover:text-white transition-colors">Privacy</a>
-        <a href="#contact"  class="hover:text-white transition-colors">Support</a>
+        <a href="#services" class="hover:text-emerald-400 transition-colors">Privacy</a>
+        <a href="#contact"  class="hover:text-emerald-400 transition-colors">Support</a>
       </div>
     </div>
   </footer>
 
-  <!-- Mobile bottom bar -->
-  <div class="fixed bottom-0 inset-x-0 z-50 glass border-t border-white/10 p-3 flex sm:hidden items-center gap-3 mobile-bar">
-    <a href="tel:5551234567" class="btn btn-glass flex-1 py-3.5 text-xs">Call Dispatch</a>
+  <!-- Mobile CTA bar -->
+  <div class="fixed bottom-0 inset-x-0 z-50 border-t p-3 flex sm:hidden items-center gap-3 mobile-bar"
+    style="background:rgba(4,8,4,0.92);backdrop-filter:blur(24px);border-color:rgba(52,211,153,0.15);box-shadow:0 -4px 30px rgba(0,0,0,0.6)">
+    <a href="tel:5551234567" class="btn btn-ghost flex-1 py-3.5 text-xs">Call Dispatch</a>
     <a href="#contact"       class="btn btn-primary flex-1 py-3.5 text-xs">Book Quote</a>
   </div>
 
-  <!-- ══════════════ SCRIPTS ══════════════ -->
+  <!-- ══════ SCRIPTS ══════ -->
   <script src="https://unpkg.com/gsap@3.12.2/dist/gsap.min.js"></script>
   <script src="https://unpkg.com/gsap@3.12.2/dist/ScrollTrigger.min.js"></script>
-
   <script>
-    /* ─ Marquee: clone template twice for seamless loop ─ */
-    const marqueeInner = document.querySelector('.marquee-inner');
-    const tpl = document.getElementById('marquee-tpl').content;
-    marqueeInner.appendChild(tpl.cloneNode(true));
-    marqueeInner.appendChild(tpl.cloneNode(true));
+    /* Marquee — clone template twice */
+    const mi = document.querySelector('.marquee-inner');
+    const tpl = document.getElementById('tpl').content;
+    mi.appendChild(tpl.cloneNode(true));
+    mi.appendChild(tpl.cloneNode(true));
 
-    /* ─ Reduced motion check ─ */
     const noMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    /* ─ Nav scroll tint ─ */
+    /* Nav scroll */
     const pill = document.getElementById('nav-pill');
-    window.addEventListener('scroll', () => {
-      pill.classList.toggle('scrolled', window.scrollY > 60);
-    }, { passive: true });
+    window.addEventListener('scroll', () => pill.classList.toggle('scrolled', scrollY > 60), { passive: true });
 
-    /* ─ Magnetic nav links ─ */
-    document.querySelectorAll('.nav-link').forEach(link => {
-      link.addEventListener('mousemove', e => {
-        const r = link.getBoundingClientRect();
-        const x = (e.clientX - r.left - r.width  / 2) * 0.3;
-        const y = (e.clientY - r.top  - r.height / 2) * 0.3;
-        link.style.transform = `translate(${x}px,${y}px)`;
+    /* Magnetic nav links */
+    document.querySelectorAll('.nav-link').forEach(el => {
+      el.addEventListener('mousemove', e => {
+        const r = el.getBoundingClientRect();
+        el.style.transform = `translate(${(e.clientX-r.left-r.width/2)*.3}px,${(e.clientY-r.top-r.height/2)*.3}px)`;
       });
-      link.addEventListener('mouseleave', () => { link.style.transform = ''; });
+      el.addEventListener('mouseleave', () => el.style.transform = '');
     });
 
-    /* ─ Button ripple ─ */
+    /* Button ripple */
     document.querySelectorAll('.btn').forEach(btn => {
       btn.addEventListener('pointerdown', e => {
-        const r   = btn.getBoundingClientRect();
+        const r = btn.getBoundingClientRect();
         const rip = document.createElement('span');
         rip.className = 'btn-ripple';
-        const size = Math.max(r.width, r.height) * 1.6;
+        const sz = Math.max(r.width, r.height) * 1.8;
         Object.assign(rip.style, {
-          width: size + 'px', height: size + 'px',
-          left: (e.clientX - r.left) + 'px',
-          top:  (e.clientY - r.top)  + 'px',
+          width: sz+'px', height: sz+'px',
+          left: (e.clientX-r.left)+'px', top: (e.clientY-r.top)+'px'
         });
         btn.appendChild(rip);
         rip.addEventListener('animationend', () => rip.remove());
@@ -748,137 +788,82 @@
     if (!noMotion) {
       gsap.registerPlugin(ScrollTrigger);
 
-      /* ══════════════════════════════════════════
-         PARALLAX — hero video drifts up on scroll
-      ══════════════════════════════════════════ */
+      /* ── Parallax hero video ── */
       gsap.to('#hero-video', {
-        yPercent: 20,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: '#hero',
-          start: 'top top',
-          end: 'bottom top',
-          scrub: 1.5,
-        }
+        yPercent: 22, ease: 'none',
+        scrollTrigger: { trigger: '#hero', start: 'top top', end: 'bottom top', scrub: 1.5 }
       });
 
-      /* Hero overlay darkens slightly as you scroll */
-      gsap.to('#hero-bg', {
-        '--tw-bg-opacity': 0.9,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: '#hero',
-          start: 'top top',
-          end: '80% top',
-          scrub: true,
-        }
-      });
+      /* ── Hero cinematic entrance ── */
+      gsap.timeline({ defaults: { ease: 'power4.out' } })
+        .from('#hero-badge',  { yPercent: 80, opacity: 0, duration: 1.0 }, 0.2)
+        .from('#hero-h1',     { yPercent: 90, opacity: 0, duration: 1.3 }, 0.30)
+        .from('#hero-sub',    { y: 40,        opacity: 0, duration: 1.0 }, 0.52)
+        .from('#hero-ctas',   { y: 30,        opacity: 0, duration: 0.9 }, 0.66)
+        .from('#hero-widget', { x: 50,        opacity: 0, duration: 1.1 }, 0.55);
 
-      /* ══════════════════════════════════════════
-         HERO ENTRANCE — cinematic from below
-      ══════════════════════════════════════════ */
-      const heroTl = gsap.timeline({ defaults: { ease: 'power4.out' } });
-      heroTl
-        .from('#hero-badge',  { yPercent: 60, opacity: 0, duration: 1.0 }, 0.2)
-        .from('#hero-h1',     { yPercent: 80, opacity: 0, duration: 1.2 }, 0.3)
-        .from('#hero-sub',    { y: 35, opacity: 0, duration: 1.0 },        0.5)
-        .from('#hero-ctas',   { y: 25, opacity: 0, duration: 0.9 },        0.65)
-        .from('#hero-widget', { x: 40, opacity: 0, duration: 1.1 },        0.55);
-
-      /* ══════════════════════════════════════════
-         SCROLL TRIGGER — each .st-* class batch
-      ══════════════════════════════════════════ */
-
-      /* st-up: cards, headings, steps */
+      /* ── st-up: scroll trigger per element ── */
       document.querySelectorAll('.st-up').forEach(el => {
-        const delay = parseFloat(getComputedStyle(el).getPropertyValue('--delay') || '0');
+        const delay = parseFloat(getComputedStyle(el).getPropertyValue('--delay') || 0);
         gsap.from(el, {
-          y: 72, opacity: 0, duration: 0.9,
-          delay,
+          y: 70, opacity: 0, duration: 0.95, delay,
           ease: 'power3.out',
-          scrollTrigger: {
-            trigger: el,
-            start: 'top 88%',
-            toggleActions: 'play none none none',
-          }
+          scrollTrigger: { trigger: el, start: 'top 89%', toggleActions: 'play none none none' }
         });
       });
 
-      /* st-left: section headings */
       document.querySelectorAll('.st-left').forEach(el => {
         gsap.from(el, {
-          x: -60, opacity: 0, duration: 1.0,
+          x: -65, opacity: 0, duration: 1.05,
           ease: 'power3.out',
-          scrollTrigger: {
-            trigger: el,
-            start: 'top 85%',
-            toggleActions: 'play none none none',
-          }
+          scrollTrigger: { trigger: el, start: 'top 85%', toggleActions: 'play none none none' }
         });
       });
 
-      /* st-scale: why-us cards, form */
       document.querySelectorAll('.st-scale').forEach(el => {
-        const delay = parseFloat(getComputedStyle(el).getPropertyValue('--delay') || '0');
+        const delay = parseFloat(getComputedStyle(el).getPropertyValue('--delay') || 0);
         gsap.from(el, {
-          scale: 0.88, y: 32, opacity: 0, duration: 0.95,
-          delay,
-          ease: 'back.out(1.4)',
-          scrollTrigger: {
-            trigger: el,
-            start: 'top 88%',
-            toggleActions: 'play none none none',
-          }
+          scale: 0.87, y: 30, opacity: 0, duration: 1.0, delay,
+          ease: 'back.out(1.5)',
+          scrollTrigger: { trigger: el, start: 'top 88%', toggleActions: 'play none none none' }
         });
       });
 
-      /* ══════════════════════════════════════════
-         PARALLAX — section blobs drift at diff speeds
-      ══════════════════════════════════════════ */
-      document.querySelectorAll('.blob-field').forEach((section, i) => {
-        const pseudo = section.querySelector(':scope > *:first-child');
-        gsap.to(section, {
-          '--blob-y': `${(i % 2 === 0 ? -1 : 1) * 80}px`,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: section,
-            start: 'top bottom',
-            end: 'bottom top',
-            scrub: 2,
-          }
+      /* ── Horizontal text parallax on headings ── */
+      gsap.utils.toArray('h2.font-display').forEach((h, i) => {
+        gsap.from(h, {
+          x: i % 2 === 0 ? -25 : 25, ease: 'none',
+          scrollTrigger: { trigger: h, start: 'top bottom', end: 'bottom top', scrub: 1.8 }
         });
       });
 
-      /* Horizontal text parallax on h2s */
-      gsap.utils.toArray('h2.font-display').forEach((h2, i) => {
-        gsap.from(h2, {
-          x: i % 2 === 0 ? -30 : 30,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: h2,
-            start: 'top bottom',
-            end: 'bottom top',
-            scrub: 1.5,
+      /* ── Crystal card glow pulses on scroll entry ── */
+      gsap.utils.toArray('.crystal-card').forEach(card => {
+        ScrollTrigger.create({
+          trigger: card, start: 'top 80%',
+          onEnter: () => {
+            gsap.fromTo(card,
+              { '--glow': '0.3' },
+              { '--glow': '1', duration: 0.6, ease: 'power2.out',
+                onComplete: () => gsap.to(card, { '--glow': '0.3', duration: 0.8 }) }
+            );
           }
         });
       });
 
     } else {
-      /* Reduced motion: just make everything visible */
-      document.querySelectorAll('.st-up, .st-left, .st-scale').forEach(el => {
-        el.style.opacity = '1';
-        el.style.transform = 'none';
+      document.querySelectorAll('.st-up,.st-left,.st-scale').forEach(el => {
+        el.style.opacity = '1'; el.style.transform = 'none';
       });
     }
 
-    /* ─ Form submit ─ */
+    /* Form submit */
     document.getElementById('quote-form').addEventListener('submit', e => {
       e.preventDefault();
       const btn = document.getElementById('submit-btn');
       btn.textContent = '✓ Quote Request Submitted';
-      btn.style.background = 'linear-gradient(145deg,#059669,#047857)';
+      btn.style.background = 'linear-gradient(145deg,rgba(110,231,183,0.15) 0%,rgba(5,150,105,0.88) 15%,rgba(4,120,87,0.94) 65%,rgba(5,150,105,0.85) 100%) padding-box,linear-gradient(175deg,rgba(220,255,235,0.7) 0%,rgba(16,185,129,0.4) 50%,rgba(220,255,235,0.65) 100%) border-box';
       btn.disabled = true;
-      btn.style.cursor = 'default';
     });
   </script>
 </body>
