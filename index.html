@@ -4,426 +4,468 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Frank's Lawn Service | A Cut Above the Rest</title>
-
   <script src="https://cdn.tailwindcss.com"></script>
-
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
 
     :root {
-      --apple-ease: cubic-bezier(0.16, 1, 0.3, 1);
-      --glass-bg: rgba(255, 255, 255, 0.06);
-      --glass-border: rgba(255, 255, 255, 0.12);
-      --glass-highlight: rgba(255, 255, 255, 0.18);
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    * { box-sizing: border-box; }
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
 
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
-      background-color: #050705;
+      background: #060a06;
       color: #f3f4f6;
       overflow-x: hidden;
     }
 
-    .heading-editorial {
+    .font-display {
       font-family: 'Space Grotesk', sans-serif;
-      line-height: 0.85;
       letter-spacing: -0.05em;
+      line-height: 0.88;
     }
 
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #050705; }
-    ::-webkit-scrollbar-thumb { background: #1c2e1c; border-radius: 4px; }
-    ::-webkit-scrollbar-thumb:hover { background: #2e4d2e; }
-
-    /* ─── LIQUID GLASS ─────────────────────────────── */
-    .glass-card {
-      background: var(--glass-bg);
-      backdrop-filter: blur(24px) saturate(160%);
-      -webkit-backdrop-filter: blur(24px) saturate(160%);
-      border: 1px solid var(--glass-border);
-      transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
-    }
-
-    .glass-card:hover {
-      background: rgba(255, 255, 255, 0.09);
-      border-color: rgba(52, 211, 153, 0.25);
-      box-shadow: 0 0 40px rgba(52, 211, 153, 0.06), inset 0 1px 0 rgba(255,255,255,0.1);
-    }
-
-    /* Liquid glass button — ripple refraction layer */
-    .liquid-btn {
+    /* ════════════════════════════════════════════
+       LIQUID GLASS
+       Requires colorful blobs behind each panel.
+       We inject those blobs as ::before pseudo-els
+       on the section, so every card has vivid color
+       to refract through backdrop-filter.
+    ════════════════════════════════════════════ */
+    .glass {
       position: relative;
-      overflow: hidden;
-      background: rgba(255, 255, 255, 0.07);
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      color: #fff;
-      font-weight: 700;
-      font-size: 0.875rem;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      border-radius: 9999px;
-      padding: 0.85rem 2rem;
-      cursor: pointer;
-      transition: all 0.35s var(--apple-ease);
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(28px) saturate(180%) brightness(1.1);
+      -webkit-backdrop-filter: blur(28px) saturate(180%) brightness(1.1);
+      border: 1px solid rgba(255,255,255,0.14);
+      /* top-edge light catch */
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.18),
+        inset 0 -1px 0 rgba(0,0,0,0.2),
+        0 8px 40px rgba(0,0,0,0.45);
+    }
+
+    /* shimmer highlight layer */
+    .glass::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(
+        135deg,
+        rgba(255,255,255,0.13) 0%,
+        rgba(255,255,255,0.04) 30%,
+        transparent 60%
+      );
+      pointer-events: none;
+    }
+
+    .glass:hover {
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(52,211,153,0.35);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.25),
+        inset 0 -1px 0 rgba(0,0,0,0.2),
+        0 16px 60px rgba(0,0,0,0.55),
+        0 0 0 1px rgba(52,211,153,0.15);
+      transition: all 0.4s var(--ease-out-expo);
+    }
+
+    /* ════════════════════════════════════════════
+       AMBIENT BLOBS — the secret sauce for glass
+       These colorful radial gradients sit BEHIND
+       cards so backdrop-filter has color to refract.
+    ════════════════════════════════════════════ */
+    .blob-field {
+      position: relative;
       isolation: isolate;
     }
 
-    .liquid-btn::before {
+    .blob-field::before,
+    .blob-field::after {
       content: '';
       position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(255,255,255,0.22) 0%, transparent 60%);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      border-radius: inherit;
+      border-radius: 50%;
+      filter: blur(90px);
       pointer-events: none;
+      z-index: 0;
     }
 
-    .liquid-btn::after {
-      content: '';
-      position: absolute;
-      top: -50%; left: -50%;
-      width: 200%; height: 200%;
-      background: radial-gradient(circle at center, rgba(52,211,153,0.25) 0%, transparent 60%);
-      opacity: 0;
-      transform: scale(0.4);
-      transition: opacity 0.5s ease, transform 0.6s var(--apple-ease);
-      border-radius: inherit;
-      pointer-events: none;
+    .blob-field::before {
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(16,185,129,0.28) 0%, rgba(5,150,105,0.12) 50%, transparent 70%);
+      top: -180px; left: -200px;
     }
 
-    .liquid-btn:hover {
-      border-color: rgba(52, 211, 153, 0.45);
-      box-shadow:
-        0 8px 32px rgba(52, 211, 153, 0.15),
-        inset 0 1px 0 rgba(255,255,255,0.2),
-        inset 0 -1px 0 rgba(0,0,0,0.1);
-      transform: translateY(-2px);
+    .blob-field::after {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(52,211,153,0.22) 0%, rgba(16,185,129,0.1) 50%, transparent 70%);
+      bottom: -150px; right: -150px;
     }
 
-    .liquid-btn:hover::before { opacity: 1; }
-    .liquid-btn:hover::after  { opacity: 1; transform: scale(1); }
+    .blob-field > * { position: relative; z-index: 1; }
 
-    .liquid-btn:active {
-      transform: translateY(0px) scale(0.98);
-      box-shadow: 0 2px 12px rgba(52, 211, 153, 0.1);
+    /* Alternate tint blobs for variety */
+    .blob-field-alt::before {
+      background: radial-gradient(circle, rgba(6,182,212,0.2) 0%, rgba(16,185,129,0.12) 50%, transparent 70%);
+    }
+    .blob-field-alt::after {
+      background: radial-gradient(circle, rgba(52,211,153,0.25) 0%, rgba(6,182,212,0.08) 50%, transparent 70%);
+      top: -100px; right: -100px; bottom: auto; left: auto;
     }
 
-    /* Emerald CTA — solid liquid variant */
-    .liquid-btn-primary {
-      background: linear-gradient(135deg, #10b981, #059669);
-      border-color: rgba(52,211,153,0.4);
-      color: #022c1a;
-      box-shadow: 0 4px 20px rgba(16,185,129,0.25), inset 0 1px 0 rgba(255,255,255,0.25);
-    }
-
-    .liquid-btn-primary::after {
-      background: radial-gradient(circle at center, rgba(255,255,255,0.35) 0%, transparent 60%);
-    }
-
-    .liquid-btn-primary:hover {
-      background: linear-gradient(135deg, #34d399, #10b981);
-      border-color: rgba(52,211,153,0.6);
-      box-shadow: 0 8px 40px rgba(16,185,129,0.4), inset 0 1px 0 rgba(255,255,255,0.35);
-    }
-
-    /* Nav pill liquid glass */
-    .nav-glass {
-      background: rgba(5, 7, 5, 0.7);
-      backdrop-filter: blur(30px) saturate(180%);
-      -webkit-backdrop-filter: blur(30px) saturate(180%);
-      border: 1px solid rgba(255,255,255,0.1);
-      transition: background 0.3s ease, border-color 0.3s ease;
-    }
-
-    .nav-glass.scrolled {
-      background: rgba(5, 7, 5, 0.88);
-      border-color: rgba(52,211,153,0.15);
-    }
-
-    /* ─── PARALLAX LAYERS ──────────────────────────── */
-    .parallax-hero-video { will-change: transform; }
-
-    /* ─── SCROLL REVEAL STATES ─────────────────────── */
-    .reveal {
-      opacity: 0;
-      transform: translateY(48px);
-      transition: opacity 0.75s var(--apple-ease), transform 0.75s var(--apple-ease);
-    }
-
-    .reveal.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .reveal-left {
-      opacity: 0;
-      transform: translateX(-50px);
-      transition: opacity 0.75s var(--apple-ease), transform 0.75s var(--apple-ease);
-    }
-
-    .reveal-left.visible {
-      opacity: 1;
-      transform: translateX(0);
-    }
-
-    .reveal-scale {
-      opacity: 0;
-      transform: scale(0.92);
-      transition: opacity 0.7s var(--apple-ease), transform 0.7s var(--apple-ease);
-    }
-
-    .reveal-scale.visible {
-      opacity: 1;
-      transform: scale(1);
-    }
-
-    /* ─── SERVICE CARDS ────────────────────────────── */
-    .service-card {
+    /* ════════════════════════════════════════════
+       LIQUID GLASS BUTTONS
+    ════════════════════════════════════════════ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       position: relative;
       overflow: hidden;
-      transition: transform 0.45s var(--apple-ease), box-shadow 0.45s ease;
+      border-radius: 9999px;
+      padding: 0.85rem 2rem;
+      font-size: 0.875rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition:
+        transform 0.3s var(--ease-out-expo),
+        box-shadow 0.35s ease,
+        background 0.35s ease,
+        border-color 0.35s ease;
+      -webkit-user-select: none;
+      user-select: none;
+      isolation: isolate;
+      text-decoration: none;
     }
 
-    .service-card::before {
+    /* Ghost liquid glass variant */
+    .btn-glass {
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(20px) saturate(200%);
+      -webkit-backdrop-filter: blur(20px) saturate(200%);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.2),
+        0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    .btn-glass::before {
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(135deg, rgba(52,211,153,0.07) 0%, transparent 55%);
+      border-radius: inherit;
+      background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
       opacity: 0;
-      transition: opacity 0.45s ease;
+      transition: opacity 0.35s ease;
       pointer-events: none;
+    }
+
+    .btn-glass:hover {
+      background: rgba(255,255,255,0.14);
+      border-color: rgba(52,211,153,0.5);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.3),
+        0 8px 40px rgba(52,211,153,0.2),
+        0 0 0 1px rgba(52,211,153,0.2);
+      transform: translateY(-3px);
+    }
+
+    .btn-glass:hover::before { opacity: 1; }
+
+    /* Solid emerald primary */
+    .btn-primary {
+      background: linear-gradient(145deg, #10b981 0%, #059669 60%, #047857 100%);
+      border: 1px solid rgba(52,211,153,0.5);
+      color: #022c1a;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.3),
+        0 4px 24px rgba(16,185,129,0.35),
+        0 1px 4px rgba(0,0,0,0.3);
+    }
+
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: radial-gradient(ellipse at 30% 30%, rgba(255,255,255,0.25) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(145deg, #34d399 0%, #10b981 60%, #059669 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.4),
+        0 8px 48px rgba(52,211,153,0.5),
+        0 2px 8px rgba(0,0,0,0.3);
+      transform: translateY(-3px) scale(1.02);
+    }
+
+    .btn:active { transform: translateY(0) scale(0.97) !important; }
+
+    /* Click ripple */
+    .btn-ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      transform: translate(-50%, -50%) scale(0);
+      animation: ripple 0.55s ease-out forwards;
+      pointer-events: none;
+    }
+
+    @keyframes ripple {
+      to { transform: translate(-50%, -50%) scale(4); opacity: 0; }
+    }
+
+    /* ════════════════════════════════════════════
+       NAV
+    ════════════════════════════════════════════ */
+    .nav-pill {
+      background: rgba(6,10,6,0.65);
+      backdrop-filter: blur(32px) saturate(200%);
+      -webkit-backdrop-filter: blur(32px) saturate(200%);
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 8px 32px rgba(0,0,0,0.4);
+      transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .nav-pill.scrolled {
+      background: rgba(6,10,6,0.88);
+      border-color: rgba(52,211,153,0.2);
+      box-shadow: inset 0 1px 0 rgba(52,211,153,0.08), 0 8px 40px rgba(0,0,0,0.6);
+    }
+
+    /* ════════════════════════════════════════════
+       SCROLL TRIGGER STATES
+       Single system — GSAP only. CSS just hides.
+    ════════════════════════════════════════════ */
+    .st-up    { opacity: 0; transform: translateY(72px); }
+    .st-left  { opacity: 0; transform: translateX(-60px); }
+    .st-scale { opacity: 0; transform: scale(0.88) translateY(32px); }
+
+    /* ════════════════════════════════════════════
+       SERVICE CARDS
+    ════════════════════════════════════════════ */
+    .service-card {
+      transition:
+        transform 0.45s var(--ease-out-expo),
+        box-shadow 0.45s ease,
+        background 0.4s ease,
+        border-color 0.4s ease;
     }
 
     .service-card:hover {
-      transform: translateY(-6px) scale(1.01);
-      box-shadow: 0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(52,211,153,0.2);
+      transform: translateY(-8px) scale(1.015);
+      background: rgba(255,255,255,0.1);
+      border-color: rgba(52,211,153,0.3);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.25),
+        0 32px 80px rgba(0,0,0,0.6),
+        0 0 0 1px rgba(52,211,153,0.15);
     }
 
-    .service-card:hover::before { opacity: 1; }
-
-    /* Service number morphs on hover */
-    .service-num {
-      transition: background 0.4s ease, color 0.4s ease, transform 0.4s var(--apple-ease);
+    .svc-num {
+      transition: background 0.4s ease, color 0.4s ease, transform 0.5s var(--ease-out-expo), box-shadow 0.4s ease;
     }
 
-    .service-card:hover .service-num {
-      background: rgba(52, 211, 153, 0.2);
+    .service-card:hover .svc-num {
+      background: rgba(52,211,153,0.2);
       color: #6ee7b7;
-      transform: rotate(-6deg) scale(1.1);
+      transform: rotate(-8deg) scale(1.15);
+      box-shadow: 0 0 24px rgba(52,211,153,0.3);
     }
 
-    /* ─── PROCESS STEPS ────────────────────────────── */
+    .svc-arrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform 0.35s var(--ease-out-expo), color 0.3s ease;
+    }
+
+    .service-card:hover .svc-arrow {
+      transform: translateX(6px);
+      color: #6ee7b7;
+    }
+
+    /* ════════════════════════════════════════════
+       PROCESS STEPS
+    ════════════════════════════════════════════ */
     .step-card {
-      transition: transform 0.4s var(--apple-ease), box-shadow 0.4s ease;
-      cursor: default;
+      border-left: 3px solid transparent;
+      transition:
+        transform 0.4s var(--ease-out-expo),
+        box-shadow 0.4s ease,
+        border-color 0.4s ease,
+        background 0.4s ease;
     }
 
     .step-card:hover {
-      transform: translateX(8px);
-      box-shadow: -4px 0 0 #10b981, 0 20px 60px rgba(0,0,0,0.4);
+      transform: translateX(10px);
+      border-color: #10b981;
+      background: rgba(255,255,255,0.09);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.15),
+        0 24px 60px rgba(0,0,0,0.5),
+        -4px 0 24px rgba(16,185,129,0.15);
     }
 
     .step-num {
-      transition: transform 0.4s var(--apple-ease), box-shadow 0.4s ease;
+      transition: transform 0.45s var(--ease-out-expo), box-shadow 0.4s ease;
     }
 
     .step-card:hover .step-num {
-      transform: rotate(12deg) scale(1.08);
-      box-shadow: 0 0 30px rgba(16,185,129,0.5);
+      transform: rotate(15deg) scale(1.1);
+      box-shadow: 0 0 36px rgba(16,185,129,0.6);
     }
 
-    /* ─── STAT BAR ─────────────────────────────────── */
-    .stat-item {
-      transition: transform 0.3s var(--apple-ease);
+    /* ════════════════════════════════════════════
+       WHY-US CARDS
+    ════════════════════════════════════════════ */
+    .why-card {
+      transition: transform 0.4s var(--ease-out-expo), box-shadow 0.4s ease, border-color 0.4s ease;
     }
 
-    .stat-item:hover { transform: scale(1.05); }
+    .why-card:hover {
+      transform: translateY(-10px);
+      border-color: rgba(52,211,153,0.35);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.2),
+        0 32px 80px rgba(0,0,0,0.55),
+        0 0 60px rgba(16,185,129,0.08);
+    }
 
-    /* ─── FORM INPUTS ──────────────────────────────── */
-    .glass-input {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.1);
+    .why-icon {
+      transition: transform 0.4s var(--ease-out-expo), filter 0.4s ease;
+    }
+
+    .why-card:hover .why-icon {
+      transform: scale(1.2) translateY(-4px);
+      filter: drop-shadow(0 0 12px rgba(52,211,153,0.5));
+    }
+
+    /* ════════════════════════════════════════════
+       MARQUEE
+    ════════════════════════════════════════════ */
+    @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    .marquee-inner { display: flex; width: max-content; animation: marquee 22s linear infinite; }
+    .marquee-inner:hover { animation-play-state: paused; }
+
+    /* ════════════════════════════════════════════
+       FORM
+    ════════════════════════════════════════════ */
+    .field {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 0.75rem;
+      padding: 0.85rem 1rem;
+      font-size: 0.875rem;
       color: #fff;
-      border-radius: 0.75rem;
-      padding: 0.8rem 1rem;
-      width: 100%;
-      font-size: 0.875rem;
+      outline: none;
       transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
-      outline: none;
-    }
-
-    .glass-input:focus {
-      border-color: rgba(52, 211, 153, 0.5);
-      background: rgba(255,255,255,0.07);
-      box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.1), inset 0 1px 0 rgba(255,255,255,0.05);
-    }
-
-    .glass-input::placeholder { color: rgba(156,163,175,0.6); }
-
-    .glass-select {
-      background: rgba(10,15,10,0.85);
-      border: 1px solid rgba(255,255,255,0.1);
-      color: #d1d5db;
-      border-radius: 0.75rem;
-      padding: 0.8rem 1rem;
-      width: 100%;
-      font-size: 0.875rem;
-      cursor: pointer;
-      transition: border-color 0.3s ease, box-shadow 0.3s ease;
-      outline: none;
       -webkit-appearance: none;
+      font-family: inherit;
     }
 
-    .glass-select:focus {
-      border-color: rgba(52, 211, 153, 0.5);
-      box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.1);
+    .field::placeholder { color: rgba(156,163,175,0.5); }
+
+    .field:focus {
+      border-color: rgba(52,211,153,0.55);
+      background: rgba(255,255,255,0.08);
+      box-shadow: 0 0 0 3px rgba(52,211,153,0.12), inset 0 1px 0 rgba(255,255,255,0.06);
     }
 
-    /* ─── FLOATING ORBS ────────────────────────────── */
-    .orb {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(80px);
-      pointer-events: none;
-      will-change: transform;
+    /* ════════════════════════════════════════════
+       MISC
+    ════════════════════════════════════════════ */
+    @keyframes pulse-ring {
+      0%,100% { box-shadow: 0 0 0 0 rgba(52,211,153,0.5); }
+      50%      { box-shadow: 0 0 0 7px rgba(52,211,153,0); }
     }
+    .pulse { animation: pulse-ring 2.8s ease-in-out infinite; }
 
-    .orb-1 {
-      width: 600px; height: 600px;
-      background: radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%);
-      top: -100px; left: -150px;
-    }
+    @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(6px)} }
+    .bob { animation: bob 1.6s ease-in-out infinite; }
 
-    .orb-2 {
-      width: 500px; height: 500px;
-      background: radial-gradient(circle, rgba(52,211,153,0.08) 0%, transparent 70%);
-      bottom: -80px; right: -100px;
-    }
+    @keyframes slide-up-in { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
+    .mobile-bar { animation: slide-up-in 0.6s 1.2s var(--ease-out-expo) both; }
 
-    /* ─── MOBILE BOTTOM BAR ────────────────────────── */
-    @keyframes slideUp {
-      from { transform: translateY(100%); opacity: 0; }
-      to   { transform: translateY(0);    opacity: 1; }
-    }
-
-    .mobile-bar {
-      animation: slideUp 0.6s 1s var(--apple-ease) both;
-    }
-
-    /* ─── HERO BADGE PULSE ─────────────────────────── */
-    @keyframes subtlePulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(52,211,153,0.4); }
-      50%       { box-shadow: 0 0 0 6px rgba(52,211,153,0); }
-    }
-
-    .badge-dot { animation: subtlePulse 2.5s ease-in-out infinite; }
-
-    /* ─── HORIZONTAL MARQUEE ───────────────────────── */
-    @keyframes marquee {
-      from { transform: translateX(0); }
-      to   { transform: translateX(-50%); }
-    }
-
-    .marquee-track {
-      display: flex;
-      width: max-content;
-      animation: marquee 24s linear infinite;
-    }
-
-    .marquee-track:hover { animation-play-state: paused; }
-
-    /* ─── SECTION DIVIDER LINE ─────────────────────── */
-    .section-line {
+    .divider {
       height: 1px;
-      background: linear-gradient(to right, transparent, rgba(52,211,153,0.3), transparent);
+      background: linear-gradient(to right, transparent, rgba(52,211,153,0.25), transparent);
     }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #060a06; }
+    ::-webkit-scrollbar-thumb { background: #1a2e1a; border-radius: 3px; }
   </style>
 </head>
 <body>
 
-  <!-- ═══ NAV ═════════════════════════════════════════════════════ -->
-  <nav class="fixed top-0 left-0 w-full z-50 px-4 py-4 transition-all duration-300" id="navbar">
-    <div class="max-w-7xl mx-auto flex items-center justify-between nav-glass rounded-full px-6 py-3" id="nav-pill">
+  <!-- ══════════════ NAV ══════════════ -->
+  <nav class="fixed top-0 inset-x-0 z-50 px-4 py-4" id="navbar">
+    <div class="max-w-7xl mx-auto flex items-center justify-between nav-pill rounded-full px-6 py-3" id="nav-pill">
       <div class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-emerald-700 flex items-center justify-center font-bold text-xs shadow-lg shadow-green-900/30">F</div>
-        <span class="heading-editorial font-bold text-lg tracking-tight text-white uppercase">Frank's</span>
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-emerald-700 flex items-center justify-center font-bold text-xs shadow-lg shadow-green-900/40">F</div>
+        <span class="font-display font-bold text-lg text-white uppercase">Frank's</span>
       </div>
-
       <div class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
-        <a href="#services" class="hover:text-emerald-400 transition-colors duration-200">Services</a>
-        <a href="#process"  class="hover:text-emerald-400 transition-colors duration-200">Our Process</a>
-        <a href="#why-us"   class="hover:text-emerald-400 transition-colors duration-200">Why Frank's</a>
+        <a href="#services" class="nav-link hover:text-emerald-400 transition-colors">Services</a>
+        <a href="#process"  class="nav-link hover:text-emerald-400 transition-colors">Our Process</a>
+        <a href="#why-us"   class="nav-link hover:text-emerald-400 transition-colors">Why Frank's</a>
       </div>
-
       <div class="flex items-center gap-4">
-        <a href="tel:5551234567" class="hidden sm:inline-flex text-sm font-semibold text-gray-300 hover:text-white transition-colors">
-          (555) 123-4567
-        </a>
-        <a href="#contact" class="liquid-btn liquid-btn-primary px-5 py-2.5 text-xs">
-          Get Free Quote
-        </a>
+        <a href="tel:5551234567" class="hidden sm:block text-sm font-semibold text-gray-300 hover:text-white transition-colors">(555) 123-4567</a>
+        <a href="#contact" class="btn btn-primary px-5 py-2.5 text-xs">Get Free Quote</a>
       </div>
     </div>
   </nav>
 
-  <!-- ═══ HERO ══════════════════════════════════════════════════════ -->
-  <section class="relative w-full h-screen flex items-center justify-start overflow-hidden px-6 md:px-12" id="hero">
-
-    <!-- Parallax Video Background -->
-    <div class="absolute inset-0 w-full h-full z-0" id="hero-bg-wrap">
-      <video
-        autoplay muted loop playsinline
+  <!-- ══════════════ HERO ══════════════ -->
+  <section class="relative w-full h-screen flex items-center overflow-hidden px-6 md:px-12 blob-field" id="hero">
+    <!-- Parallax video -->
+    <div class="absolute inset-0 z-0" id="hero-bg">
+      <video autoplay muted loop playsinline
         poster="https://images.unsplash.com/photo-1533460004989-cef01064af7e?auto=format&fit=crop&q=80&w=2000"
-        class="w-full h-full object-cover parallax-hero-video"
-        id="hero-video"
-      >
+        class="w-full h-full object-cover" id="hero-video">
         <source src="hero-video.mp4" type="video/mp4">
       </video>
-      <div class="absolute inset-0 bg-gradient-to-t from-[#050705] via-black/50 to-black/60 z-10"></div>
-      <div class="absolute inset-0 bg-gradient-to-r from-[#050705]/80 via-transparent to-transparent z-10"></div>
+      <div class="absolute inset-0 bg-gradient-to-t from-[#060a06] via-black/55 to-black/50 z-10"></div>
+      <div class="absolute inset-0 bg-gradient-to-r from-[#060a06]/85 via-[#060a06]/30 to-transparent z-10"></div>
     </div>
 
-    <!-- Floating orbs -->
-    <div class="orb orb-1 z-10"></div>
-
-    <!-- Hero Content -->
     <div class="max-w-7xl mx-auto w-full z-20 relative pt-20 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-      <div class="lg:col-span-8 space-y-6">
-
-        <div class="inline-flex items-center gap-2 px-3 py-1.5 glass-card rounded-full text-xs font-semibold text-emerald-400 uppercase tracking-widest reveal" id="hero-badge">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 badge-dot"></span>
+      <div class="lg:col-span-8 space-y-7" id="hero-content">
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 glass rounded-full text-xs font-semibold text-emerald-400 uppercase tracking-widest st-up" id="hero-badge">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 pulse"></span>
           Commercial &amp; Residential Architecture
         </div>
-
-        <h1 class="heading-editorial text-white font-bold text-[clamp(2.8rem,8vw,7.5rem)] leading-none uppercase select-none reveal" id="hero-title" style="transition-delay:0.1s">
+        <h1 class="font-display text-white font-bold text-[clamp(3rem,8.5vw,7.5rem)] uppercase st-up" id="hero-h1" style="--delay:.08s">
           Frank's<br>
           <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-green-300 to-emerald-500">Lawn Service</span>
         </h1>
-
-        <p class="text-gray-300 text-base md:text-xl max-w-xl font-normal leading-relaxed reveal" id="hero-subtitle" style="transition-delay:0.22s">
-          Engineered landscape architecture and precision styling custom tailored for high-value residential properties. Beautiful lawns, structurally executed.
+        <p class="text-gray-300 text-base md:text-xl max-w-lg leading-relaxed st-up" id="hero-sub" style="--delay:.18s">
+          Engineered landscape architecture and precision styling tailored for high-value residential properties. Beautiful lawns, structurally executed.
         </p>
-
-        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2 reveal" style="transition-delay:0.34s">
-          <a href="#contact" class="liquid-btn liquid-btn-primary text-center">
-            Schedule Service
-          </a>
-          <a href="#services" class="liquid-btn text-center">
-            Our Services
-          </a>
+        <div class="flex flex-col sm:flex-row gap-4 pt-2 st-up" id="hero-ctas" style="--delay:.28s">
+          <a href="#contact" class="btn btn-primary">Schedule Service</a>
+          <a href="#services" class="btn btn-glass">Our Services</a>
         </div>
       </div>
 
-      <!-- Stat widget -->
-      <div class="hidden lg:block lg:col-span-4 glass-card p-6 rounded-3xl space-y-4 shadow-2xl reveal" style="transition-delay:0.44s">
-        <div class="text-xs font-bold uppercase tracking-widest text-emerald-400">Current Campaign Status</div>
-        <div class="text-2xl font-bold text-white heading-editorial uppercase">A Cut Above The Rest</div>
-        <div class="text-sm text-gray-400 leading-relaxed">Keeping elite properties manicured to structural perfection across the entire region.</div>
+      <!-- Glass widget — has blob behind it from blob-field -->
+      <div class="hidden lg:flex lg:col-span-4 glass rounded-3xl p-6 flex-col gap-4 st-up" id="hero-widget" style="--delay:.4s">
+        <div class="text-xs font-bold uppercase tracking-widest text-emerald-400">Campaign Status</div>
+        <div class="font-display text-2xl font-bold text-white uppercase">A Cut Above The Rest</div>
+        <p class="text-sm text-gray-400 leading-relaxed">Keeping elite properties manicured to structural perfection across the entire region.</p>
         <div class="h-px bg-white/10"></div>
         <div class="flex items-center justify-between text-xs font-semibold text-gray-300">
           <span>🌟 Elite Rating</span>
@@ -432,478 +474,411 @@
       </div>
     </div>
 
-    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 text-xs text-gray-400 tracking-widest uppercase pointer-events-none">
-      <span class="animate-bounce">↓</span> Scroll to Explore
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-1 text-xs text-gray-400 tracking-widest uppercase pointer-events-none">
+      <span class="bob">↓</span> Scroll to Explore
     </div>
   </section>
 
-  <!-- ═══ MARQUEE STATS BAR ═════════════════════════════════════════ -->
-  <div class="bg-neutral-950 border-y border-white/5 py-5 overflow-hidden">
-    <div class="marquee-track gap-16 px-8">
-      <!-- Repeated twice for seamless loop -->
-      <div class="flex items-center gap-16 flex-shrink-0">
-        <div class="stat-item text-center px-4">
-          <div class="text-white text-xl font-bold heading-editorial">100%</div>
-          <div class="text-gray-500 uppercase tracking-widest text-[10px] mt-1">Reliability Standard</div>
+  <!-- ══════════════ MARQUEE ══════════════ -->
+  <div class="bg-[#060f06] border-y border-white/5 py-5 overflow-hidden">
+    <div class="marquee-inner gap-0">
+      <!-- duplicate for loop -->
+      <template id="marquee-tpl">
+        <div class="flex items-center gap-0 flex-shrink-0">
+          <div class="px-10 text-center">
+            <div class="text-white text-lg font-bold font-display">100%</div>
+            <div class="text-gray-500 text-[10px] uppercase tracking-widest mt-0.5">Reliability</div>
+          </div>
+          <div class="w-px h-7 bg-white/10"></div>
+          <div class="px-10 text-center">
+            <div class="text-white text-lg font-bold font-display">5★ Rating</div>
+            <div class="text-gray-500 text-[10px] uppercase tracking-widest mt-0.5">Google Certified</div>
+          </div>
+          <div class="w-px h-7 bg-white/10"></div>
+          <div class="px-10 text-center">
+            <div class="text-white text-lg font-bold font-display">Premium</div>
+            <div class="text-gray-500 text-[10px] uppercase tracking-widest mt-0.5">Commercial Equipment</div>
+          </div>
+          <div class="w-px h-7 bg-white/10"></div>
+          <div class="px-10 text-center">
+            <div class="text-white text-lg font-bold font-display">500+</div>
+            <div class="text-gray-500 text-[10px] uppercase tracking-widest mt-0.5">Properties Serviced</div>
+          </div>
+          <div class="w-px h-7 bg-white/10"></div>
+          <div class="px-10 text-center">
+            <div class="text-white text-lg font-bold font-display">12 Yrs</div>
+            <div class="text-gray-500 text-[10px] uppercase tracking-widest mt-0.5">In Operation</div>
+          </div>
+          <div class="w-px h-7 bg-white/10"></div>
         </div>
-        <div class="w-px h-8 bg-white/10"></div>
-        <div class="stat-item text-center px-4">
-          <div class="text-white text-xl font-bold heading-editorial">5★ Rating</div>
-          <div class="text-gray-500 uppercase tracking-widest text-[10px] mt-1">Google Certified</div>
-        </div>
-        <div class="w-px h-8 bg-white/10"></div>
-        <div class="stat-item text-center px-4">
-          <div class="text-white text-xl font-bold heading-editorial">Premium</div>
-          <div class="text-gray-500 uppercase tracking-widest text-[10px] mt-1">Commercial Equipment Only</div>
-        </div>
-        <div class="w-px h-8 bg-white/10"></div>
-        <div class="stat-item text-center px-4">
-          <div class="text-white text-xl font-bold heading-editorial">500+</div>
-          <div class="text-gray-500 uppercase tracking-widest text-[10px] mt-1">Properties Serviced</div>
-        </div>
-        <div class="w-px h-8 bg-white/10"></div>
-        <div class="stat-item text-center px-4">
-          <div class="text-white text-xl font-bold heading-editorial">12 Yrs</div>
-          <div class="text-gray-500 uppercase tracking-widest text-[10px] mt-1">In Operation</div>
-        </div>
-        <div class="w-px h-8 bg-white/10"></div>
-      </div>
-      <!-- Duplicate for infinite scroll -->
-      <div class="flex items-center gap-16 flex-shrink-0">
-        <div class="stat-item text-center px-4">
-          <div class="text-white text-xl font-bold heading-editorial">100%</div>
-          <div class="text-gray-500 uppercase tracking-widest text-[10px] mt-1">Reliability Standard</div>
-        </div>
-        <div class="w-px h-8 bg-white/10"></div>
-        <div class="stat-item text-center px-4">
-          <div class="text-white text-xl font-bold heading-editorial">5★ Rating</div>
-          <div class="text-gray-500 uppercase tracking-widest text-[10px] mt-1">Google Certified</div>
-        </div>
-        <div class="w-px h-8 bg-white/10"></div>
-        <div class="stat-item text-center px-4">
-          <div class="text-white text-xl font-bold heading-editorial">Premium</div>
-          <div class="text-gray-500 uppercase tracking-widest text-[10px] mt-1">Commercial Equipment Only</div>
-        </div>
-        <div class="w-px h-8 bg-white/10"></div>
-        <div class="stat-item text-center px-4">
-          <div class="text-white text-xl font-bold heading-editorial">500+</div>
-          <div class="text-gray-500 uppercase tracking-widest text-[10px] mt-1">Properties Serviced</div>
-        </div>
-        <div class="w-px h-8 bg-white/10"></div>
-        <div class="stat-item text-center px-4">
-          <div class="text-white text-xl font-bold heading-editorial">12 Yrs</div>
-          <div class="text-gray-500 uppercase tracking-widest text-[10px] mt-1">In Operation</div>
-        </div>
-        <div class="w-px h-8 bg-white/10"></div>
-      </div>
+      </template>
     </div>
   </div>
 
-  <!-- ═══ SERVICES ══════════════════════════════════════════════════ -->
-  <section id="services" class="py-28 px-6 md:px-12 relative overflow-hidden">
-    <div class="orb orb-2 opacity-60"></div>
-    <div class="max-w-7xl mx-auto space-y-16 relative z-10">
+  <!-- ══════════════ SERVICES ══════════════ -->
+  <section id="services" class="py-28 px-6 md:px-12 blob-field relative">
+    <div class="max-w-7xl mx-auto space-y-14 relative z-10">
 
-      <div class="max-w-3xl space-y-4 reveal-left">
+      <div class="max-w-3xl space-y-3 st-left">
         <div class="text-xs font-bold uppercase tracking-widest text-emerald-400">Premium Capabilities</div>
-        <h2 class="heading-editorial text-4xl md:text-6xl text-white font-bold uppercase">Architectural Excellence<br>for Your Turf</h2>
+        <h2 class="font-display text-4xl md:text-6xl text-white font-bold uppercase">Architectural<br>Excellence</h2>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
 
-        <div class="md:col-span-2 glass-card service-card rounded-3xl p-8 flex flex-col justify-between min-h-[380px] reveal" style="transition-delay:0.05s">
+        <div class="md:col-span-2 glass service-card rounded-3xl p-8 flex flex-col justify-between min-h-[380px] st-up">
           <div class="space-y-4">
-            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-xl text-emerald-400 font-bold service-num">01</div>
-            <h3 class="text-2xl font-bold text-white uppercase heading-editorial">Precision Lawn Sculpting</h3>
-            <p class="text-gray-400 max-w-md text-sm leading-relaxed">
-              Meticulous uniform cut lines scheduled on precise intervals using industrial multi-blade systems to guarantee perfect spatial leveling.
-            </p>
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-bold text-xl svc-num font-display">01</div>
+            <h3 class="font-display text-2xl font-bold text-white uppercase">Precision Lawn Sculpting</h3>
+            <p class="text-gray-400 text-sm leading-relaxed max-w-md">Meticulous uniform cut lines on precise intervals using industrial multi-blade systems to guarantee perfect spatial leveling across every square foot.</p>
           </div>
-          <div class="text-xs font-bold uppercase text-emerald-400 tracking-wider pt-6 flex items-center gap-2 group-hover:translate-x-1 transition-transform">
-            Explore Detail <span>→</span>
-          </div>
+          <div class="text-xs font-bold uppercase text-emerald-400 tracking-wider pt-6 svc-arrow">Explore Detail <span>→</span></div>
         </div>
 
-        <div class="glass-card service-card rounded-3xl p-8 flex flex-col justify-between min-h-[380px] reveal" style="transition-delay:0.12s">
+        <div class="glass service-card rounded-3xl p-8 flex flex-col justify-between min-h-[380px] st-up" style="--delay:.1s">
           <div class="space-y-4">
-            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-xl text-emerald-400 font-bold service-num">02</div>
-            <h3 class="text-2xl font-bold text-white uppercase heading-editorial">Hedge Architecture</h3>
-            <p class="text-gray-400 text-sm leading-relaxed">
-              Sharp geometric edge pruning and formal shaping to create structural botanical containment fields along properties.
-            </p>
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-bold text-xl svc-num font-display">02</div>
+            <h3 class="font-display text-2xl font-bold text-white uppercase">Hedge Architecture</h3>
+            <p class="text-gray-400 text-sm leading-relaxed">Sharp geometric edge pruning and formal shaping to create structural botanical containment fields along property lines.</p>
           </div>
-          <div class="text-xs font-bold uppercase text-emerald-400 tracking-wider pt-6 flex items-center gap-2 transition-transform">
-            Explore Detail <span>→</span>
-          </div>
+          <div class="text-xs font-bold uppercase text-emerald-400 tracking-wider pt-6 svc-arrow">Explore Detail <span>→</span></div>
         </div>
 
-        <div class="glass-card service-card rounded-3xl p-8 flex flex-col justify-between min-h-[340px] reveal" style="transition-delay:0.18s">
+        <div class="glass service-card rounded-3xl p-8 flex flex-col justify-between min-h-[320px] st-up" style="--delay:.15s">
           <div class="space-y-4">
-            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-xl text-emerald-400 font-bold service-num">03</div>
-            <h3 class="text-2xl font-bold text-white uppercase heading-editorial">Mulching & Feeding</h3>
-            <p class="text-gray-400 text-sm leading-relaxed">
-              Premium moisture containment systems combined with systemic compound updates to enrich and frame focal turf layers.
-            </p>
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-bold text-xl svc-num font-display">03</div>
+            <h3 class="font-display text-2xl font-bold text-white uppercase">Mulching &amp; Feeding</h3>
+            <p class="text-gray-400 text-sm leading-relaxed">Premium moisture containment with systemic compound updates to enrich and frame focal turf layers.</p>
           </div>
-          <div class="text-xs font-bold uppercase text-emerald-400 tracking-wider pt-6 flex items-center gap-2 transition-transform">
-            Explore Detail <span>→</span>
-          </div>
+          <div class="text-xs font-bold uppercase text-emerald-400 tracking-wider pt-6 svc-arrow">Explore Detail <span>→</span></div>
         </div>
 
-        <div class="md:col-span-2 glass-card service-card rounded-3xl p-8 flex flex-col justify-between min-h-[340px] reveal" style="transition-delay:0.24s">
+        <div class="md:col-span-2 glass service-card rounded-3xl p-8 flex flex-col justify-between min-h-[320px] st-up" style="--delay:.2s">
           <div class="space-y-4">
-            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-xl text-emerald-400 font-bold service-num">04</div>
-            <h3 class="text-2xl font-bold text-white uppercase heading-editorial">Seasonal Property Overhauls</h3>
-            <p class="text-gray-400 max-w-md text-sm leading-relaxed">
-              Complete architectural grid sweeps, clearing natural waste and processing layout blockages to restore structural clean slates.
-            </p>
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-bold text-xl svc-num font-display">04</div>
+            <h3 class="font-display text-2xl font-bold text-white uppercase">Seasonal Property Overhauls</h3>
+            <p class="text-gray-400 text-sm leading-relaxed max-w-md">Complete architectural grid sweeps, clearing natural waste and restoring structural clean slates before each season.</p>
           </div>
-          <div class="text-xs font-bold uppercase text-emerald-400 tracking-wider pt-6 flex items-center gap-2 transition-transform">
-            Explore Detail <span>→</span>
-          </div>
+          <div class="text-xs font-bold uppercase text-emerald-400 tracking-wider pt-6 svc-arrow">Explore Detail <span>→</span></div>
         </div>
 
       </div>
     </div>
   </section>
 
-  <div class="section-line mx-12"></div>
+  <div class="divider mx-10"></div>
 
-  <!-- ═══ PROCESS ═══════════════════════════════════════════════════ -->
-  <section id="process" class="py-28 px-6 md:px-12 relative overflow-hidden">
-    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+  <!-- ══════════════ PROCESS ══════════════ -->
+  <section id="process" class="py-28 px-6 md:px-12 blob-field blob-field-alt relative">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-start relative z-10">
 
-      <!-- Sticky heading -->
-      <div class="lg:col-span-4 lg:sticky top-28 space-y-4 reveal-left">
+      <div class="lg:col-span-4 lg:sticky top-28 space-y-5 st-left">
         <div class="text-xs font-bold uppercase tracking-widest text-emerald-400">Our Protocol</div>
-        <h2 class="heading-editorial text-4xl md:text-5xl text-white font-bold uppercase">Manicured In Three Steps</h2>
-        <p class="text-gray-400 text-sm leading-relaxed max-w-sm">
-          We treat property care as structured project management. No loose cuts, no missed frames.
-        </p>
-        <!-- Decorative vertical bar -->
-        <div class="hidden lg:block w-px h-48 bg-gradient-to-b from-emerald-500/50 to-transparent ml-4 mt-4"></div>
+        <h2 class="font-display text-4xl md:text-5xl text-white font-bold uppercase">Manicured In Three Steps</h2>
+        <p class="text-gray-400 text-sm leading-relaxed max-w-sm">We treat property care as structured project management. No loose cuts, no missed frames.</p>
+        <div class="hidden lg:block w-px h-40 bg-gradient-to-b from-emerald-500/60 to-transparent ml-6"></div>
       </div>
 
-      <!-- Steps -->
-      <div class="lg:col-span-8 space-y-8">
-
-        <div class="glass-card step-card p-8 rounded-3xl flex flex-col sm:flex-row gap-6 items-start reveal" style="transition-delay:0.1s">
-          <div class="w-12 h-12 rounded-full bg-emerald-500 text-neutral-950 font-bold text-lg flex items-center justify-center flex-shrink-0 heading-editorial shadow-lg shadow-emerald-500/20 step-num">01</div>
-          <div class="space-y-2">
-            <h4 class="text-xl font-bold text-white uppercase heading-editorial">Site Analysis &amp; Estimate</h4>
-            <p class="text-gray-400 text-sm leading-relaxed">We audit your property layout footprints, assessing lawn densities, geometric edging risks, and outline specific custom maintenance routines mapping exact pricing configurations.</p>
+      <div class="lg:col-span-8 space-y-6">
+        <div class="glass step-card rounded-3xl p-8 flex flex-col sm:flex-row gap-6 items-start st-up">
+          <div class="w-12 h-12 rounded-full bg-emerald-500 text-neutral-950 font-bold text-lg flex items-center justify-center flex-shrink-0 font-display shadow-lg shadow-emerald-500/30 step-num">01</div>
+          <div>
+            <h4 class="text-xl font-bold text-white uppercase font-display mb-2">Site Analysis &amp; Estimate</h4>
+            <p class="text-gray-400 text-sm leading-relaxed">We audit your property footprint, assess lawn densities, geometric edging risks, and map exact pricing configurations before a single blade touches the ground.</p>
           </div>
         </div>
-
-        <div class="glass-card step-card p-8 rounded-3xl flex flex-col sm:flex-row gap-6 items-start reveal" style="transition-delay:0.2s">
-          <div class="w-12 h-12 rounded-full bg-emerald-500 text-neutral-950 font-bold text-lg flex items-center justify-center flex-shrink-0 heading-editorial shadow-lg shadow-emerald-500/20 step-num">02</div>
-          <div class="space-y-2">
-            <h4 class="text-xl font-bold text-white uppercase heading-editorial">Precision Execution Loop</h4>
-            <p class="text-gray-400 text-sm leading-relaxed">Our specialized engineering units arrive on precise regular schedules. Utilizing verified razor alignments, we sweep your property grids to perfection with no structural compromises.</p>
+        <div class="glass step-card rounded-3xl p-8 flex flex-col sm:flex-row gap-6 items-start st-up" style="--delay:.12s">
+          <div class="w-12 h-12 rounded-full bg-emerald-500 text-neutral-950 font-bold text-lg flex items-center justify-center flex-shrink-0 font-display shadow-lg shadow-emerald-500/30 step-num">02</div>
+          <div>
+            <h4 class="text-xl font-bold text-white uppercase font-display mb-2">Precision Execution Loop</h4>
+            <p class="text-gray-400 text-sm leading-relaxed">Our crews arrive on precise regular schedules. Verified razor alignments sweep your property grids to perfection — no structural compromises, zero shortcuts.</p>
           </div>
         </div>
-
-        <div class="glass-card step-card p-8 rounded-3xl flex flex-col sm:flex-row gap-6 items-start reveal" style="transition-delay:0.3s">
-          <div class="w-12 h-12 rounded-full bg-emerald-500 text-neutral-950 font-bold text-lg flex items-center justify-center flex-shrink-0 heading-editorial shadow-lg shadow-emerald-500/20 step-num">03</div>
-          <div class="space-y-2">
-            <h4 class="text-xl font-bold text-white uppercase heading-editorial">Clean Verification Signature</h4>
-            <p class="text-gray-400 text-sm leading-relaxed">We clean all clipping waste lines off hardscape surfaces, perform a diagnostic edge check, and leave your property looking instantly profile-worthy.</p>
+        <div class="glass step-card rounded-3xl p-8 flex flex-col sm:flex-row gap-6 items-start st-up" style="--delay:.24s">
+          <div class="w-12 h-12 rounded-full bg-emerald-500 text-neutral-950 font-bold text-lg flex items-center justify-center flex-shrink-0 font-display shadow-lg shadow-emerald-500/30 step-num">03</div>
+          <div>
+            <h4 class="text-xl font-bold text-white uppercase font-display mb-2">Clean Verification Signature</h4>
+            <p class="text-gray-400 text-sm leading-relaxed">We clear all clipping lines off hardscape, run a diagnostic edge check, and leave your property looking profile-worthy every single time.</p>
           </div>
         </div>
-
       </div>
     </div>
   </section>
 
-  <div class="section-line mx-12"></div>
+  <div class="divider mx-10"></div>
 
-  <!-- ═══ WHY US ═════════════════════════════════════════════════════ -->
-  <section id="why-us" class="py-28 px-6 md:px-12 relative overflow-hidden">
-    <div class="orb orb-1 opacity-40 top-0 right-0 left-auto"></div>
+  <!-- ══════════════ WHY US ══════════════ -->
+  <section id="why-us" class="py-28 px-6 md:px-12 blob-field relative">
     <div class="max-w-7xl mx-auto relative z-10">
-
-      <div class="text-center space-y-4 mb-16 reveal">
+      <div class="text-center space-y-3 mb-16 st-up">
         <div class="text-xs font-bold uppercase tracking-widest text-emerald-400">The Frank's Difference</div>
-        <h2 class="heading-editorial text-4xl md:text-6xl text-white font-bold uppercase">Built Different</h2>
+        <h2 class="font-display text-4xl md:text-6xl text-white font-bold uppercase">Built Different</h2>
       </div>
-
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-        <div class="glass-card service-card rounded-3xl p-8 text-center space-y-4 reveal-scale" style="transition-delay:0.05s">
-          <div class="text-4xl mb-2">⚡</div>
-          <h3 class="text-lg font-bold text-white uppercase heading-editorial">Same-Day Response</h3>
-          <p class="text-gray-400 text-sm leading-relaxed">Quote requests processed same business day. No waiting, no chasing. Just precision scheduling.</p>
+        <div class="glass why-card rounded-3xl p-8 text-center space-y-4 st-scale">
+          <div class="text-5xl why-icon inline-block">⚡</div>
+          <h3 class="font-display text-xl font-bold text-white uppercase">Same-Day Response</h3>
+          <p class="text-gray-400 text-sm leading-relaxed">Quote requests processed same business day. No waiting, no chasing — just precision scheduling.</p>
         </div>
-
-        <div class="glass-card service-card rounded-3xl p-8 text-center space-y-4 reveal-scale" style="transition-delay:0.12s">
-          <div class="text-4xl mb-2">🛡️</div>
-          <h3 class="text-lg font-bold text-white uppercase heading-editorial">Fully Insured</h3>
-          <p class="text-gray-400 text-sm leading-relaxed">Complete liability coverage on every job. Your property is protected from the first blade to the last sweep.</p>
+        <div class="glass why-card rounded-3xl p-8 text-center space-y-4 st-scale" style="--delay:.1s">
+          <div class="text-5xl why-icon inline-block">🛡️</div>
+          <h3 class="font-display text-xl font-bold text-white uppercase">Fully Insured</h3>
+          <p class="text-gray-400 text-sm leading-relaxed">Complete liability coverage on every job. Your property is protected from first blade to last sweep.</p>
         </div>
-
-        <div class="glass-card service-card rounded-3xl p-8 text-center space-y-4 reveal-scale" style="transition-delay:0.2s">
-          <div class="text-4xl mb-2">🌱</div>
-          <h3 class="text-lg font-bold text-white uppercase heading-editorial">Eco-Conscious</h3>
-          <p class="text-gray-400 text-sm leading-relaxed">Low-emission equipment and organic treatment options available. Premium results without compromising the environment.</p>
+        <div class="glass why-card rounded-3xl p-8 text-center space-y-4 st-scale" style="--delay:.2s">
+          <div class="text-5xl why-icon inline-block">🌱</div>
+          <h3 class="font-display text-xl font-bold text-white uppercase">Eco-Conscious</h3>
+          <p class="text-gray-400 text-sm leading-relaxed">Low-emission equipment and organic treatment options available — premium results without compromise.</p>
         </div>
-
       </div>
     </div>
   </section>
 
-  <!-- ═══ CONTACT ════════════════════════════════════════════════════ -->
-  <section id="contact" class="py-28 px-6 md:px-12 max-w-4xl mx-auto text-center space-y-12 relative">
-    <div class="space-y-4 reveal">
-      <div class="text-xs font-bold uppercase tracking-widest text-emerald-400">Lock In Architecture Protection</div>
-      <h2 class="heading-editorial text-4xl md:text-7xl text-white font-bold uppercase leading-none">Let's Sculpt Your Turf</h2>
-      <p class="text-gray-400 text-base md:text-lg max-w-xl mx-auto">
-        Input your site details below. Our technical dispatch units will review your grid and render a custom estimate plan.
-      </p>
-    </div>
+  <!-- ══════════════ CONTACT ══════════════ -->
+  <section id="contact" class="py-28 px-6 md:px-12 blob-field blob-field-alt relative">
+    <div class="max-w-4xl mx-auto text-center space-y-10 relative z-10">
+      <div class="space-y-3 st-up">
+        <div class="text-xs font-bold uppercase tracking-widest text-emerald-400">Lock In Your Property</div>
+        <h2 class="font-display text-4xl md:text-7xl text-white font-bold uppercase leading-none">Let's Sculpt Your Turf</h2>
+        <p class="text-gray-400 text-base md:text-lg max-w-xl mx-auto">Input your site details. Our dispatch team will review your property and send a custom estimate.</p>
+      </div>
 
-    <div class="glass-card p-8 md:p-10 rounded-3xl text-left shadow-2xl max-w-2xl mx-auto reveal-scale" style="transition-delay:0.15s">
-      <form class="space-y-6" id="quote-form">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div class="space-y-2">
-            <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Your Full Name</label>
-            <input type="text" placeholder="Frank Smith" required class="glass-input">
+      <div class="glass rounded-3xl p-8 md:p-10 text-left max-w-2xl mx-auto st-scale" style="--delay:.15s">
+        <form id="quote-form" class="space-y-6">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Full Name</label>
+              <input type="text" placeholder="Frank Smith" required class="field">
+            </div>
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Phone Number</label>
+              <input type="tel" placeholder="(555) 000-0000" required class="field">
+            </div>
           </div>
-          <div class="space-y-2">
-            <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Phone Number</label>
-            <input type="tel" placeholder="(555) 000-0000" required class="glass-input">
+          <div class="space-y-1.5">
+            <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Property Address</label>
+            <input type="text" placeholder="123 Immaculate Drive" required class="field">
           </div>
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Property Address</label>
-          <input type="text" placeholder="123 Immaculate Drive, Premium Region" required class="glass-input">
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Primary Service</label>
-          <select class="glass-select">
-            <option>Full-Scale Recurring Maintenance Sculpting</option>
-            <option>Hedge Architectural Overhaul</option>
-            <option>Seasonal Property Cleanup</option>
-            <option>Other / Structural Landscape Build</option>
-          </select>
-        </div>
-
-        <button type="submit" class="liquid-btn liquid-btn-primary w-full justify-center text-center" id="submit-btn">
-          Process Free Quote Request
-        </button>
-      </form>
+          <div class="space-y-1.5">
+            <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Primary Service</label>
+            <select class="field" style="background:rgba(6,10,6,0.9);cursor:pointer">
+              <option>Full-Scale Recurring Maintenance</option>
+              <option>Hedge Architectural Overhaul</option>
+              <option>Seasonal Property Cleanup</option>
+              <option>Other / Landscape Build</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary w-full" id="submit-btn">
+            Process Free Quote Request
+          </button>
+        </form>
+      </div>
     </div>
   </section>
 
-  <!-- ═══ FOOTER ════════════════════════════════════════════════════ -->
-  <footer class="bg-neutral-950 border-t border-white/5 py-12 px-6">
-    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-gray-500">
+  <!-- ══════════════ FOOTER ══════════════ -->
+  <footer class="bg-[#040704] border-t border-white/5 py-10 px-6">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-5 text-xs text-gray-500">
       <div class="flex items-center gap-2">
         <div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-[10px]">F</div>
-        <span class="heading-editorial font-bold text-sm tracking-tight text-white uppercase">Frank's Lawn Service</span>
+        <span class="font-display font-bold text-sm text-white uppercase">Frank's Lawn Service</span>
       </div>
-      <div class="flex flex-wrap justify-center gap-8 text-gray-400">
+      <div class="flex flex-wrap justify-center gap-6 text-gray-400">
         <span>© 2026 Frank's Lawn Service. All Rights Reserved.</span>
-        <a href="#services" class="hover:text-white transition-colors">Privacy Terms</a>
-        <a href="#contact"  class="hover:text-white transition-colors">Site Support</a>
+        <a href="#services" class="hover:text-white transition-colors">Privacy</a>
+        <a href="#contact"  class="hover:text-white transition-colors">Support</a>
       </div>
     </div>
   </footer>
 
-  <!-- Mobile bottom CTA -->
-  <div class="fixed bottom-0 left-0 w-full z-50 glass-card border-t border-white/10 p-3 flex sm:hidden items-center gap-3 mobile-bar">
-    <a href="tel:5551234567" class="flex-1 liquid-btn text-center py-3.5 text-xs">Call Dispatch</a>
-    <a href="#contact"       class="flex-1 liquid-btn liquid-btn-primary text-center py-3.5 text-xs">Book Quote</a>
+  <!-- Mobile bottom bar -->
+  <div class="fixed bottom-0 inset-x-0 z-50 glass border-t border-white/10 p-3 flex sm:hidden items-center gap-3 mobile-bar">
+    <a href="tel:5551234567" class="btn btn-glass flex-1 py-3.5 text-xs">Call Dispatch</a>
+    <a href="#contact"       class="btn btn-primary flex-1 py-3.5 text-xs">Book Quote</a>
   </div>
 
-  <!-- ═══ SCRIPTS ═══════════════════════════════════════════════════ -->
+  <!-- ══════════════ SCRIPTS ══════════════ -->
   <script src="https://unpkg.com/gsap@3.12.2/dist/gsap.min.js"></script>
   <script src="https://unpkg.com/gsap@3.12.2/dist/ScrollTrigger.min.js"></script>
 
   <script>
-    gsap.registerPlugin(ScrollTrigger);
+    /* ─ Marquee: clone template twice for seamless loop ─ */
+    const marqueeInner = document.querySelector('.marquee-inner');
+    const tpl = document.getElementById('marquee-tpl').content;
+    marqueeInner.appendChild(tpl.cloneNode(true));
+    marqueeInner.appendChild(tpl.cloneNode(true));
 
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    /* ─ Reduced motion check ─ */
+    const noMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    /* ── NAV SCROLL BEHAVIOUR ─────────────────────────────────── */
-    const navPill = document.getElementById('nav-pill');
+    /* ─ Nav scroll tint ─ */
+    const pill = document.getElementById('nav-pill');
     window.addEventListener('scroll', () => {
-      navPill.classList.toggle('scrolled', window.scrollY > 50);
+      pill.classList.toggle('scrolled', window.scrollY > 60);
     }, { passive: true });
 
-    /* ── SCROLL REVEAL (Intersection Observer) ────────────────── */
-    if (!prefersReducedMotion) {
-      const revealEls = document.querySelectorAll('.reveal, .reveal-left, .reveal-scale');
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(e => {
-          if (e.isIntersecting) {
-            e.target.classList.add('visible');
-            observer.unobserve(e.target);
+    /* ─ Magnetic nav links ─ */
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('mousemove', e => {
+        const r = link.getBoundingClientRect();
+        const x = (e.clientX - r.left - r.width  / 2) * 0.3;
+        const y = (e.clientY - r.top  - r.height / 2) * 0.3;
+        link.style.transform = `translate(${x}px,${y}px)`;
+      });
+      link.addEventListener('mouseleave', () => { link.style.transform = ''; });
+    });
+
+    /* ─ Button ripple ─ */
+    document.querySelectorAll('.btn').forEach(btn => {
+      btn.addEventListener('pointerdown', e => {
+        const r   = btn.getBoundingClientRect();
+        const rip = document.createElement('span');
+        rip.className = 'btn-ripple';
+        const size = Math.max(r.width, r.height) * 1.6;
+        Object.assign(rip.style, {
+          width: size + 'px', height: size + 'px',
+          left: (e.clientX - r.left) + 'px',
+          top:  (e.clientY - r.top)  + 'px',
+        });
+        btn.appendChild(rip);
+        rip.addEventListener('animationend', () => rip.remove());
+      });
+    });
+
+    if (!noMotion) {
+      gsap.registerPlugin(ScrollTrigger);
+
+      /* ══════════════════════════════════════════
+         PARALLAX — hero video drifts up on scroll
+      ══════════════════════════════════════════ */
+      gsap.to('#hero-video', {
+        yPercent: 20,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: '#hero',
+          start: 'top top',
+          end: 'bottom top',
+          scrub: 1.5,
+        }
+      });
+
+      /* Hero overlay darkens slightly as you scroll */
+      gsap.to('#hero-bg', {
+        '--tw-bg-opacity': 0.9,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: '#hero',
+          start: 'top top',
+          end: '80% top',
+          scrub: true,
+        }
+      });
+
+      /* ══════════════════════════════════════════
+         HERO ENTRANCE — cinematic from below
+      ══════════════════════════════════════════ */
+      const heroTl = gsap.timeline({ defaults: { ease: 'power4.out' } });
+      heroTl
+        .from('#hero-badge',  { yPercent: 60, opacity: 0, duration: 1.0 }, 0.2)
+        .from('#hero-h1',     { yPercent: 80, opacity: 0, duration: 1.2 }, 0.3)
+        .from('#hero-sub',    { y: 35, opacity: 0, duration: 1.0 },        0.5)
+        .from('#hero-ctas',   { y: 25, opacity: 0, duration: 0.9 },        0.65)
+        .from('#hero-widget', { x: 40, opacity: 0, duration: 1.1 },        0.55);
+
+      /* ══════════════════════════════════════════
+         SCROLL TRIGGER — each .st-* class batch
+      ══════════════════════════════════════════ */
+
+      /* st-up: cards, headings, steps */
+      document.querySelectorAll('.st-up').forEach(el => {
+        const delay = parseFloat(getComputedStyle(el).getPropertyValue('--delay') || '0');
+        gsap.from(el, {
+          y: 72, opacity: 0, duration: 0.9,
+          delay,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: el,
+            start: 'top 88%',
+            toggleActions: 'play none none none',
           }
         });
-      }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
-
-      revealEls.forEach(el => observer.observe(el));
-
-      // Immediately fire hero elements (already in view)
-      document.querySelectorAll('#hero .reveal').forEach(el => {
-        setTimeout(() => el.classList.add('visible'), 200);
       });
+
+      /* st-left: section headings */
+      document.querySelectorAll('.st-left').forEach(el => {
+        gsap.from(el, {
+          x: -60, opacity: 0, duration: 1.0,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: el,
+            start: 'top 85%',
+            toggleActions: 'play none none none',
+          }
+        });
+      });
+
+      /* st-scale: why-us cards, form */
+      document.querySelectorAll('.st-scale').forEach(el => {
+        const delay = parseFloat(getComputedStyle(el).getPropertyValue('--delay') || '0');
+        gsap.from(el, {
+          scale: 0.88, y: 32, opacity: 0, duration: 0.95,
+          delay,
+          ease: 'back.out(1.4)',
+          scrollTrigger: {
+            trigger: el,
+            start: 'top 88%',
+            toggleActions: 'play none none none',
+          }
+        });
+      });
+
+      /* ══════════════════════════════════════════
+         PARALLAX — section blobs drift at diff speeds
+      ══════════════════════════════════════════ */
+      document.querySelectorAll('.blob-field').forEach((section, i) => {
+        const pseudo = section.querySelector(':scope > *:first-child');
+        gsap.to(section, {
+          '--blob-y': `${(i % 2 === 0 ? -1 : 1) * 80}px`,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: section,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 2,
+          }
+        });
+      });
+
+      /* Horizontal text parallax on h2s */
+      gsap.utils.toArray('h2.font-display').forEach((h2, i) => {
+        gsap.from(h2, {
+          x: i % 2 === 0 ? -30 : 30,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: h2,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 1.5,
+          }
+        });
+      });
+
     } else {
-      // Respect reduced motion — show everything immediately
-      document.querySelectorAll('.reveal, .reveal-left, .reveal-scale').forEach(el => {
+      /* Reduced motion: just make everything visible */
+      document.querySelectorAll('.st-up, .st-left, .st-scale').forEach(el => {
         el.style.opacity = '1';
         el.style.transform = 'none';
       });
     }
 
-    /* ── PARALLAX HERO VIDEO ──────────────────────────────────── */
-    if (!prefersReducedMotion) {
-      gsap.to("#hero-video", {
-        yPercent: 18,
-        ease: "none",
-        scrollTrigger: {
-          trigger: "#hero",
-          start: "top top",
-          end: "bottom top",
-          scrub: 1.2
-        }
-      });
-
-      // Orb slow drift parallax
-      gsap.to(".orb-1", {
-        y: -120,
-        ease: "none",
-        scrollTrigger: {
-          trigger: "body",
-          start: "top top",
-          end: "bottom top",
-          scrub: 2
-        }
-      });
-
-      gsap.to(".orb-2", {
-        y: 100,
-        ease: "none",
-        scrollTrigger: {
-          trigger: "#services",
-          start: "top bottom",
-          end: "bottom top",
-          scrub: 2
-        }
-      });
-
-      /* ── HERO TITLE CINEMATIC ENTRANCE ──────────────────────── */
-      gsap.from("#hero-title", {
-        yPercent: 60,
-        opacity: 0,
-        duration: 1.3,
-        delay: 0.1,
-        ease: "power4.out"
-      });
-
-      gsap.from("#hero-subtitle", {
-        y: 28,
-        opacity: 0,
-        duration: 1,
-        delay: 0.35,
-        ease: "power3.out"
-      });
-
-      /* ── SERVICES STAGGER (GSAP ScrollTrigger) ──────────────── */
-      gsap.from(".service-card", {
-        y: 60,
-        opacity: 0,
-        duration: 0.9,
-        stagger: 0.1,
-        ease: "power2.out",
-        scrollTrigger: {
-          trigger: "#services",
-          start: "top 78%"
-        }
-      });
-
-      /* ── STEP CARDS SLIDE IN ─────────────────────────────────── */
-      gsap.from(".step-card", {
-        x: 60,
-        opacity: 0,
-        duration: 0.85,
-        stagger: 0.15,
-        ease: "power2.out",
-        scrollTrigger: {
-          trigger: "#process",
-          start: "top 75%"
-        }
-      });
-
-      /* ── CONTACT FORM SCALE IN ───────────────────────────────── */
-      gsap.from("#quote-form", {
-        scale: 0.95,
-        opacity: 0,
-        duration: 0.9,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: "#contact",
-          start: "top 78%"
-        }
-      });
-    }
-
-    /* ── LIQUID BUTTON RIPPLE ON CLICK ───────────────────────── */
-    document.querySelectorAll('.liquid-btn').forEach(btn => {
-      btn.addEventListener('click', function(e) {
-        const rect = this.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width  * 100).toFixed(1);
-        const y = ((e.clientY - rect.top)  / rect.height * 100).toFixed(1);
-
-        const ripple = document.createElement('span');
-        ripple.style.cssText = `
-          position:absolute;
-          left:${x}%; top:${y}%;
-          width:0; height:0;
-          border-radius:50%;
-          background:rgba(255,255,255,0.18);
-          transform:translate(-50%,-50%);
-          animation:ripple-expand 0.6s ease-out forwards;
-          pointer-events:none;
-        `;
-        this.appendChild(ripple);
-        setTimeout(() => ripple.remove(), 650);
-      });
-    });
-
-    /* ── RIPPLE KEYFRAME (injected) ──────────────────────────── */
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes ripple-expand {
-        to { width: 280px; height: 280px; opacity: 0; }
-      }
-    `;
-    document.head.appendChild(style);
-
-    /* ── FORM SUBMIT ─────────────────────────────────────────── */
-    document.getElementById('quote-form').addEventListener('submit', function(e) {
+    /* ─ Form submit ─ */
+    document.getElementById('quote-form').addEventListener('submit', e => {
       e.preventDefault();
       const btn = document.getElementById('submit-btn');
-      btn.textContent = '✓ Request Submitted';
-      btn.style.background = 'linear-gradient(135deg, #059669, #047857)';
+      btn.textContent = '✓ Quote Request Submitted';
+      btn.style.background = 'linear-gradient(145deg,#059669,#047857)';
       btn.disabled = true;
-    });
-
-    /* ── CURSOR MAGNETIC EFFECT ON NAV LINKS ────────────────── */
-    document.querySelectorAll('nav a').forEach(link => {
-      link.addEventListener('mousemove', function(e) {
-        const rect = this.getBoundingClientRect();
-        const cx = rect.left + rect.width  / 2;
-        const cy = rect.top  + rect.height / 2;
-        const dx = (e.clientX - cx) * 0.25;
-        const dy = (e.clientY - cy) * 0.25;
-        this.style.transform = `translate(${dx}px, ${dy}px)`;
-      });
-      link.addEventListener('mouseleave', function() {
-        this.style.transform = '';
-      });
+      btn.style.cursor = 'default';
     });
   </script>
 </body>
