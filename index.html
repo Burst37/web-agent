@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frank's Lawn Service | A Cut Above the Rest</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
+
+    :root {
+      --apple-ease: cubic-bezier(0.16, 1, 0.3, 1);
+      --glass-bg: rgba(255, 255, 255, 0.06);
+      --glass-border: rgba(255, 255, 255, 0.12);
+      --glass-highlight: rgba(255, 255, 255, 0.18);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #050705;
+      color: #f3f4f6;
+      overflow-x: hidden;
+    }
+
+    .heading-editorial {
+      font-family: 'Space Grotesk', sans-serif;
+      line-height: 0.85;
+      letter-spacing: -0.05em;
+    }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #050705; }
+    ::-webkit-scrollbar-thumb { background: #1c2e1c; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #2e4d2e; }
+
+    /* ─── LIQUID GLASS ─────────────────────────────── */
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
+      border: 1px solid var(--glass-border);
+      transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+    }
+
+    .glass-card:hover {
+      background: rgba(255, 255, 255, 0.09);
+      border-color: rgba(52, 211, 153, 0.25);
+      box-shadow: 0 0 40px rgba(52, 211, 153, 0.06), inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+
+    /* Liquid glass button — ripple refraction layer */
+    .liquid-btn {
+      position: relative;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.07);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.875rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      border-radius: 9999px;
+      padding: 0.85rem 2rem;
+      cursor: pointer;
+      transition: all 0.35s var(--apple-ease);
+      isolation: isolate;
+    }
+
+    .liquid-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.22) 0%, transparent 60%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      border-radius: inherit;
+      pointer-events: none;
+    }
+
+    .liquid-btn::after {
+      content: '';
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: radial-gradient(circle at center, rgba(52,211,153,0.25) 0%, transparent 60%);
+      opacity: 0;
+      transform: scale(0.4);
+      transition: opacity 0.5s ease, transform 0.6s var(--apple-ease);
+      border-radius: inherit;
+      pointer-events: none;
+    }
+
+    .liquid-btn:hover {
+      border-color: rgba(52, 211, 153, 0.45);
+      box-shadow:
+        0 8px 32px rgba(52, 211, 153, 0.15),
+        inset 0 1px 0 rgba(255,255,255,0.2),
+        inset 0 -1px 0 rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+    }
+
+    .liquid-btn:hover::before { opacity: 1; }
+    .liquid-btn:hover::after  { opacity: 1; transform: scale(1); }
+
+    .liquid-btn:active {
+      transform: translateY(0px) scale(0.98);
+      box-shadow: 0 2px 12px rgba(52, 211, 153, 0.1);
+    }
+
+    /* Emerald CTA — solid liquid variant */
+    .liquid-btn-primary {
+      background: linear-gradient(135deg, #10b981, #059669);
+      border-color: rgba(52,211,153,0.4);
+      color: #022c1a;
+      box-shadow: 0 4px 20px rgba(16,185,129,0.25), inset 0 1px 0 rgba(255,255,255,0.25);
+    }
+
+    .liquid-btn-primary::after {
+      background: radial-gradient(circle at center, rgba(255,255,255,0.35) 0%, transparent 60%);
+    }
+
+    .liquid-btn-primary:hover {
+      background: linear-gradient(135deg, #34d399, #10b981);
+      border-color: rgba(52,211,153,0.6);
+      box-shadow: 0 8px 40px rgba(16,185,129,0.4), inset 0 1px 0 rgba(255,255,255,0.35);
+    }
+
+    /* Nav pill liquid glass */
+    .nav-glass {
+      background: rgba(5, 7, 5, 0.7);
+      backdrop-filter: blur(30px) saturate(180%);
+      -webkit-backdrop-filter: blur(30px) saturate(180%);
+      border: 1px solid rgba(255,255,255,0.1);
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .nav-glass.scrolled {
+      background: rgba(5, 7, 5, 0.88);
+      border-color: rgba(52,211,153,0.15);
+    }
+
+    /* ─── PARALLAX LAYERS ──────────────────────────── */
+    .parallax-hero-video { will-change: transform; }
+
+    /* ─── SCROLL REVEAL STATES ─────────────────────── */
+    .reveal {
+      opacity: 0;
+      transform: translateY(48px);
+      transition: opacity 0.75s var(--apple-ease), transform 0.75s var(--apple-ease);
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .reveal-left {
+      opacity: 0;
+      transform: translateX(-50px);
+      transition: opacity 0.75s var(--apple-ease), transform 0.75s var(--apple-ease);
+    }
+
+    .reveal-left.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .reveal-scale {
+      opacity: 0;
+      transform: scale(0.92);
+      transition: opacity 0.7s var(--apple-ease), transform 0.7s var(--apple-ease);
+    }
+
+    .reveal-scale.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* ─── SERVICE CARDS ────────────────────────────── */
+    .service-card {
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.45s var(--apple-ease), box-shadow 0.45s ease;
+    }
+
+    .service-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(52,211,153,0.07) 0%, transparent 55%);
+      opacity: 0;
+      transition: opacity 0.45s ease;
+      pointer-events: none;
+    }
+
+    .service-card:hover {
+      transform: translateY(-6px) scale(1.01);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(52,211,153,0.2);
+    }
+
+    .service-card:hover::before { opacity: 1; }
+
+    /* Service number morphs on hover */
+    .service-num {
+      transition: background 0.4s ease, color 0.4s ease, transform 0.4s var(--apple-ease);
+    }
+
+    .service-card:hover .service-num {
+      background: rgba(52, 211, 153, 0.2);
+      color: #6ee7b7;
+      transform: rotate(-6deg) scale(1.1);
+    }
+
+    /* ─── PROCESS STEPS ────────────────────────────── */
+    .step-card {
+      transition: transform 0.4s var(--apple-ease), box-shadow 0.4s ease;
+      cursor: default;
+    }
+
+    .step-card:hover {
+      transform: translateX(8px);
+      box-shadow: -4px 0 0 #10b981, 0 20px 60px rgba(0,0,0,0.4);
+    }
+
+    .step-num {
+      transition: transform 0.4s var(--apple-ease), box-shadow 0.4s ease;
+    }
+
+    .step-card:hover .step-num {
+      transform: rotate(12deg) scale(1.08);
+      box-shadow: 0 0 30px rgba(16,185,129,0.5);
+    }
+
+    /* ─── STAT BAR ─────────────────────────────────── */
+    .stat-item {
+      transition: transform 0.3s var(--apple-ease);
+    }
+
+    .stat-item:hover { transform: scale(1.05); }
+
+    /* ─── FORM INPUTS ──────────────────────────────── */
+    .glass-input {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #fff;
+      border-radius: 0.75rem;
+      padding: 0.8rem 1rem;
+      width: 100%;
+      font-size: 0.875rem;
+      transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+      outline: none;
+    }
+
+    .glass-input:focus {
+      border-color: rgba(52, 211, 153, 0.5);
+      background: rgba(255,255,255,0.07);
+      box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.1), inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+
+    .glass-input::placeholder { color: rgba(156,163,175,0.6); }
+
+    .glass-select {
+      background: rgba(10,15,10,0.85);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #d1d5db;
+      border-radius: 0.75rem;
+      padding: 0.8rem 1rem;
+      width: 100%;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .glass-select:focus {
+      border-color: rgba(52, 211, 153, 0.5);
+      box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.1);
+    }
+
+    /* ─── FLOATING ORBS ────────────────────────────── */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      will-change: transform;
+    }
+
+    .orb-1 {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%);
+      top: -100px; left: -150px;
+    }
+
+    .orb-2 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(52,211,153,0.08) 0%, transparent 70%);
+      bottom: -80px; right: -100px;
+    }
+
+    /* ─── MOBILE BOTTOM BAR ────────────────────────── */
+    @keyframes slideUp {
+      from { transform: translateY(100%); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    .mobile-bar {
+      animation: slideUp 0.6s 1s var(--apple-ease) both;
+    }
+
+    /* ─── HERO BADGE PULSE ─────────────────────────── */
+    @keyframes subtlePulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(52,211,153,0.4); }
+      50%       { box-shadow: 0 0 0 6px rgba(52,211,153,0); }
+    }
+
+    .badge-dot { animation: subtlePulse 2.5s ease-in-out infinite; }
+
+    /* ─── HORIZONTAL MARQUEE ───────────────────────── */
+    @keyframes marquee {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    .marquee-track {
+      display: flex;
+      width: max-content;
+      animation: marquee 24s linear infinite;
+    }
+
+    .marquee-track:hover { animation-play-state: paused; }
+
+    /* ─── SECTION DIVIDER LINE ─────────────────────── */
+    .section-line {
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(52,211,153,0.3), transparent);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══ NAV ═════════════════════════════════════════════════════ -->
+  <nav class="fixed top-0 left-0 w-full z-50 px-4 py-4 transition-all duration-300" id="navbar">
+    <div class="max-w-7xl mx-auto flex items-center justify-between nav-glass rounded-full px-6 py-3" id="nav-pill">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-green-400 to-emerald-700 flex items-center justify-center font-bold text-xs shadow-lg shadow-green-900/30">F</div>
+        <span class="heading-editorial font-bold text-lg tracking-tight text-white uppercase">Frank's</span>
+      </div>
+
+      <div class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
+        <a href="#services" class="hover:text-emerald-400 transition-colors duration-200">Services</a>
+        <a href="#process"  class="hover:text-emerald-400 transition-colors duration-200">Our Process</a>
+        <a href="#why-us"   class="hover:text-emerald-400 transition-colors duration-200">Why Frank's</a>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <a href="tel:5551234567" class="hidden sm:inline-flex text-sm font-semibold text-gray-300 hover:text-white transition-colors">
+          (555) 123-4567
+        </a>
+        <a href="#contact" class="liquid-btn liquid-btn-primary px-5 py-2.5 text-xs">
+          Get Free Quote
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══ HERO ══════════════════════════════════════════════════════ -->
+  <section class="relative w-full h-screen flex items-center justify-start overflow-hidden px-6 md:px-12" id="hero">
+
+    <!-- Parallax Video Background -->
+    <div class="absolute inset-0 w-full h-full z-0" id="hero-bg-wrap">
+      <video
+        autoplay muted loop playsinline
+        poster="https://images.unsplash.com/photo-1533460004989-cef01064af7e?auto=format&fit=crop&q=80&w=2000"
+        class="w-full h-full object-cover parallax-hero-video"
+        id="hero-video"
+      >
+        <source src="hero-video.mp4" type="video/mp4">
+      </video>
+      <div class="absolute inset-0 bg-gradient-to-t from-[#050705] via-black/50 to-black/60 z-10"></div>
+      <div class="absolute inset-0 bg-gradient-to-r from-[#050705]/80 via-transparent to-transparent z-10"></div>
+    </div>
+
+    <!-- Floating orbs -->
+    <div class="orb orb-1 z-10"></div>
+
+    <!-- Hero Content -->
+    <div class="max-w-7xl mx-auto w-full z-20 relative pt-20 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+      <div class="lg:col-span-8 space-y-6">
+
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 glass-card rounded-full text-xs font-semibold text-emerald-400 uppercase tracking-widest reveal" id="hero-badge">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 badge-dot"></span>
+          Commercial &amp; Residential Architecture
+        </div>
+
+        <h1 class="heading-editorial text-white font-bold text-[clamp(2.8rem,8vw,7.5rem)] leading-none uppercase select-none reveal" id="hero-title" style="transition-delay:0.1s">
+          Frank's<br>
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-green-300 to-emerald-500">Lawn Service</span>
+        </h1>
+
+        <p class="text-gray-300 text-base md:text-xl max-w-xl font-normal leading-relaxed reveal" id="hero-subtitle" style="transition-delay:0.22s">
+          Engineered landscape architecture and precision styling custom tailored for high-value residential properties. Beautiful lawns, structurally executed.
+        </p>
+
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2 reveal" style="transition-delay:0.34s">
+          <a href="#contact" class="liquid-btn liquid-btn-primary text-center">
+            Schedule Service
+          </a>
+          <a href="#services" class="liquid-btn text-center">
+            Our Services
+          </a>
+        </div>
+      </div>
+
+      <!-- Stat widget -->
+      <div class="hidden lg:block lg:col-span-4 glass-card p-6 rounded-3xl space-y-4 shadow-2xl reveal" style="transition-delay:0.44s">
+        <div class="text-xs font-bold uppercase tracking-widest text-emerald-400">Current Campaign Status</div>
+        <div class="text-2xl font-bold text-white heading-editorial uppercase">A Cut Above The Rest</div>
+        <div class="text-sm text-gray-400 leading-relaxed">Keeping elite properties manicured to structural perfection across the entire region.</div>
+        <div class="h-px bg-white/10"></div>
+        <div class="flex items-center justify-between text-xs font-semibold text-gray-300">
+          <span>🌟 Elite Rating</span>
+          <span class="text-white">4.9 / 5.0</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 text-xs text-gray-400 tracking-widest uppercase pointer-events-none">
+      <span class="animate-bounce">↓</span> Scroll to Explore
+    </div>
+  </section>
+
+  <!-- ═══ MARQUEE STATS BAR ═════════════════════════════════════════ -->
+  <div class="bg-neutral-950 border-y border-white/5 py-5 overflow-hidden">
+    <div class="marquee-track gap-16 px-8">
+      <!-- Repeated twice for seamless loop -->
+      <div class="flex items-center gap-16 flex-shrink-0">
+        <div class="stat-item text-center px-4">
+          <div class="text-white text-xl font-bold heading-editorial">100%</div>
+          <div class="text-gray-500 uppercase tracking-widest text-[10px] mt-1">Reliability Standard</div>
+        </div>
+        <div class="w-px h-8 bg-white/10"></div>
+        <div class="stat-item text-center px-4">
+          <div class="text-white text-xl font-bold heading-editorial">5★ Rating</div>
+          <div class="text-gray-500 uppercase tracking-widest text-[10px] mt-1">Google Certified</div>
+        </div>
+        <div class="w-px h-8 bg-white/10"></div>
+        <div class="stat-item text-center px-4">
+          <div class="text-white text-xl font-bold heading-editorial">Premium</div>
+          <div class="text-gray-500 uppercase tracking-widest text-[10px] mt-1">Commercial Equipment Only</div>
+        </div>
+        <div class="w-px h-8 bg-white/10"></div>
+        <div class="stat-item text-center px-4">
+          <div class="text-white text-xl font-bold heading-editorial">500+</div>
+          <div class="text-gray-500 uppercase tracking-widest text-[10px] mt-1">Properties Serviced</div>
+        </div>
+        <div class="w-px h-8 bg-white/10"></div>
+        <div class="stat-item text-center px-4">
+          <div class="text-white text-xl font-bold heading-editorial">12 Yrs</div>
+          <div class="text-gray-500 uppercase tracking-widest text-[10px] mt-1">In Operation</div>
+        </div>
+        <div class="w-px h-8 bg-white/10"></div>
+      </div>
+      <!-- Duplicate for infinite scroll -->
+      <div class="flex items-center gap-16 flex-shrink-0">
+        <div class="stat-item text-center px-4">
+          <div class="text-white text-xl font-bold heading-editorial">100%</div>
+          <div class="text-gray-500 uppercase tracking-widest text-[10px] mt-1">Reliability Standard</div>
+        </div>
+        <div class="w-px h-8 bg-white/10"></div>
+        <div class="stat-item text-center px-4">
+          <div class="text-white text-xl font-bold heading-editorial">5★ Rating</div>
+          <div class="text-gray-500 uppercase tracking-widest text-[10px] mt-1">Google Certified</div>
+        </div>
+        <div class="w-px h-8 bg-white/10"></div>
+        <div class="stat-item text-center px-4">
+          <div class="text-white text-xl font-bold heading-editorial">Premium</div>
+          <div class="text-gray-500 uppercase tracking-widest text-[10px] mt-1">Commercial Equipment Only</div>
+        </div>
+        <div class="w-px h-8 bg-white/10"></div>
+        <div class="stat-item text-center px-4">
+          <div class="text-white text-xl font-bold heading-editorial">500+</div>
+          <div class="text-gray-500 uppercase tracking-widest text-[10px] mt-1">Properties Serviced</div>
+        </div>
+        <div class="w-px h-8 bg-white/10"></div>
+        <div class="stat-item text-center px-4">
+          <div class="text-white text-xl font-bold heading-editorial">12 Yrs</div>
+          <div class="text-gray-500 uppercase tracking-widest text-[10px] mt-1">In Operation</div>
+        </div>
+        <div class="w-px h-8 bg-white/10"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SERVICES ══════════════════════════════════════════════════ -->
+  <section id="services" class="py-28 px-6 md:px-12 relative overflow-hidden">
+    <div class="orb orb-2 opacity-60"></div>
+    <div class="max-w-7xl mx-auto space-y-16 relative z-10">
+
+      <div class="max-w-3xl space-y-4 reveal-left">
+        <div class="text-xs font-bold uppercase tracking-widest text-emerald-400">Premium Capabilities</div>
+        <h2 class="heading-editorial text-4xl md:text-6xl text-white font-bold uppercase">Architectural Excellence<br>for Your Turf</h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <div class="md:col-span-2 glass-card service-card rounded-3xl p-8 flex flex-col justify-between min-h-[380px] reveal" style="transition-delay:0.05s">
+          <div class="space-y-4">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-xl text-emerald-400 font-bold service-num">01</div>
+            <h3 class="text-2xl font-bold text-white uppercase heading-editorial">Precision Lawn Sculpting</h3>
+            <p class="text-gray-400 max-w-md text-sm leading-relaxed">
+              Meticulous uniform cut lines scheduled on precise intervals using industrial multi-blade systems to guarantee perfect spatial leveling.
+            </p>
+          </div>
+          <div class="text-xs font-bold uppercase text-emerald-400 tracking-wider pt-6 flex items-center gap-2 group-hover:translate-x-1 transition-transform">
+            Explore Detail <span>→</span>
+          </div>
+        </div>
+
+        <div class="glass-card service-card rounded-3xl p-8 flex flex-col justify-between min-h-[380px] reveal" style="transition-delay:0.12s">
+          <div class="space-y-4">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-xl text-emerald-400 font-bold service-num">02</div>
+            <h3 class="text-2xl font-bold text-white uppercase heading-editorial">Hedge Architecture</h3>
+            <p class="text-gray-400 text-sm leading-relaxed">
+              Sharp geometric edge pruning and formal shaping to create structural botanical containment fields along properties.
+            </p>
+          </div>
+          <div class="text-xs font-bold uppercase text-emerald-400 tracking-wider pt-6 flex items-center gap-2 transition-transform">
+            Explore Detail <span>→</span>
+          </div>
+        </div>
+
+        <div class="glass-card service-card rounded-3xl p-8 flex flex-col justify-between min-h-[340px] reveal" style="transition-delay:0.18s">
+          <div class="space-y-4">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-xl text-emerald-400 font-bold service-num">03</div>
+            <h3 class="text-2xl font-bold text-white uppercase heading-editorial">Mulching & Feeding</h3>
+            <p class="text-gray-400 text-sm leading-relaxed">
+              Premium moisture containment systems combined with systemic compound updates to enrich and frame focal turf layers.
+            </p>
+          </div>
+          <div class="text-xs font-bold uppercase text-emerald-400 tracking-wider pt-6 flex items-center gap-2 transition-transform">
+            Explore Detail <span>→</span>
+          </div>
+        </div>
+
+        <div class="md:col-span-2 glass-card service-card rounded-3xl p-8 flex flex-col justify-between min-h-[340px] reveal" style="transition-delay:0.24s">
+          <div class="space-y-4">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-xl text-emerald-400 font-bold service-num">04</div>
+            <h3 class="text-2xl font-bold text-white uppercase heading-editorial">Seasonal Property Overhauls</h3>
+            <p class="text-gray-400 max-w-md text-sm leading-relaxed">
+              Complete architectural grid sweeps, clearing natural waste and processing layout blockages to restore structural clean slates.
+            </p>
+          </div>
+          <div class="text-xs font-bold uppercase text-emerald-400 tracking-wider pt-6 flex items-center gap-2 transition-transform">
+            Explore Detail <span>→</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="section-line mx-12"></div>
+
+  <!-- ═══ PROCESS ═══════════════════════════════════════════════════ -->
+  <section id="process" class="py-28 px-6 md:px-12 relative overflow-hidden">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+
+      <!-- Sticky heading -->
+      <div class="lg:col-span-4 lg:sticky top-28 space-y-4 reveal-left">
+        <div class="text-xs font-bold uppercase tracking-widest text-emerald-400">Our Protocol</div>
+        <h2 class="heading-editorial text-4xl md:text-5xl text-white font-bold uppercase">Manicured In Three Steps</h2>
+        <p class="text-gray-400 text-sm leading-relaxed max-w-sm">
+          We treat property care as structured project management. No loose cuts, no missed frames.
+        </p>
+        <!-- Decorative vertical bar -->
+        <div class="hidden lg:block w-px h-48 bg-gradient-to-b from-emerald-500/50 to-transparent ml-4 mt-4"></div>
+      </div>
+
+      <!-- Steps -->
+      <div class="lg:col-span-8 space-y-8">
+
+        <div class="glass-card step-card p-8 rounded-3xl flex flex-col sm:flex-row gap-6 items-start reveal" style="transition-delay:0.1s">
+          <div class="w-12 h-12 rounded-full bg-emerald-500 text-neutral-950 font-bold text-lg flex items-center justify-center flex-shrink-0 heading-editorial shadow-lg shadow-emerald-500/20 step-num">01</div>
+          <div class="space-y-2">
+            <h4 class="text-xl font-bold text-white uppercase heading-editorial">Site Analysis &amp; Estimate</h4>
+            <p class="text-gray-400 text-sm leading-relaxed">We audit your property layout footprints, assessing lawn densities, geometric edging risks, and outline specific custom maintenance routines mapping exact pricing configurations.</p>
+          </div>
+        </div>
+
+        <div class="glass-card step-card p-8 rounded-3xl flex flex-col sm:flex-row gap-6 items-start reveal" style="transition-delay:0.2s">
+          <div class="w-12 h-12 rounded-full bg-emerald-500 text-neutral-950 font-bold text-lg flex items-center justify-center flex-shrink-0 heading-editorial shadow-lg shadow-emerald-500/20 step-num">02</div>
+          <div class="space-y-2">
+            <h4 class="text-xl font-bold text-white uppercase heading-editorial">Precision Execution Loop</h4>
+            <p class="text-gray-400 text-sm leading-relaxed">Our specialized engineering units arrive on precise regular schedules. Utilizing verified razor alignments, we sweep your property grids to perfection with no structural compromises.</p>
+          </div>
+        </div>
+
+        <div class="glass-card step-card p-8 rounded-3xl flex flex-col sm:flex-row gap-6 items-start reveal" style="transition-delay:0.3s">
+          <div class="w-12 h-12 rounded-full bg-emerald-500 text-neutral-950 font-bold text-lg flex items-center justify-center flex-shrink-0 heading-editorial shadow-lg shadow-emerald-500/20 step-num">03</div>
+          <div class="space-y-2">
+            <h4 class="text-xl font-bold text-white uppercase heading-editorial">Clean Verification Signature</h4>
+            <p class="text-gray-400 text-sm leading-relaxed">We clean all clipping waste lines off hardscape surfaces, perform a diagnostic edge check, and leave your property looking instantly profile-worthy.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <div class="section-line mx-12"></div>
+
+  <!-- ═══ WHY US ═════════════════════════════════════════════════════ -->
+  <section id="why-us" class="py-28 px-6 md:px-12 relative overflow-hidden">
+    <div class="orb orb-1 opacity-40 top-0 right-0 left-auto"></div>
+    <div class="max-w-7xl mx-auto relative z-10">
+
+      <div class="text-center space-y-4 mb-16 reveal">
+        <div class="text-xs font-bold uppercase tracking-widest text-emerald-400">The Frank's Difference</div>
+        <h2 class="heading-editorial text-4xl md:text-6xl text-white font-bold uppercase">Built Different</h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <div class="glass-card service-card rounded-3xl p-8 text-center space-y-4 reveal-scale" style="transition-delay:0.05s">
+          <div class="text-4xl mb-2">⚡</div>
+          <h3 class="text-lg font-bold text-white uppercase heading-editorial">Same-Day Response</h3>
+          <p class="text-gray-400 text-sm leading-relaxed">Quote requests processed same business day. No waiting, no chasing. Just precision scheduling.</p>
+        </div>
+
+        <div class="glass-card service-card rounded-3xl p-8 text-center space-y-4 reveal-scale" style="transition-delay:0.12s">
+          <div class="text-4xl mb-2">🛡️</div>
+          <h3 class="text-lg font-bold text-white uppercase heading-editorial">Fully Insured</h3>
+          <p class="text-gray-400 text-sm leading-relaxed">Complete liability coverage on every job. Your property is protected from the first blade to the last sweep.</p>
+        </div>
+
+        <div class="glass-card service-card rounded-3xl p-8 text-center space-y-4 reveal-scale" style="transition-delay:0.2s">
+          <div class="text-4xl mb-2">🌱</div>
+          <h3 class="text-lg font-bold text-white uppercase heading-editorial">Eco-Conscious</h3>
+          <p class="text-gray-400 text-sm leading-relaxed">Low-emission equipment and organic treatment options available. Premium results without compromising the environment.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ CONTACT ════════════════════════════════════════════════════ -->
+  <section id="contact" class="py-28 px-6 md:px-12 max-w-4xl mx-auto text-center space-y-12 relative">
+    <div class="space-y-4 reveal">
+      <div class="text-xs font-bold uppercase tracking-widest text-emerald-400">Lock In Architecture Protection</div>
+      <h2 class="heading-editorial text-4xl md:text-7xl text-white font-bold uppercase leading-none">Let's Sculpt Your Turf</h2>
+      <p class="text-gray-400 text-base md:text-lg max-w-xl mx-auto">
+        Input your site details below. Our technical dispatch units will review your grid and render a custom estimate plan.
+      </p>
+    </div>
+
+    <div class="glass-card p-8 md:p-10 rounded-3xl text-left shadow-2xl max-w-2xl mx-auto reveal-scale" style="transition-delay:0.15s">
+      <form class="space-y-6" id="quote-form">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Your Full Name</label>
+            <input type="text" placeholder="Frank Smith" required class="glass-input">
+          </div>
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Phone Number</label>
+            <input type="tel" placeholder="(555) 000-0000" required class="glass-input">
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Property Address</label>
+          <input type="text" placeholder="123 Immaculate Drive, Premium Region" required class="glass-input">
+        </div>
+
+        <div class="space-y-2">
+          <label class="text-xs font-bold text-gray-300 uppercase tracking-wider">Primary Service</label>
+          <select class="glass-select">
+            <option>Full-Scale Recurring Maintenance Sculpting</option>
+            <option>Hedge Architectural Overhaul</option>
+            <option>Seasonal Property Cleanup</option>
+            <option>Other / Structural Landscape Build</option>
+          </select>
+        </div>
+
+        <button type="submit" class="liquid-btn liquid-btn-primary w-full justify-center text-center" id="submit-btn">
+          Process Free Quote Request
+        </button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ═══ FOOTER ════════════════════════════════════════════════════ -->
+  <footer class="bg-neutral-950 border-t border-white/5 py-12 px-6">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-gray-500">
+      <div class="flex items-center gap-2">
+        <div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-[10px]">F</div>
+        <span class="heading-editorial font-bold text-sm tracking-tight text-white uppercase">Frank's Lawn Service</span>
+      </div>
+      <div class="flex flex-wrap justify-center gap-8 text-gray-400">
+        <span>© 2026 Frank's Lawn Service. All Rights Reserved.</span>
+        <a href="#services" class="hover:text-white transition-colors">Privacy Terms</a>
+        <a href="#contact"  class="hover:text-white transition-colors">Site Support</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Mobile bottom CTA -->
+  <div class="fixed bottom-0 left-0 w-full z-50 glass-card border-t border-white/10 p-3 flex sm:hidden items-center gap-3 mobile-bar">
+    <a href="tel:5551234567" class="flex-1 liquid-btn text-center py-3.5 text-xs">Call Dispatch</a>
+    <a href="#contact"       class="flex-1 liquid-btn liquid-btn-primary text-center py-3.5 text-xs">Book Quote</a>
+  </div>
+
+  <!-- ═══ SCRIPTS ═══════════════════════════════════════════════════ -->
+  <script src="https://unpkg.com/gsap@3.12.2/dist/gsap.min.js"></script>
+  <script src="https://unpkg.com/gsap@3.12.2/dist/ScrollTrigger.min.js"></script>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    /* ── NAV SCROLL BEHAVIOUR ─────────────────────────────────── */
+    const navPill = document.getElementById('nav-pill');
+    window.addEventListener('scroll', () => {
+      navPill.classList.toggle('scrolled', window.scrollY > 50);
+    }, { passive: true });
+
+    /* ── SCROLL REVEAL (Intersection Observer) ────────────────── */
+    if (!prefersReducedMotion) {
+      const revealEls = document.querySelectorAll('.reveal, .reveal-left, .reveal-scale');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            e.target.classList.add('visible');
+            observer.unobserve(e.target);
+          }
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+
+      revealEls.forEach(el => observer.observe(el));
+
+      // Immediately fire hero elements (already in view)
+      document.querySelectorAll('#hero .reveal').forEach(el => {
+        setTimeout(() => el.classList.add('visible'), 200);
+      });
+    } else {
+      // Respect reduced motion — show everything immediately
+      document.querySelectorAll('.reveal, .reveal-left, .reveal-scale').forEach(el => {
+        el.style.opacity = '1';
+        el.style.transform = 'none';
+      });
+    }
+
+    /* ── PARALLAX HERO VIDEO ──────────────────────────────────── */
+    if (!prefersReducedMotion) {
+      gsap.to("#hero-video", {
+        yPercent: 18,
+        ease: "none",
+        scrollTrigger: {
+          trigger: "#hero",
+          start: "top top",
+          end: "bottom top",
+          scrub: 1.2
+        }
+      });
+
+      // Orb slow drift parallax
+      gsap.to(".orb-1", {
+        y: -120,
+        ease: "none",
+        scrollTrigger: {
+          trigger: "body",
+          start: "top top",
+          end: "bottom top",
+          scrub: 2
+        }
+      });
+
+      gsap.to(".orb-2", {
+        y: 100,
+        ease: "none",
+        scrollTrigger: {
+          trigger: "#services",
+          start: "top bottom",
+          end: "bottom top",
+          scrub: 2
+        }
+      });
+
+      /* ── HERO TITLE CINEMATIC ENTRANCE ──────────────────────── */
+      gsap.from("#hero-title", {
+        yPercent: 60,
+        opacity: 0,
+        duration: 1.3,
+        delay: 0.1,
+        ease: "power4.out"
+      });
+
+      gsap.from("#hero-subtitle", {
+        y: 28,
+        opacity: 0,
+        duration: 1,
+        delay: 0.35,
+        ease: "power3.out"
+      });
+
+      /* ── SERVICES STAGGER (GSAP ScrollTrigger) ──────────────── */
+      gsap.from(".service-card", {
+        y: 60,
+        opacity: 0,
+        duration: 0.9,
+        stagger: 0.1,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: "#services",
+          start: "top 78%"
+        }
+      });
+
+      /* ── STEP CARDS SLIDE IN ─────────────────────────────────── */
+      gsap.from(".step-card", {
+        x: 60,
+        opacity: 0,
+        duration: 0.85,
+        stagger: 0.15,
+        ease: "power2.out",
+        scrollTrigger: {
+          trigger: "#process",
+          start: "top 75%"
+        }
+      });
+
+      /* ── CONTACT FORM SCALE IN ───────────────────────────────── */
+      gsap.from("#quote-form", {
+        scale: 0.95,
+        opacity: 0,
+        duration: 0.9,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: "#contact",
+          start: "top 78%"
+        }
+      });
+    }
+
+    /* ── LIQUID BUTTON RIPPLE ON CLICK ───────────────────────── */
+    document.querySelectorAll('.liquid-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        const rect = this.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width  * 100).toFixed(1);
+        const y = ((e.clientY - rect.top)  / rect.height * 100).toFixed(1);
+
+        const ripple = document.createElement('span');
+        ripple.style.cssText = `
+          position:absolute;
+          left:${x}%; top:${y}%;
+          width:0; height:0;
+          border-radius:50%;
+          background:rgba(255,255,255,0.18);
+          transform:translate(-50%,-50%);
+          animation:ripple-expand 0.6s ease-out forwards;
+          pointer-events:none;
+        `;
+        this.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 650);
+      });
+    });
+
+    /* ── RIPPLE KEYFRAME (injected) ──────────────────────────── */
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes ripple-expand {
+        to { width: 280px; height: 280px; opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+
+    /* ── FORM SUBMIT ─────────────────────────────────────────── */
+    document.getElementById('quote-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submit-btn');
+      btn.textContent = '✓ Request Submitted';
+      btn.style.background = 'linear-gradient(135deg, #059669, #047857)';
+      btn.disabled = true;
+    });
+
+    /* ── CURSOR MAGNETIC EFFECT ON NAV LINKS ────────────────── */
+    document.querySelectorAll('nav a').forEach(link => {
+      link.addEventListener('mousemove', function(e) {
+        const rect = this.getBoundingClientRect();
+        const cx = rect.left + rect.width  / 2;
+        const cy = rect.top  + rect.height / 2;
+        const dx = (e.clientX - cx) * 0.25;
+        const dy = (e.clientY - cy) * 0.25;
+        this.style.transform = `translate(${dx}px, ${dy}px)`;
+      });
+      link.addEventListener('mouseleave', function() {
+        this.style.transform = '';
+      });
+    });
+  </script>
+</body>
+</html>
