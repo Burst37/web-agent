@@ -48,6 +48,7 @@ import argparse
 import csv
 import json
 import queue
+import re
 import sys
 import threading
 import time
@@ -78,6 +79,29 @@ RESULTS_FIELDNAMES = ["url", "brand", "program", "status", "worker", "error", "t
 
 NO_FORM_MAX_STRIKES = 2
 RETRYABLE_STATUSES = {"failed", "timeout", "navigation_error", "captcha_failed", "captcha_skipped"}
+
+# Min interactive fields that count as "a form is on this page". Below this we
+# hunt for a Sign Up / Create Account link to navigate to the real form --
+# mirrors auto-signup-parallel-FIXED.py's `initial_fields < 2` modal/link hunt,
+# which is the difference between "no form fields found" and a success on the
+# many retail sites that hide signup behind a person-icon or "Sign In" modal.
+MIN_FORM_FIELDS = 2
+MAX_NAV_HOPS = 2  # how many signup-link clicks to chase before giving up
+
+# Cookie/consent banners block interaction; dismiss before scanning for a form.
+CONSENT_PATTERNS = re.compile(
+    r"accept\s+all|accept\s+cookies|allow\s+all|i\s+accept|i\s+agree|\bagree\b|"
+    r"got\s+it|allow\s+cookies",
+    re.IGNORECASE,
+)
+
+# Links/buttons that lead from a landing page TO the signup form.
+SIGNUP_LINK_PATTERNS = re.compile(
+    r"create\s+(an\s+)?account|sign\s*up|register|join(\s+(now|free))?|"
+    r"become\s+a\s+member|enroll|get\s+started|create\s+profile|new\s+customer|"
+    r"new\s+user|don'?t\s+have\s+an\s+account|not\s+a\s+member|sign\s*in|log\s*in",
+    re.IGNORECASE,
+)
 
 _progress_lock = threading.Lock()
 _results_lock = threading.Lock()
@@ -221,6 +245,64 @@ def find_submit_ref(client: CamofoxClient, tab_id: str, user_id: str) -> str | N
     return None
 
 
+def count_form_fields(items: list) -> int:
+    return sum(1 for it in items if it.role in INTERACTIVE_ROLES and match_field(it.label))
+
+
+def dismiss_cookie_banner(client: CamofoxClient, tab_id: str, user_id: str, log) -> None:
+    """Click the first consent/accept control so it stops covering the form."""
+    try:
+        items = parse_snapshot(client.snapshot(tab_id, user_id).get("snapshot", ""))
+    except CamofoxError:
+        return
+    for item in items:
+        if item.role in ("button", "link") and CONSENT_PATTERNS.search(item.label):
+            try:
+                client.click(tab_id, user_id, ref=item.ref)
+                client.wait(tab_id, user_id, timeout_ms=800)
+                log(f"  dismissed consent banner: '{item.label}'")
+            except CamofoxError:
+                pass
+            return
+
+
+def navigate_to_form(client: CamofoxClient, tab_id: str, user_id: str, worker: int, log) -> int:
+    """If the landing page has too few form fields, click a Sign Up / Create
+    Account / Sign In link to reach the real signup form. Returns the field
+    count once a form is found (or the best count after MAX_NAV_HOPS)."""
+    items = parse_snapshot(client.snapshot(tab_id, user_id).get("snapshot", ""))
+    fields = count_form_fields(items)
+    if fields >= MIN_FORM_FIELDS:
+        return fields
+
+    tried: set[str] = set()
+    for _ in range(MAX_NAV_HOPS):
+        target = None
+        for item in items:
+            if item.role not in ("button", "link") or item.ref in tried:
+                continue
+            # Never click a submit-looking control during navigation -- only
+            # links that take us to a registration form.
+            if SIGNUP_LINK_PATTERNS.search(item.label) and not SUBMIT_PATTERNS.search(item.label) \
+                    or re.search(r"create\s+(an\s+)?account|sign\s*up|register|join", item.label, re.IGNORECASE):
+                target = item
+                break
+        if not target:
+            break
+        tried.add(target.ref)
+        log(f"  [W{worker}] hop -> clicking '{target.label}' ({target.ref}) to reach form")
+        try:
+            client.click(tab_id, user_id, ref=target.ref)
+            client.wait(tab_id, user_id, timeout_ms=2500)
+        except CamofoxError:
+            pass
+        items = parse_snapshot(client.snapshot(tab_id, user_id).get("snapshot", ""))
+        fields = count_form_fields(items)
+        if fields >= MIN_FORM_FIELDS:
+            return fields
+    return fields
+
+
 def snapshot_has_captcha(client: CamofoxClient, tab_id: str, user_id: str) -> bool:
     snap = client.snapshot(tab_id, user_id)
     return bool(CAPTCHA_PATTERNS.search(snap.get("snapshot", "")))
@@ -256,6 +338,11 @@ def process_entry(client: CamofoxClient, row: dict, flat_cfg: dict, worker: int,
             client.wait(tab_id, user_id, timeout_ms=3000)
         except CamofoxError:
             pass
+
+        # Clear consent banners, then chase a Sign Up / Create Account link if
+        # the landing page has too few fields to be the actual signup form.
+        dismiss_cookie_banner(client, tab_id, user_id, log)
+        navigate_to_form(client, tab_id, user_id, worker, log)
 
         filled = fill_form(client, tab_id, user_id, flat_cfg, log)
         log(f"  [W{worker}] filled {filled} field(s) -- {brand}")
