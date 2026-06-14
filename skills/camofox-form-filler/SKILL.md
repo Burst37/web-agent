@@ -226,6 +226,8 @@ user's cookies/localStorage across runs
 | `camofox_client.py` | Thin Python REST client for camofox-browser (tabs, snapshot, click, type, navigate, cookies) |
 | `auto_signup_camofox.py` | Single-process signup runner + shared helpers (`FIELD_PATTERNS`, `flat_config`, smart-queue/dead-URL helpers) reused by the parallel engine |
 | `auto_signup_camofox_parallel.py` | Multi-worker engine matching LoyaltyBot_V3's `auto-signup-parallel-FIXED.py` CLI/file contract (nested config, 7-column results CSV, `progress_<id>.json`, `dead-urls.json`) — drop-in replacement for `do_launch()` |
+| `loyaltybot_server.patched.py` | Reference patch of LoyaltyBot_V3's `loyaltybot_server.py` with a per-client `"engine": "camofox"\|"playwright"` toggle wired into `do_launch()` (client name defaults scrubbed). Diff against your local copy or drop in. |
+| `program.md` | Karpathy-autoresearch fixed-budget A/B loop to measure success_rate per engine/config change |
 | `requirements.txt` | Python deps (`requests`) |
 
 ## Trigger This Skill When
