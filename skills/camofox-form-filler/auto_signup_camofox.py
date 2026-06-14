@@ -53,19 +53,33 @@ from pathlib import Path
 from camofox_client import CamofoxClient, CamofoxError, parse_snapshot
 
 # Ordered: more specific patterns first so "confirm password" doesn't match
-# "password" generically before its own rule gets a chance.
+# "password" generically before its own rule gets a chance, and "confirm
+# email" doesn't match "email" before its own rule gets a chance.
+# Field keys mirror the flattened config schema produced by flat_config(),
+# including the employment/education/SSN fields used by LoyaltyBot_V3's
+# richer client profiles (loan/credit/job-board style signup forms).
 FIELD_PATTERNS: list[tuple[str, str]] = [
     (r"confirm.*password|verify.*password|re-?type.*password|repeat.*password", "password"),
     (r"\bpassword\b", "password"),
+    (r"confirm.*e-?\s*mail|verify.*e-?\s*mail|re-?enter.*e-?\s*mail", "email"),
+    (r"e-?\s*mail", "email"),
+    (r"user\s*name|\busername\b", "username"),
     (r"first\s*name|given\s*name|\bfname\b", "first_name"),
     (r"last\s*name|surname|family\s*name|\blname\b", "last_name"),
-    (r"e-?\s*mail", "email"),
+    (r"full\s*name|your\s*name", "full_name"),
+    (r"work\s*phone|business\s*phone|employer\s*phone", "employment.employer_phone"),
     (r"phone|mobile|cell", "phone"),
     (r"date\s*of\s*birth|birth\s*date|\bdob\b|birthday", "date_of_birth"),
+    (r"\bssn\b|social\s*security|tax\s*id", "ssn"),
     (r"zip|postal", "address.zip"),
     (r"street|address\s*(line\s*1|1)?\b", "address.street"),
     (r"\bcity|town\b", "address.city"),
     (r"\bstate|province\b", "address.state"),
+    (r"employer|company\s*name|organization", "employment.employer"),
+    (r"job\s*title|occupation|position", "employment.job_title"),
+    (r"income|salary", "employment.annual_income"),
+    (r"college|university|school", "education.college"),
+    (r"degree|education\s*level", "education.degree"),
 ]
 
 SUBMIT_PATTERNS = re.compile(
@@ -93,11 +107,20 @@ def load_config(path: Path) -> dict:
 
 
 def flat_config(config: dict) -> dict:
-    """Flatten config.json into the dotted keys used by FIELD_PATTERNS."""
+    """Flatten config.json into the dotted keys used by FIELD_PATTERNS.
+
+    LoyaltyBot_V3 configs nest `address`, `employment`, and `education` but
+    also duplicate those fields at the top level for legacy scripts -- the
+    top-level (non-dict) values win, and the nested dicts fill in anything
+    missing under `<section>.<field>` dotted keys.
+    """
     flat = {k: v for k, v in config.items() if not isinstance(v, dict)}
-    address = config.get("address", {})
-    for k, v in address.items():
-        flat[f"address.{k}"] = v
+    for section in ("address", "employment", "education"):
+        for k, v in config.get(section, {}).items():
+            flat.setdefault(f"{section}.{k}", v)
+            flat.setdefault(k, v)
+    if "full_name" not in flat and flat.get("first_name") and flat.get("last_name"):
+        flat["full_name"] = f"{flat['first_name']} {flat['last_name']}"
     return flat
 
 
@@ -118,6 +141,7 @@ def load_programs(csv_path: Path) -> list[dict]:
         "url": "url",
         "auto_signup_feasible": "feasible",
         "feasible": "feasible",
+        "barriers": "barriers",
     }
 
     rows = []
@@ -137,6 +161,87 @@ def is_feasible(row: dict) -> bool:
     return row.get("feasible", "").strip().lower() in ("yes", "y", "true", "1")
 
 
+# ── SMART QUEUE — barrier-based priority (mirrors auto-signup-parallel-FIXED.py) ──
+BARRIER_PRIORITY = {
+    "none noted": 0,
+    "": 0,
+    "payment required": 90,
+    "ssn required; soft pull only": 80,
+    "ssn required; soft pull": 80,
+    "ssn and income info required": 85,
+    "financing application required": 90,
+    "in-store signup only": 99,
+    "income verification required": 85,
+    "rent-to-own application required": 90,
+}
+
+
+def get_priority(barriers: str) -> int:
+    b = (barriers or "").strip().lower()
+    if b in BARRIER_PRIORITY:
+        return BARRIER_PRIORITY[b]
+    if "captcha" in b:
+        return 70
+    if "ssn" in b:
+        return 80
+    if "payment" in b or "pay" in b:
+        return 90
+    if "in-store" in b or "in store" in b:
+        return 99
+    return 10
+
+
+def sort_by_priority(rows: list[dict]) -> list[dict]:
+    """Easy (no-barrier) sites first, CAPTCHA/SSN/payment/in-store sites last."""
+    return sorted(rows, key=lambda r: get_priority(r.get("barriers", "")))
+
+
+# ── DEAD-URL / NO-FORM STRIKE TRACKING ──────────────────────────────────────
+# Same 3-strike (overall) / 2-strike (no-form-in-session) retirement rules as
+# auto-signup-parallel-FIXED.py, so a camofox run and a Playwright run share
+# the same dead-urls.json and don't keep re-trying permanently broken sites.
+MAX_STRIKES = 3
+NO_FORM_MAX_STRIKES = 2
+
+
+def load_dead_urls(path: Path) -> set[str]:
+    if path.exists():
+        try:
+            return set(json.loads(path.read_text(encoding="utf-8")).get("urls", []))
+        except Exception:
+            return set()
+    return set()
+
+
+def save_dead_urls(path: Path, dead_urls: set[str]) -> None:
+    path.write_text(json.dumps({"urls": sorted(dead_urls)}, indent=2), encoding="utf-8")
+
+
+def retire_repeated_failures(results_path: Path, dead_urls: set[str]) -> set[str]:
+    """Scan a results CSV and add URLs with >= MAX_STRIKES failures and 0
+    successes to `dead_urls`. Returns the (possibly expanded) set."""
+    if not results_path.exists():
+        return dead_urls
+    from collections import defaultdict
+
+    url_stats = defaultdict(lambda: {"failures": 0, "successes": 0})
+    with open(results_path, newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            url = (row.get("url") or "").strip()
+            status = (row.get("status") or "").strip()
+            if not url:
+                continue
+            if status == "success":
+                url_stats[url]["successes"] += 1
+            elif status in ("failed", "timeout", "navigation_error", "captcha_failed", "captcha_skipped"):
+                url_stats[url]["failures"] += 1
+
+    for url, stats in url_stats.items():
+        if stats["failures"] >= MAX_STRIKES and stats["successes"] == 0:
+            dead_urls.add(url)
+    return dead_urls
+
+
 def match_field(label: str) -> str | None:
     for pattern, field in FIELD_PATTERNS:
         if re.search(pattern, label, re.IGNORECASE):
@@ -145,7 +250,12 @@ def match_field(label: str) -> str | None:
 
 
 def get_value(flat_cfg: dict, field: str) -> str | None:
-    return flat_cfg.get(field)
+    value = flat_cfg.get(field)
+    if value:
+        return value
+    if field == "employment.annual_income":
+        return flat_cfg.get("employment.monthly_income") or flat_cfg.get("monthly_income")
+    return None
 
 
 def fill_form(client: CamofoxClient, tab_id: str, user_id: str, flat_cfg: dict, log) -> int:

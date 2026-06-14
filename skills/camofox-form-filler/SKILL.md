@@ -128,6 +128,69 @@ timestamp` columns the dashboard already reads — `status` is one of
 5. A submit button is located by label (`sign up|create account|register|
    join|enroll|continue|submit`) and clicked, unless `--dry-run`.
 
+## Drop-in engine for LoyaltyBot_V3 (parallel + dashboard)
+
+LoyaltyBot_V3's real architecture is bigger than a single-process script:
+`loyaltybot_server.py` runs a local dashboard server (port 8765) and spawns
+`auto-signup-parallel-FIXED.py` per client with `--workers N --config
+config_<id>.json --progress progress_<id>.json --results
+signup-results_<id>.csv [--dry-run] [--limit N]`. That script is async,
+multi-worker Playwright + ~250 lines of hand-rolled `STEALTH_JS` (patching
+`navigator.webdriver`, WebGL, plugins, etc.) plus optional CapSolver
+auto-CAPTCHA-solving.
+
+`auto_signup_camofox_parallel.py` in this skill is a drop-in alternate
+**engine** with the *same* CLI flags and the *same* file contract, so
+`loyaltybot_server.py`'s `do_launch()` can spawn it instead with no other
+changes:
+
+- **Config**: reads the real nested `config_<id>.json` schema
+  (`address{}`, `employment{}`, `education{}`, `ssn`, `capsolver_api_key`,
+  etc.) via `flat_config()`, which flattens nested sections into dotted keys
+  (`employment.employer`, `education.college`, ...) and also derives
+  `full_name` from `first_name`/`last_name`.
+- **CSV**: reads `loyalty-rewards-MASTER.csv` including the `Barriers`
+  column and reproduces the same smart queue (`sort_by_priority` /
+  `get_priority` — no-barrier sites first, SSN/payment/in-store-only sites
+  last).
+- **Results**: writes the real 7-column schema
+  `url,brand,program,status,worker,error,timestamp` (not the simplified
+  5-column one `auto_signup_camofox.py` uses).
+- **Progress**: writes `progress_<id>.json` with the same
+  `{running, start_time, stats{total,processed,success,failed,captcha,
+  skipped}, current_workers[], log[], eta_seconds}` shape the dashboard
+  already polls.
+- **Dead URLs**: shares `dead-urls.json` with the Playwright engine — same
+  3-strike (overall failure) and 2-strike (no-form-fields-in-session)
+  retirement rules, via `load_dead_urls` / `retire_repeated_failures` /
+  `check_no_form_strike`.
+- **Workers**: `--workers N` spawns N threads, each with its own
+  `CamofoxClient`; per-brand session persistence (`userId =
+  loyaltybot-<slugified-brand>`) means concurrent workers never collide on
+  the same camofox profile.
+- **Retry**: `--retry` re-processes only URLs whose last status was
+  `failed`/`timeout`/`navigation_error`/`captcha_failed`/`captcha_skipped`.
+
+To wire it in, change the `do_launch()` subprocess command in
+`loyaltybot_server.py` from `auto-signup-parallel-FIXED.py` to
+`auto_signup_camofox_parallel.py` (keep the same `--workers/--config
+--progress --results [--dry-run] [--limit]` args you already build) —
+ideally behind a per-client `"engine": "camofox" | "playwright"` flag in
+`config_<id>.json` so you can A/B the two engines per brand and compare
+`signup-results_<id>.csv` success rates directly.
+
+### CapSolver caveat
+
+camofox-browser's REST API has no generic JS-eval endpoint, so this engine
+**cannot** auto-inject CapSolver tokens the way `auto-signup-parallel-FIXED.py`
+does. In practice this matters less than it sounds: most of the production
+failures (≈88% of 511 processed rows in one real run) were `"no form fields
+found"` or 60-second timeouts — i.e. Playwright/Chromium getting
+blocked/blank-paged before a CAPTCHA was ever served — which is exactly what
+Camoufox's fingerprint spoofing targets. Any CAPTCHA that *does* render still
+falls back to the noVNC manual-solve flow (`ENABLE_VNC=1`), same as
+`auto_signup_camofox.py`.
+
 ## Per-brand session persistence
 
 Each row uses `userId = loyaltybot-<slugified-brand>`. camofox persists that
@@ -161,7 +224,8 @@ user's cookies/localStorage across runs
 | File | Purpose |
 |---|---|
 | `camofox_client.py` | Thin Python REST client for camofox-browser (tabs, snapshot, click, type, navigate, cookies) |
-| `auto_signup_camofox.py` | Drop-in signup runner: reads `config.json` + `loyalty-rewards-MASTER.csv`, writes `signup-results-camofox.csv` |
+| `auto_signup_camofox.py` | Single-process signup runner + shared helpers (`FIELD_PATTERNS`, `flat_config`, smart-queue/dead-URL helpers) reused by the parallel engine |
+| `auto_signup_camofox_parallel.py` | Multi-worker engine matching LoyaltyBot_V3's `auto-signup-parallel-FIXED.py` CLI/file contract (nested config, 7-column results CSV, `progress_<id>.json`, `dead-urls.json`) — drop-in replacement for `do_launch()` |
 | `requirements.txt` | Python deps (`requests`) |
 
 ## Trigger This Skill When
