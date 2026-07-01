@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AUTHORITEES — Wear The Truth</title>
+<meta name="description" content="Authoritees — Black history and civil-rights screenprint apparel. Wear the truth.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c1c1c; --paper:#f4f1ea; --pure:#fff; --accent:#c8462b;
+  --gold:#c79a3a; --ease:cubic-bezier(.16,1,.3,1); --ease2:cubic-bezier(.4,0,.22,1);
+  --gutter:clamp(1.2rem,4vw,4rem); --maxw:1600px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+body{
+  font-family:"Bricolage Grotesque",system-ui,sans-serif;
+  background:var(--paper); color:var(--ink); overflow-x:hidden;
+  line-height:1.15; letter-spacing:-.01em;
+}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
+::selection{background:var(--ink);color:var(--paper)}
+
+/* ---------- scroll progress ---------- */
+#progress{position:fixed;top:0;left:0;height:3px;width:0;background:var(--accent);z-index:9999;transition:width .1s linear}
+
+/* ---------- top bar ---------- */
+header.nav{position:fixed;top:0;left:0;right:0;z-index:900;display:flex;align-items:center;justify-content:space-between;padding:1.1rem var(--gutter);mix-blend-mode:difference;color:#fff}
+.nav .brand{font-weight:800;font-size:1.15rem;letter-spacing:-.03em}
+.nav .links{display:flex;gap:1.6rem;font-size:.82rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.nav .links a{opacity:.85;transition:opacity .2s}
+.nav .links a:hover{opacity:1}
+@media(max-width:640px){.nav .links{display:none}}
+
+/* ---------- HERO ---------- */
+.hero{position:relative;min-height:100svh;display:flex;flex-direction:column;justify-content:center;padding:0 var(--gutter);background:var(--ink);color:var(--paper);overflow:hidden}
+.hero__bg{position:absolute;inset:0;z-index:0;opacity:.22;background-size:cover;background-position:center;filter:grayscale(.2) contrast(1.05);will-change:transform}
+.hero__grad{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(28,28,28,.6),rgba(28,28,28,.2) 40%,var(--ink))}
+.hero__inner{position:relative;z-index:2;max-width:var(--maxw);margin:0 auto;width:100%}
+.hero__eyebrow{display:flex;align-items:center;gap:.8rem;font-size:.78rem;font-weight:600;letter-spacing:.28em;text-transform:uppercase;opacity:.8;margin-bottom:1.4rem}
+.hero__eyebrow::before{content:"";width:44px;height:1px;background:var(--accent)}
+.hero h1{font-weight:800;letter-spacing:-.045em;line-height:.9;font-size:clamp(3.2rem,12vw,11rem);text-transform:uppercase}
+.hero h1 .ln{display:block;overflow:hidden}
+.hero h1 .ln span{display:block;transform:translateY(105%);transition:transform 1s var(--ease)}
+.hero h1 .ln:nth-child(1) span{transition-delay:.05s}
+.hero h1 .ln:nth-child(2) span{transition-delay:.15s;color:var(--accent)}
+.hero h1 .ln:nth-child(3) span{transition-delay:.25s}
+.hero.in h1 .ln span{transform:translateY(0)}
+.hero__sub{margin-top:1.8rem;max-width:46ch;font-size:clamp(1rem,1.6vw,1.28rem);line-height:1.4;opacity:0;transform:translateY(20px);transition:.9s var(--ease) .5s}
+.hero.in .hero__sub{opacity:.9;transform:none}
+.hero__cta{margin-top:2.4rem;display:flex;gap:1rem;flex-wrap:wrap;opacity:0;transform:translateY(20px);transition:.9s var(--ease) .65s}
+.hero.in .hero__cta{opacity:1;transform:none}
+.btn{display:inline-flex;align-items:center;gap:.6rem;padding:1rem 1.8rem;font-weight:700;font-size:.9rem;letter-spacing:.02em;text-transform:uppercase;border:1.5px solid var(--paper);transition:.35s var(--ease)}
+.btn--fill{background:var(--paper);color:var(--ink)}
+.btn--fill:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn--ghost:hover{background:var(--paper);color:var(--ink)}
+.hero__scroll{position:absolute;bottom:1.6rem;left:50%;transform:translateX(-50%);z-index:2;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;opacity:.6;display:flex;flex-direction:column;align-items:center;gap:.5rem}
+.hero__scroll::after{content:"";width:1px;height:38px;background:linear-gradient(var(--paper),transparent);animation:sc 1.8s var(--ease) infinite}
+@keyframes sc{0%{transform:scaleY(0);transform-origin:top}45%{transform:scaleY(1);transform-origin:top}55%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+
+/* ---------- marquee ---------- */
+.marquee{background:var(--accent);color:#fff;padding:1.05rem 0;overflow:hidden;white-space:nowrap;border-top:1px solid rgba(255,255,255,.15);border-bottom:1px solid rgba(0,0,0,.1)}
+.marquee__track{display:inline-block;animation:mq 32s linear infinite;font-weight:800;text-transform:uppercase;letter-spacing:-.02em;font-size:1.5rem}
+.marquee__track span{margin:0 1.4rem;opacity:.55}
+.marquee__track b{margin:0 1.4rem}
+@keyframes mq{to{transform:translateX(-50%)}}
+
+/* ---------- section frame ---------- */
+section{padding:clamp(4rem,9vh,7rem) var(--gutter)}
+.wrap{max-width:var(--maxw);margin:0 auto}
+.sec-head{display:flex;align-items:flex-end;justify-content:space-between;gap:2rem;margin-bottom:2.6rem;flex-wrap:wrap}
+.sec-head h2{font-size:clamp(2rem,5.5vw,4.4rem);font-weight:800;letter-spacing:-.04em;text-transform:uppercase;line-height:.92}
+.sec-head p{max-width:34ch;opacity:.7;font-size:1rem;line-height:1.4}
+.kicker{font-size:.75rem;font-weight:700;letter-spacing:.26em;text-transform:uppercase;color:var(--accent);margin-bottom:.9rem}
+
+/* ---------- reveal utility (base visible) ---------- */
+.rv{opacity:1;transform:none}
+@media(prefers-reduced-motion:no-preference){
+  .js .rv{opacity:0;transform:translateY(38px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+  .js .rv.in{opacity:1;transform:none}
+  .js .rv.d1{transition-delay:.08s}.js .rv.d2{transition-delay:.16s}.js .rv.d3{transition-delay:.24s}
+}
+
+/* ---------- DETAIL split-view ---------- */
+.showcase{background:var(--ink);color:var(--paper)}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:clamp(1.5rem,4vw,4rem);align-items:center;min-height:70vh}
+@media(max-width:900px){.split{grid-template-columns:1fr;min-height:auto}}
+.split__copy{position:relative}
+.split__copy .idx{font-size:.8rem;font-weight:700;letter-spacing:.2em;color:var(--gold);margin-bottom:1.1rem;opacity:0;transform:translateX(-30px);transition:.6s var(--ease)}
+.split__copy .title{font-size:clamp(1.9rem,4vw,3.4rem);font-weight:800;letter-spacing:-.035em;line-height:1;text-transform:uppercase;margin-bottom:1.3rem}
+.split__copy .title .w{display:inline-block;overflow:hidden;vertical-align:top}
+.split__copy .title .w span{display:inline-block;transform:translateY(110%);transition:transform .7s var(--ease)}
+.split__copy .price{font-size:1.5rem;font-weight:700;margin-bottom:1.6rem;color:var(--paper);opacity:0;transform:translateX(-30px);transition:.6s var(--ease) .15s}
+.split__copy .desc{max-width:42ch;line-height:1.5;opacity:0;transform:translateX(-30px);transition:.6s var(--ease) .2s;margin-bottom:2rem;color:rgba(244,241,234,.75)}
+.split__copy .order{opacity:0;transform:translateX(-30px);transition:.6s var(--ease) .28s;display:flex;gap:1rem;flex-wrap:wrap}
+.split.in .idx,.split.in .price,.split.in .desc,.split.in .order{opacity:1;transform:none}
+.split.in .title .w span{transform:translateY(0)}
+.split__media{position:relative;aspect-ratio:1;background:var(--paper);overflow:hidden}
+.split__media img{width:100%;height:100%;object-fit:cover;transform:scale(1.12);opacity:0;transition:transform 1.1s var(--ease),opacity .8s var(--ease)}
+.split.in .split__media img{transform:scale(1);opacity:1}
+.split__media::after{content:"";position:absolute;inset:0;background:var(--ink);transform-origin:right;transition:transform .8s var(--ease2)}
+.split.in .split__media::after{transform:scaleX(0)}
+
+/* ---------- product rail ---------- */
+.rail-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1.6rem;gap:1rem;flex-wrap:wrap}
+.rail-head .count{font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;opacity:.55;font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:clamp(.8rem,1.6vw,1.4rem)}
+.card{position:relative;cursor:pointer;background:var(--pure);overflow:hidden;border:1px solid rgba(28,28,28,.08);transition:transform .5s var(--ease),box-shadow .5s var(--ease)}
+.card:hover{transform:translateY(-6px);box-shadow:0 24px 50px -24px rgba(28,28,28,.45)}
+.card__img{position:relative;aspect-ratio:1;overflow:hidden;background:var(--paper)}
+.card__img img{width:100%;height:100%;object-fit:cover;transition:transform .8s var(--ease)}
+.card:hover .card__img img{transform:scale(1.06)}
+.card__view{position:absolute;inset:auto 0 0 0;background:var(--ink);color:var(--paper);padding:.7rem;text-align:center;font-size:.72rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;transform:translateY(100%);transition:transform .4s var(--ease)}
+.card:hover .card__view{transform:translateY(0)}
+.card__body{padding:.9rem 1rem 1.1rem}
+.card__ttl{font-size:.86rem;font-weight:700;line-height:1.15;letter-spacing:-.01em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.1em}
+.card__price{margin-top:.5rem;font-size:.9rem;font-weight:700;color:var(--accent)}
+
+/* ---------- LIGHTBOX / detail overlay ---------- */
+.lb{position:fixed;inset:0;z-index:1000;display:grid;grid-template-columns:1fr 1fr;background:var(--ink);color:var(--paper);opacity:0;pointer-events:none;transition:opacity .5s var(--ease)}
+.lb.open{opacity:1;pointer-events:auto}
+@media(max-width:900px){.lb{grid-template-columns:1fr;grid-template-rows:auto 1fr;overflow-y:auto}}
+.lb__media{position:relative;background:var(--paper);overflow:hidden;order:2}
+@media(max-width:900px){.lb__media{order:1;aspect-ratio:1}}
+.lb__media img{width:100%;height:100%;object-fit:cover;transform:translateX(60px) scale(1.08);opacity:0;transition:transform .8s var(--ease) .1s,opacity .7s var(--ease) .1s}
+.lb.open .lb__media img{transform:none;opacity:1}
+.lb__copy{order:1;display:flex;flex-direction:column;justify-content:center;padding:clamp(2rem,6vw,6rem);position:relative}
+@media(max-width:900px){.lb__copy{order:2;padding:2rem var(--gutter) 3rem}}
+.lb__idx{font-size:.78rem;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);margin-bottom:1.2rem;opacity:0;transform:translateY(20px);transition:.6s var(--ease) .2s}
+.lb__ttl{font-size:clamp(2rem,4.4vw,4rem);font-weight:800;letter-spacing:-.04em;line-height:.95;text-transform:uppercase;margin-bottom:1.4rem;opacity:0;transform:translateY(28px);transition:.7s var(--ease) .28s}
+.lb__price{font-size:1.7rem;font-weight:700;margin-bottom:1.6rem;opacity:0;transform:translateY(20px);transition:.6s var(--ease) .36s}
+.lb__desc{max-width:44ch;line-height:1.55;color:rgba(244,241,234,.72);margin-bottom:2.2rem;opacity:0;transform:translateY(20px);transition:.6s var(--ease) .44s}
+.lb__actions{display:flex;gap:1rem;flex-wrap:wrap;opacity:0;transform:translateY(20px);transition:.6s var(--ease) .52s}
+.lb.open .lb__idx,.lb.open .lb__ttl,.lb.open .lb__price,.lb.open .lb__desc,.lb.open .lb__actions{opacity:1;transform:none}
+.lb__close{position:absolute;top:1.4rem;right:1.6rem;z-index:5;width:46px;height:46px;border:1.5px solid rgba(244,241,234,.4);background:transparent;color:var(--paper);cursor:pointer;font-size:1.2rem;transition:.3s var(--ease)}
+.lb__close:hover{background:var(--paper);color:var(--ink)}
+
+/* ---------- statement / manifesto ---------- */
+.manifesto{background:var(--paper)}
+.manifesto p{font-size:clamp(1.8rem,4.5vw,3.6rem);font-weight:600;letter-spacing:-.03em;line-height:1.08;max-width:20ch}
+.manifesto .word{display:inline-block;opacity:.18;transition:opacity .4s var(--ease)}
+.manifesto .word.lit{opacity:1}
+.manifesto em{font-style:normal;color:var(--accent)}
+
+/* ---------- footer ---------- */
+footer{background:var(--ink);color:var(--paper);padding:clamp(3rem,7vh,6rem) var(--gutter) 2.4rem}
+.foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:2rem;max-width:var(--maxw);margin:0 auto}
+@media(max-width:760px){.foot-grid{grid-template-columns:1fr 1fr}}
+.foot-grid h3{font-size:clamp(2.4rem,7vw,5rem);font-weight:800;letter-spacing:-.045em;text-transform:uppercase;line-height:.9;grid-column:1/-1;margin-bottom:1.5rem}
+.foot-col h4{font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;opacity:.5;margin-bottom:1rem}
+.foot-col a{display:block;padding:.35rem 0;opacity:.85;font-size:.95rem;transition:.25s var(--ease)}
+.foot-col a:hover{opacity:1;color:var(--accent);transform:translateX(4px)}
+.foot-bottom{max-width:var(--maxw);margin:2.6rem auto 0;padding-top:1.6rem;border-top:1px solid rgba(244,241,234,.14);display:flex;justify-content:space-between;font-size:.8rem;opacity:.6;flex-wrap:wrap;gap:1rem}
+
+/* magnetic */
+.mag{transition:transform .3s var(--ease)}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+
+<header class="nav">
+  <a class="brand" href="https://authoritees.com">AUTHORITEES</a>
+  <nav class="links">
+    <a href="#shop">Shop</a>
+    <a href="#featured">Featured</a>
+    <a href="#story">Story</a>
+    <a href="https://authoritees.com" target="_blank" rel="noopener">Store ↗</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero" id="top">
+  <div class="hero__bg" id="heroBg"></div>
+  <div class="hero__grad"></div>
+  <div class="hero__inner">
+    <div class="hero__eyebrow">Black History · Civil Rights · Screenprint</div>
+    <h1>
+      <span class="ln"><span>Wear</span></span>
+      <span class="ln"><span>The</span></span>
+      <span class="ln"><span>Truth</span></span>
+    </h1>
+    <p class="hero__sub">Authoritees puts the movement on your back — bold statements, real history, and unapologetic design pressed onto every thread.</p>
+    <div class="hero__cta">
+      <a class="btn btn--fill mag" href="#shop">Shop The Collection</a>
+      <a class="btn btn--ghost mag" href="#story">Our Story</a>
+    </div>
+  </div>
+  <div class="hero__scroll">Scroll</div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee" aria-hidden="true">
+  <div class="marquee__track" id="mq">
+    <b>WEAR THE TRUTH</b><span>✶</span><b>KNOW YOUR HISTORY</b><span>✶</span><b>UNAPOLOGETIC</b><span>✶</span><b>101 DESIGNS</b><span>✶</span>
+    <b>WEAR THE TRUTH</b><span>✶</span><b>KNOW YOUR HISTORY</b><span>✶</span><b>UNAPOLOGETIC</b><span>✶</span><b>101 DESIGNS</b><span>✶</span>
+  </div>
+</div>
+
+<!-- FEATURED SPLIT SHOWCASE -->
+<section class="showcase" id="featured">
+  <div class="wrap">
+    <div class="kicker rv">Featured Drop</div>
+    <div class="sec-head rv">
+      <h2>The Statement<br>Pieces</h2>
+      <p>Hand-picked designs that speak the loudest. Click any product below to open it full-screen.</p>
+    </div>
+    <div id="featuredSplits"></div>
+  </div>
+</section>
+
+<!-- SHOP GRID -->
+<section id="shop">
+  <div class="wrap">
+    <div class="kicker rv">The Full Catalog</div>
+    <div class="rail-head rv">
+      <div class="sec-head" style="margin:0">
+        <h2>Shop All</h2>
+      </div>
+      <div class="count" id="shopCount"></div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+</section>
+
+<!-- MANIFESTO -->
+<section class="manifesto" id="story">
+  <div class="wrap">
+    <div class="kicker rv">Why We Print</div>
+    <p id="manifestoText">Every shirt is a <em>protest</em>, a <em>lesson</em>, and a <em>tribute</em> — the movement, worn out loud.</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-grid">
+    <h3>Wear<br>The Truth.</h3>
+    <div class="foot-col">
+      <h4>Shop</h4>
+      <a href="#shop">All Products</a>
+      <a href="#featured">Featured</a>
+      <a href="https://authoritees.com" target="_blank" rel="noopener">Full Store ↗</a>
+    </div>
+    <div class="foot-col">
+      <h4>Authoritees</h4>
+      <a href="#story">Our Story</a>
+      <a href="https://authoritees.com" target="_blank" rel="noopener">authoritees.com ↗</a>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    <span>© <span id="yr"></span> Authoritees. All rights reserved.</span>
+    <span>Wear the truth.</span>
+  </div>
+</footer>
+
+<!-- LIGHTBOX -->
+<div class="lb" id="lb" role="dialog" aria-modal="true">
+  <button class="lb__close" id="lbClose" aria-label="Close">✕</button>
+  <div class="lb__copy">
+    <div class="lb__idx" id="lbIdx"></div>
+    <h2 class="lb__ttl" id="lbTtl"></h2>
+    <div class="lb__price" id="lbPrice"></div>
+    <p class="lb__desc" id="lbDesc"></p>
+    <div class="lb__actions">
+      <a class="btn btn--fill mag" id="lbOrder" target="_blank" rel="noopener">Order Now ↗</a>
+      <button class="btn btn--ghost mag" id="lbNext">Next Design →</button>
+    </div>
+  </div>
+  <div class="lb__media"><img id="lbImg" alt=""></div>
+</div>
+
+<script>
+const PRODUCTS = [{"t": "I DIDN’T CHOOSE TO BE BLACK I JUST GOT BLESSED", "img": "https://assets.bigcartel.com/product_images/426729051/CE2DA166-BBF5-4CBB-BCAF-B0A82FE8173C.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/426729051/CE2DA166-BBF5-4CBB-BCAF-B0A82FE8173C.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/i-didnt-choose-to-be-black-i-just-got-blessed", "price": "32.99"}, {"t": "JULY 4TH IS A LIE UNTIL JUNETEENTH IS A REALITY", "img": "https://assets.bigcartel.com/product_images/426526731/954D7104-F6A2-41AE-97FA-09696964A649.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/426526731/954D7104-F6A2-41AE-97FA-09696964A649.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/july-4th-is-a-lie-until-juneteenth-is-a-reality", "price": "29.99"}, {"t": "I’m A Flipping Tables in the Temple Kind of Christian with BIBLE VERSE", "img": "https://assets.bigcartel.com/product_images/422185077/IMG_6070.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/422185077/IMG_6070.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/im-a-flipping-tables-in-the-temple-kind-of-christian-with-bible-verse", "price": "24.99"}, {"t": "DR. JEREMIAH WRIGHT JR. WAS RIGHT ABOUT EVERYTHING", "img": "https://assets.bigcartel.com/product_images/f60455c5-6fd1-4b5a-946a-aa66ee36342e/dr-jeremiah-wright-was-right-about-everything.jpg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/f60455c5-6fd1-4b5a-946a-aa66ee36342e/dr-jeremiah-wright-was-right-about-everything.jpg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/dr-jeremiah-wright-was-right-about-everything", "price": "29.99"}, {"t": "DR. FRANCES CRESS WESLING QUOTE DESIGN", "img": "https://assets.bigcartel.com/product_images/400349589/IMG_2261.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/400349589/IMG_2261.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/dr-frances-cress-wesling-quote-design", "price": "22.99"}, {"t": "DEFINITION OF A BLACK WOMAN LABEL DESIGN", "img": "https://assets.bigcartel.com/product_images/400345944/IMG_2257.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/400345944/IMG_2257.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/definition-of-a-black-woman-label-design", "price": "24.99"}, {"t": "THE DEFINITION OF A BLACK MAN IN TSHIRT SWEATSHIRT HOODIE", "img": "https://assets.bigcartel.com/product_images/400344891/IMG_2249.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/400344891/IMG_2249.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/the-definition-of-a-black-man-in-tshirt-sweatshirt-hoodie", "price": "24.99"}, {"t": "OVER 400 YEARS AND BEYOND BLACK AMERICAN HISTORY COMMEMORATIVE SHIRT", "img": "https://assets.bigcartel.com/product_images/399349941/IMG_2090.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/399349941/IMG_2090.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/over-400-years-and-beyond-black-american-history-commemorative-shirt", "price": "29.99"}, {"t": "LISTERVELT MIDDLETON HISTORY AND POWER QUOTE SHIRT", "img": "https://assets.bigcartel.com/product_images/b58b82d8-bf78-4da5-8f6a-fa668275897c/listervelt-middleton-history-and-power-quote-shirt.jpg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/b58b82d8-bf78-4da5-8f6a-fa668275897c/listervelt-middleton-history-and-power-quote-shirt.jpg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/listervelt-middleton-history-and-power-quote-shirt", "price": "22.99"}, {"t": "James Baldwin  inferiority = inhumanity quote shirt", "img": "https://assets.bigcartel.com/product_images/398912949/IMG_1816.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/398912949/IMG_1816.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/james-baldwin-inferiority-inhumanity-quote-shirt", "price": "24.99"}, {"t": "BLACKITY BLACK HISTORY", "img": "https://assets.bigcartel.com/product_images/399718773/IMG_2153.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/399718773/IMG_2153.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/blackity-black-history", "price": "22.99"}, {"t": "KEEP A SLICE OF BREAD IN THE COMMUNITY WITH MLK QUOTE", "img": "https://assets.bigcartel.com/product_images/397671885/IMG_0827.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/397671885/IMG_0827.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/keep-a-slice-of-bread-in-the-community-with-mlk-quote", "price": "29.99"}, {"t": "IN ISAIAH 10", "img": "https://assets.bigcartel.com/product_images/397644798/IMG_0894.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/397644798/IMG_0894.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/in-isaiah-10", "price": "24.99"}, {"t": "MLK AMERICA ON PAPER QUOTE SHIRT", "img": "https://assets.bigcartel.com/product_images/397640271/IMG_1102.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/397640271/IMG_1102.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/mlk-america-on-paper-quote-shirt", "price": "22.99"}, {"t": "MORE STRATEGIZING LESS TALKING", "img": "https://assets.bigcartel.com/product_images/397629102/IMG_1012.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/397629102/IMG_1012.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/more-strategizing-less-talking", "price": "24.99"}, {"t": "Women’s Sincerely 92% Letter & Men’s Sincerely 80% Letter", "img": "https://assets.bigcartel.com/product_images/397638846/IMG_0818.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/397638846/IMG_0818.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/women-s-sincerely-92-letter-men-s-sincerely-80-letter", "price": "21.99"}, {"t": "NOT OUR PEOPLE NOT OUR PROBLEM", "img": "https://assets.bigcartel.com/product_images/394189197/IMG_0248.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/394189197/IMG_0248.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/not-our-people-not-our-problem", "price": "22.99"}, {"t": "HEAVY ON THE YALL GONE STAY OVER THERE", "img": "https://assets.bigcartel.com/product_images/393953880/IMG_0087.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/393953880/IMG_0087.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/heavy-on-the-yall-gone-stay-over-there", "price": "22.99"}, {"t": "HEAVY ON THE GET SOMEBODY ELSE TO DO IT!", "img": "https://assets.bigcartel.com/product_images/393953739/IMG_0104.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/393953739/IMG_0104.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/heavy-on-the-get-someone-else-to-do-it", "price": "22.99"}, {"t": "BLACK OVER POC", "img": "https://assets.bigcartel.com/product_images/393936123/IMG_9806.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/393936123/IMG_9806.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/black-over-poc", "price": "22.99"}, {"t": "OUR BLACK JOB IS TO STAND OUR BLACK BUSINESS", "img": "https://assets.bigcartel.com/product_images/393935367/IMG_9998.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/393935367/IMG_9998.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/our-black-job-is-to-stan-our-black-business", "price": "22.99"}, {"t": "OUR BLACK JOB IS TO MIND OUR BLACK BUSINESS", "img": "https://assets.bigcartel.com/product_images/393931212/IMG_9853.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/393931212/IMG_9853.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/our-black-job-is-to-mind-our-black-business", "price": "22.99"}, {"t": "MINDING MY BLACK BUSINESS THE NEXT 4 YEARS & BEYOND", "img": "https://assets.bigcartel.com/product_images/393929460/IMG_9832.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/393929460/IMG_9832.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/minding-my-black-business-the-next-4-years-beyond", "price": "22.99"}, {"t": "STANDING ON OUR BLACK BUSINESS THE NEXT 4 YEAR & BEYOND", "img": "https://assets.bigcartel.com/product_images/393929073/IMG_9986.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/393929073/IMG_9986.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/standing-on-our-black-business-the-next-4-year-beyond", "price": "22.99"}, {"t": "PUT SOME RESPECT ON THE BLACK VOTE", "img": "https://assets.bigcartel.com/product_images/391793364/IMG_9615.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/391793364/IMG_9615.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/put-some-respect-on-the-black-vote", "price": "22.99"}, {"t": "Very Melanin, Very Eve Gene, Very Black Woman TShirt, Sweatshirt, Hoodie", "img": "https://assets.bigcartel.com/product_images/2713a358-f1c3-4802-8ff3-808466f3c326/very-melanin-very-eve-gene-very-black-woman-tshirt-sweatshirt-hoodie.jpg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/2713a358-f1c3-4802-8ff3-808466f3c326/very-melanin-very-eve-gene-very-black-woman-tshirt-sweatshirt-hoodie.jpg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/very-melanin-very-eve-gene-very-black-woman-tshirt-sweatshirt-hoodie", "price": "22.99"}, {"t": "WITH FEAR OF OUR DEMOCRACY QUOTE TEE", "img": "https://assets.bigcartel.com/product_images/387085638/IMG_8993.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/387085638/IMG_8993.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/with-fear-of-our-democracy-quote-tee", "price": "19.99"}, {"t": "PUT SOME RESPECT ON MY BLACK JOB", "img": "https://assets.bigcartel.com/product_images/385996293/IMG_8968.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/385996293/IMG_8968.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/put-some-respect-on-my-black-job", "price": "19.99"}, {"t": "OUR FREEDOM WAS FOUGHT FOR NOT GIVEN", "img": "https://assets.bigcartel.com/product_images/426740121/D1DBEA62-BFED-46D8-A3A6-72B8F704F0F9.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/426740121/D1DBEA62-BFED-46D8-A3A6-72B8F704F0F9.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/our-freedom-was-fought-for-not-given", "price": "24.99"}, {"t": "THEY NOT LIKE US INDEPENDENCE TSHIRT", "img": "https://assets.bigcartel.com/product_images/385952802/IMG_8913.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/385952802/IMG_8913.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/they-not-like-us-independence-tshirt", "price": "29.99"}, {"t": "THIS MELANIN BE MELANINING", "img": "https://assets.bigcartel.com/product_images/374716294/IMG_6377.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/374716294/IMG_6377.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/this-melanin-be-melanining", "price": "19.99"}, {"t": "DESIGN #1 BLACK NO SUGAR NO CREAM DOUBLE SHOT OF MELANIN", "img": "https://assets.bigcartel.com/product_images/374581552/IMG_6267.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/374581552/IMG_6267.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/design-1-black-no-sugar-no-cream-double-shot-of-melanin", "price": "19.99"}, {"t": "AMERICA AMERICA W.E.B DUBOIS QUOTE DESIGN", "img": "https://assets.bigcartel.com/product_images/396866607/IMG_0769.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/396866607/IMG_0769.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/america-america-w-e-b-dubois-quote-design", "price": "24.99"}, {"t": "DEFINITION OF REPARATIONS WITH 40 ACRES AND MULE PICTURE", "img": "https://assets.bigcartel.com/product_images/399348795/IMG_2020.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/399348795/IMG_2020.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/definition-of-reparations", "price": "24.99"}, {"t": "NO MORE BOMBS", "img": "https://assets.bigcartel.com/product_images/374102830/IMG_9556.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/374102830/IMG_9556.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/no-more-bombs", "price": "34.99"}, {"t": "WE CAME HERE WITH SKILLS", "img": "https://assets.bigcartel.com/product_images/374048272/IMG_9498.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/374048272/IMG_9498.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/we-came-here-with-skills", "price": "29.99"}, {"t": "WE AIN’T RUNNING NO MORE", "img": "https://assets.bigcartel.com/product_images/373656400/IMG_9216.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/373656400/IMG_9216.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/we-ain-t-running-no-more", "price": "24.99"}, {"t": "SPEAK FOR YOURSELF I AM MY ANCESTORS", "img": "https://assets.bigcartel.com/product_images/394074540/IMG_0169.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/394074540/IMG_0169.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/speak-for-yourself-i-am-my-ancestors", "price": "39.99"}, {"t": "NO COLORED BATHROOM FOR ME TSHIRT SWEATSHIRT HOODIE", "img": "https://assets.bigcartel.com/product_images/374550466/IMG_6252.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/374550466/IMG_6252.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/no-colored-bathroom-for-me-tshirt-sweatshirt-hoodie", "price": "39.99"}, {"t": "AFTER ALL THE JUNETEENTH CELEBRATIONS WE STILL WANT OUR REPARATIONS", "img": "https://assets.bigcartel.com/product_images/384578475/IMG_0129.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/384578475/IMG_0129.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/after-all-the-juneteenth-celebrations-we-still-want-our-reparations", "price": "22.99"}, {"t": "AINT NO MYSTERY WHY THEY’RE SCARED OF BLACK HISTORY", "img": "https://assets.bigcartel.com/product_images/374550796/IMG_6260.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/374550796/IMG_6260.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/aint-no-mystery-why-they-re-scared-of-black-history", "price": "24.99"}, {"t": "REPARATIONS &LEGISLATIONS OVER CELEBRATIONS&COMMEMORATIONS", "img": "https://assets.bigcartel.com/product_images/397673250/IMG_1134.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/397673250/IMG_1134.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/reparations-legislations-over-celebrations-commemorations", "price": "22.99"}, {"t": "CRITICAL RACE THEOLOGIAN", "img": "https://assets.bigcartel.com/product_images/319691589/C20A1718-9D9E-482F-B689-43D651DB1C5E.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/319691589/C20A1718-9D9E-482F-B689-43D651DB1C5E.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/critical-race-theologian", "price": "24.99"}, {"t": "MLK MARCHING QUOTE SHIRT", "img": "https://assets.bigcartel.com/product_images/397670796/IMG_1106.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/397670796/IMG_1106.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/mlk-marching-quote-shirt", "price": "22.99"}, {"t": "IDA B WELLS BALLOT QUOTE", "img": "https://assets.bigcartel.com/product_images/426343242/IMG_6663.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/426343242/IMG_6663.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/ida-b-wells-ballot-quote", "price": "34.99"}, {"t": "1921 BLACK WALL STREET 100 YEAR ANNIVERSARY COMMEMORATIVE", "img": "https://assets.bigcartel.com/product_images/399345330/IMG_2091.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/399345330/IMG_2091.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/1921-black-wall-street-100-year-anniversary-commemorative", "price": "29.99"}, {"t": "RESTORATION OVER GENTRIFICATION", "img": "https://assets.bigcartel.com/product_images/399348036/IMG_2098.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/399348036/IMG_2098.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/restoration-over-gentrification", "price": "19.99"}, {"t": "THE BLACK CHURCH GOT SOMETHING TO SAY!", "img": "https://assets.bigcartel.com/product_images/392820153/IMG_9727.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/392820153/IMG_9727.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/the-black-church-got-something-to-say", "price": "24.99"}, {"t": "REAL COURAGE MLK MERCH", "img": "https://assets.bigcartel.com/product_images/292459329/12C0B2D1-4EB0-4918-A58A-46D26D72B162.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/292459329/12C0B2D1-4EB0-4918-A58A-46D26D72B162.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/real-courage-mlk-merch", "price": "29.99"}, {"t": "“Y’ALL REALLY DON’T WANT NO SMOKE!” WITH QUEEN YAA QUOTE", "img": "https://assets.bigcartel.com/product_images/242245835/EB50CB30-73DB-466A-BA85-0FD3BDE82E78.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/242245835/EB50CB30-73DB-466A-BA85-0FD3BDE82E78.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/y-all-really-don-t-want-no-smoke-with-queen-yaa-quote", "price": "22.99"}, {"t": "FANNIE LOU & ELLA BAKER WITH FANNIE LOU QUOTE ON THE BACK", "img": "https://assets.bigcartel.com/product_images/374761849/IMG_6393.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/374761849/IMG_6393.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/fannie-lou-ella-baker-with-fannie-lou-quote-on-the-back", "price": "37.99"}, {"t": "ALI & TOURE (FORMERLY STOCKLEY CARMICHAEL) WITH TOURE QUOTE ON THE BACK", "img": "https://assets.bigcartel.com/product_images/240146276/CA0F74FC-0F33-44B5-AB77-FC5F450A8F85.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/240146276/CA0F74FC-0F33-44B5-AB77-FC5F450A8F85.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/ali-toure-formerly-stockley-carmichael-with-toure-quote-on-the-back", "price": "37.99"}, {"t": "I’M THAT FREDERICK DOUGLASS TYPE OF CHRISTIAN", "img": "https://assets.bigcartel.com/product_images/240102230/3FBA16B2-D8CC-44EB-B70E-C4800B9A2701.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/240102230/3FBA16B2-D8CC-44EB-B70E-C4800B9A2701.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/i-m-that-frederick-douglass-type-of-christian", "price": "37.99"}, {"t": "AIN’T NO PEACE UNTIL JIM CROW CEASE", "img": "https://assets.bigcartel.com/product_images/233081339/D16C1738-DAA4-45CE-AACE-232D03EE65BC.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/233081339/D16C1738-DAA4-45CE-AACE-232D03EE65BC.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/ain-t-no-peace-until-jim-crow-cease", "price": "37.99"}, {"t": "MARTIN LUTHER KING JR COLLAGE PICTURE WITH MLK QUOTE ON THE BACK", "img": "https://assets.bigcartel.com/product_images/230720756/8B52DA3D-CE0A-422B-8325-AA2C205CFBA0.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/230720756/8B52DA3D-CE0A-422B-8325-AA2C205CFBA0.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/martin-luther-king-jr-collage-picture-with-mlk-quote-on-the-back", "price": "37.99"}, {"t": "THIS AIN’T WHAT YOU WANT! STONO REBELLION 1739 IN T-SHIRT, SWEATSHIRT, HOODIE", "img": "https://assets.bigcartel.com/product_images/229899167/C586CCA3-8D0A-4BC6-867A-7D45218E84C7.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/229899167/C586CCA3-8D0A-4BC6-867A-7D45218E84C7.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/this-ain-t-what-you-want-stono-rebellion-1739-in-t-shirt-sweatshirt-hoodie", "price": "22.99"}, {"t": "DIFFERENT METHODS SAME MESSAGE IN T-SHIRTS SWEATSHIRT HOODIE", "img": "https://assets.bigcartel.com/product_images/227329838/EE09D8B5-920D-463C-B6BD-F724ACBD801D.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/227329838/EE09D8B5-920D-463C-B6BD-F724ACBD801D.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/different-methods-same-message-in-t-shirts-sweatshirt-hoodie", "price": "37.99"}, {"t": "MAKE BLACKWALLST. GREAT AGAIN RBG SNAPBACK", "img": "https://assets.bigcartel.com/product_images/227225021/EB52D834-2BB8-4C9F-AB90-986289A8BB7C.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/227225021/EB52D834-2BB8-4C9F-AB90-986289A8BB7C.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/make-blackwallst-great-again-rbg-snapback", "price": "19.99"}, {"t": "MAKE BLACKWALLST. GREAT AGAIN RBG T-SHIRT, SWEATSHIRT, HOODIE", "img": "https://assets.bigcartel.com/product_images/227224652/8B60768B-7E86-4F5F-82CB-1FBEAE713FC9.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/227224652/8B60768B-7E86-4F5F-82CB-1FBEAE713FC9.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/make-blackwallst-great-again-rbg-t-shirt-sweatshirt-hoodie", "price": "22.99"}, {"t": "MAKE BLACKWALLST. GREAT AGAIN RED T-SHIRT, SWEATSHIRT, HOODIE", "img": "https://assets.bigcartel.com/product_images/227224634/1DD21B65-EB7A-428D-B2E6-FD97790F4337.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/227224634/1DD21B65-EB7A-428D-B2E6-FD97790F4337.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/make-blackwallst-great-again-red-t-shirt-sweatshirt-hoodie", "price": "22.99"}, {"t": "MAKE BLACKWALLST. GREAT AGAIN RED DUFFLE BAG", "img": "https://assets.bigcartel.com/product_images/227224364/494CEA2A-31E8-45BB-821D-A23450F4AB9A.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/227224364/494CEA2A-31E8-45BB-821D-A23450F4AB9A.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/make-blackwallst-great-again-red-duffle-bag", "price": "19.99"}, {"t": "MAKE BLACKWALLST. GREAT AGAIN RED SNAPBACK", "img": "https://assets.bigcartel.com/product_images/227224172/2046722D-0D5F-4399-B737-1046F5543407.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/227224172/2046722D-0D5F-4399-B737-1046F5543407.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/make-blackwallst-great-again-red-snapback", "price": "19.99"}, {"t": "FANNIE LOU & ALI IN THIS TOGETHER T-SHIRT, SEEATSHIRT, HOODIE", "img": "https://assets.bigcartel.com/product_images/227207744/63D77093-A0EA-4140-99A8-201521D3819E.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/227207744/63D77093-A0EA-4140-99A8-201521D3819E.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/fannie-lou-ali-in-this-together-t-shirt-seeatshirt-hoodie", "price": "34.99"}, {"t": "I REFUSE TO EXPLAIN MY HUMANITY W/I AM A MAN PIC T-SHIRT, THIN HOODIE, THICK HOODIE", "img": "https://assets.bigcartel.com/product_images/224309437/A172B12C-88F5-43C1-8212-D5F4E78D0F16.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/224309437/A172B12C-88F5-43C1-8212-D5F4E78D0F16.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/i-refuse-to-explain-my-humanity-w-i-am-a-man-pic-t-shirt-thin-hoodie-thick-hoodie", "price": "32.99"}, {"t": "The Adventures of Princess Amina The Melanin Mermaid and the Lesson of Magical Melanin", "img": "https://assets.bigcartel.com/product_images/269759675/2A46ED8A-6323-4280-8026-3BE8BC823BB7.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/269759675/2A46ED8A-6323-4280-8026-3BE8BC823BB7.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/the-adventures-of-princess-amina", "price": "19.99"}, {"t": "I’M THAT IDA B WELLS TYPE OF CHRISTIAN T-SHIRT PLEASE ALLOW UP TO 10-14 BUSINESS DAYS TO RECEIVE", "img": "https://assets.bigcartel.com/product_images/221469478/2488FFFB-4EEB-49DD-BD19-EE88252B67EF.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/221469478/2488FFFB-4EEB-49DD-BD19-EE88252B67EF.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/i-m-that-ida-b-wells-type-of-christian-t-shirt", "price": "39.99"}, {"t": "I’M THAT FANNIE LOU HAMER TYPE OF CHRISTIAN PLEASE ALLOW UP TO 10-14 BUSINESS DAYS TO RECEIVE", "img": "https://assets.bigcartel.com/product_images/221259772/D0E24B90-894F-413C-B093-2C8109AE3C39.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/221259772/D0E24B90-894F-413C-B093-2C8109AE3C39.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/i-m-that-fannie-lou-hamer-type-of-christian", "price": "39.99"}, {"t": "WE WILL NEVER FORGET COLONIZER MEN’S", "img": "https://assets.bigcartel.com/product_images/216599047/B57218EA-1D8B-44DB-A47D-3ADE16F62998.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/216599047/B57218EA-1D8B-44DB-A47D-3ADE16F62998.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/we-will-never-forget-colonizer-men-s", "price": "21.99"}, {"t": "THAT’S CULTURAL APPROPRIATION COLONIZER MEN’S", "img": "https://assets.bigcartel.com/product_images/216598486/F5E0D23A-D7EE-4CBF-8BAE-9F04582EB0FA.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/216598486/F5E0D23A-D7EE-4CBF-8BAE-9F04582EB0FA.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/that-s-cultural-appropriation-colonizer-men-s", "price": "21.99"}, {"t": "WE WILL NEVER FORGET COLONIZER WOMEN’S", "img": "https://assets.bigcartel.com/product_images/216597514/4ADC20D1-6046-4FBF-A459-B72BF9DA4F76.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/216597514/4ADC20D1-6046-4FBF-A459-B72BF9DA4F76.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/we-will-never-forget-colonizer-women-s", "price": "21.99"}, {"t": "DON’T TOUCH MY HAIR COLONIZER WOMENS", "img": "https://assets.bigcartel.com/product_images/216597157/54B8CDD7-20A3-4B4D-90C6-4FB32BB9A689.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/216597157/54B8CDD7-20A3-4B4D-90C6-4FB32BB9A689.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/don-t-touch-my-hair-colonizer-womens", "price": "21.99"}, {"t": "THAT’S CULTURAL APPROPRIATION COLONIZER WOMEN’S", "img": "https://assets.bigcartel.com/product_images/216597289/D074750A-AFEA-4FAC-AB2B-699082E7ADA1.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/216597289/D074750A-AFEA-4FAC-AB2B-699082E7ADA1.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/that-s-cultural-appropriation-colonizer-women-s", "price": "21.99"}, {"t": "I’M THAT HARRIET TUBMAN TYPE OF CHRISTIAN T-SHIRTS OR HOODIE", "img": "https://assets.bigcartel.com/product_images/212110003/C5C0DA4D-728C-4DF2-A2EF-37EC4624BDD5.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/212110003/C5C0DA4D-728C-4DF2-A2EF-37EC4624BDD5.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/i-m-that-harriet-tubman-type-of-christian-t-shirts-sweatshirt-hoodie", "price": "39.99"}, {"t": "TYPE OF CHRISTIAN MARCUS GARVEY T-SHIRT, SWEATSHIRT, HOODIE MEN/WOMEN", "img": "https://assets.bigcartel.com/product_images/209789137/942D59B2-A348-40EF-8499-3BF0DB90A12B.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/209789137/942D59B2-A348-40EF-8499-3BF0DB90A12B.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/type-of-christian-marcus-garvey-t-shirt-sweatshirt-hoodie-men-women", "price": "39.99"}, {"t": "WOMEN’S & MEN’S UNAPOLOGETIC TSHIRT IN BLACK/WHITE", "img": "https://assets.bigcartel.com/product_images/209788741/3ADB394B-DA4C-476D-A8AC-7A78F628F753.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/209788741/3ADB394B-DA4C-476D-A8AC-7A78F628F753.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/unapologetic-tshirt-women-in-black-white", "price": "19.99"}, {"t": "TRUTH TO POWER SPEAKER T-SHIRT", "img": "https://assets.bigcartel.com/product_images/221257885/C4469B4E-9680-4565-9F8F-111801254F38.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/221257885/C4469B4E-9680-4565-9F8F-111801254F38.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/mens-truth-to-power-speaker-t-shirt", "price": "24.99"}, {"t": "IMMA TAKE A KNEE UNTIL WE ALL ARE FREE ISAIAH 1:17 IN HOODIES & T-SHIRT", "img": "https://assets.bigcartel.com/product_images/207501553/D0E69369-79A7-47C9-A36C-0AE899F8295F.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/207501553/D0E69369-79A7-47C9-A36C-0AE899F8295F.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/men-s-imma-take-a-knee-until-we-all-are-free-isaiah-1-17-in-hoodies", "price": "22.99"}, {"t": "MELANIN&CARBON&BLACK&GOLD. 3 QUARTER T-SHIRT", "img": "https://assets.bigcartel.com/product_images/203598104/IMG_0654.JPG?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/203598104/IMG_0654.JPG?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/melanin-carbon-black-gold-3-quarter-t-shirt", "price": "29.99"}, {"t": "IDA B. WELLS QUOTE TSHIRT", "img": "https://assets.bigcartel.com/product_images/397673406/IMG_1136.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/397673406/IMG_1136.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/ida-b-wells-quote-tshirt-womens", "price": "22.99"}, {"t": "MEN'S & WOMEN’S HUMANITY TSHIRT", "img": "https://assets.bigcartel.com/product_images/202333490/IMG_0289.PNG?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/202333490/IMG_0289.PNG?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/humanity-tshirt-mens", "price": "24.99"}, {"t": "MELANIN V.S. EVERYBODY CROP HOODIE", "img": "https://assets.bigcartel.com/product_images/189138326/IMG_20161124_154606.jpg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/189138326/IMG_20161124_154606.jpg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/melanin-v-s-everybody-crop-hoodie", "price": "29.99"}, {"t": "MELANIN & CURLS BLACK/WHITE CROP TOP", "img": "https://assets.bigcartel.com/product_images/181618412/image.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/181618412/image.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/melanin-curls-black-white-crop-top", "price": "19.99"}, {"t": "MELANIN & EDGES BLACK/WHITE CROP TOP", "img": "https://assets.bigcartel.com/product_images/181618280/image.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/181618280/image.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/melanin-edges-black-white-crop-top", "price": "19.99"}, {"t": "MELANIN & NATURALS BLACK/WHITE CROP TOP", "img": "https://assets.bigcartel.com/product_images/181617815/image.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/181617815/image.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/melanin-naturals", "price": "19.99"}, {"t": "MELANIN & LOCS BLACK/WHITE CROP TOP", "img": "https://assets.bigcartel.com/product_images/181617671/image.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/181617671/image.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/melanin-locs", "price": "19.99"}, {"t": "MELANIN & BUNDLES BLACK/WHITE CROP TOP", "img": "https://assets.bigcartel.com/product_images/179016641/image.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/179016641/image.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/melanin-bundles-black-white-crop-top", "price": "19.99"}, {"t": "MELANIN & AFROS BLACK/WHITE CROP TOP", "img": "https://assets.bigcartel.com/product_images/179016515/image.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/179016515/image.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/melanin-afros-black-white-crop-top", "price": "19.99"}, {"t": "MEN'S SOLIDARITY IS THE NEW BLACK", "img": "https://assets.bigcartel.com/product_images/174821995/1455684284416.jpg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/174821995/1455684284416.jpg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/men-s-solidarity-is-the-new-black", "price": "19.99"}, {"t": "MELANIN DOES THE BODY GOOD TSHIRT", "img": "https://assets.bigcartel.com/product_images/174583777/1457477978668.jpg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/174583777/1457477978668.jpg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/melanin-does-the-body-good-tshirt", "price": "24.99"}, {"t": "WOMEN'S SOLIDARITY IS THE NEW BLACK TSHIRT", "img": "https://assets.bigcartel.com/product_images/178417922/image.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/178417922/image.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/women-s-solidarity-is-the-new-black-tshirt", "price": "19.99"}, {"t": "VOTE WOMEN'S TSHIRT EMAIL COLOR COMBINATION", "img": "https://assets.bigcartel.com/product_images/150965905/IMG_20141102_152002.jpg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/150965905/IMG_20141102_152002.jpg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/vote-women-s-tshirt-red-white", "price": "19.99"}, {"t": "JUSTICE AIN'T POLITICAL IT'S BIBLICAL WOMEN'S VNECK TSHIRT PLEASE ALLOW UP TO 14-16 BUSINESS DAYS TO", "img": "https://assets.bigcartel.com/product_images/178976324/image.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/178976324/image.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/justice-ain-t-political-it-s-biblical-women-s-vneck-tshirt", "price": "24.99"}, {"t": "JUSTICE AIN'T POLITICAL IT'S BIBLICAL HOODIE (UNISEX) PLEASE ALLOW UP TO 14-16 BUSINESS DAYS TO RECE", "img": "https://assets.bigcartel.com/product_images/179002709/image.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/179002709/image.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/justice-ain-t-political-it-s-biblical-hoodie", "price": "39.99"}, {"t": "JESUS IS ALPHA HOODIE", "img": "https://assets.bigcartel.com/product_images/132735060/photo_20140221_205628.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/132735060/photo_20140221_205628.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/jesus-is-alpha-hoodie", "price": "35.99"}, {"t": "JESUS IS OMEGA HOODIE", "img": "https://assets.bigcartel.com/product_images/132689640/photo_20140221_004904.png?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/132689640/photo_20140221_004904.png?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/jesus-is-omega-hoodie", "price": "35.99"}, {"t": "GOT JUSTICE? HOODIE (UNISEX) PLEASE ALLOW UP TO 7-10 BUSINESS DAYS TO RECEIVE", "img": "https://assets.bigcartel.com/product_images/179002826/image.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/179002826/image.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/got-justice-hoodie", "price": "35.99"}, {"t": "WOMEN'S GOT JUSTICE? V-NECK T-SHIRT (Tshirt will reflect Jeremiah 22:3)", "img": "https://assets.bigcartel.com/product_images/178996460/image.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/178996460/image.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/got-justice-v-neck-t-shirt", "price": "24.99"}, {"t": "MEN'S GOT JUSTICE (T-Shirt will reflect Jeremiah 22:3)", "img": "https://assets.bigcartel.com/product_images/179002403/image.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/179002403/image.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/men-s-got-justice", "price": "24.99"}, {"t": "MEN'S JUSTICE AIN'T POLITICAL IT'S BIBLICAL PLEASE ALLOW UP TO 14-16 BUSINESS DAYS TO RECEIVE", "img": "https://assets.bigcartel.com/product_images/179002223/image.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/179002223/image.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/men-s-justice-ain-t-political-it-s-biblical", "price": "24.99"}, {"t": "WOMEN'S GOT JUSTICE? (Tshirt will reflect Jeremiah 22:3)", "img": "https://assets.bigcartel.com/product_images/178996400/image.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/178996400/image.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/got-justice", "price": "24.99"}, {"t": "WOMEN'S JUSTICE AIN'T POLITICAL IT'S BIBLICAL PLEASE ALLOW UP TO 14-16 BUSINESS DAYS TO RECEIVE", "img": "https://assets.bigcartel.com/product_images/179001857/image.jpeg?auto=format&fit=max&w=900", "thumb": "https://assets.bigcartel.com/product_images/179001857/image.jpeg?auto=format&fit=max&w=500", "url": "https://authoritees.com/product/justice-ain-t-political-it-s-biblical", "price": "24.99"}];
+document.documentElement.classList.add('js');
+document.getElementById('yr').textContent=new Date().getFullYear();
+
+/* ---------- build shop grid ---------- */
+const grid=document.getElementById('grid');
+document.getElementById('shopCount').textContent=PRODUCTS.length+' Designs';
+PRODUCTS.forEach((p,i)=>{
+  const c=document.createElement('article');
+  c.className='card rv';
+  c.dataset.i=i;
+  c.innerHTML=`
+    <div class="card__img"><img loading="lazy" src="${p.thumb}" alt="${esc(p.t)}">
+      <div class="card__view">View Design</div></div>
+    <div class="card__body">
+      <div class="card__ttl">${esc(p.t)}</div>
+      <div class="card__price">$${p.price}</div>
+    </div>`;
+  c.addEventListener('click',()=>openLB(i));
+  grid.appendChild(c);
+});
+
+/* ---------- featured splits (first 3) ---------- */
+const fs=document.getElementById('featuredSplits');
+PRODUCTS.slice(0,3).forEach((p,i)=>{
+  const flip=i%2===1;
+  const s=document.createElement('div');
+  s.className='split';
+  s.style.marginBottom='clamp(3rem,8vh,7rem)';
+  const media=`<div class="split__media"><img loading="lazy" src="${p.img}" alt="${esc(p.t)}"></div>`;
+  const copy=`<div class="split__copy">
+      <div class="idx">Featured · 0${i+1}</div>
+      <h3 class="title">${wrapWords(p.t)}</h3>
+      <div class="price">$${p.price}</div>
+      <p class="desc">A signature Authoritees statement piece — screenprinted to last, made to make people look twice.</p>
+      <div class="order">
+        <a class="btn btn--fill mag" href="${p.url}" target="_blank" rel="noopener" style="border-color:var(--paper)">Order Now ↗</a>
+        <button class="btn btn--ghost mag" data-open="${i}" style="border-color:var(--paper);color:var(--paper)">Full View</button>
+      </div>
+    </div>`;
+  s.innerHTML = flip ? media+copy : copy+media;
+  fs.appendChild(s);
+});
+fs.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>openLB(+b.dataset.open)));
+
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function wrapWords(t){return t.split(' ').map(w=>`<span class="w"><span>${esc(w)}</span></span>`).join(' ')}
+
+/* ---------- LIGHTBOX ---------- */
+let cur=0;
+const lb=document.getElementById('lb');
+function openLB(i){
+  cur=i;const p=PRODUCTS[i];
+  document.getElementById('lbIdx').textContent=`Design ${String(i+1).padStart(3,'0')} / ${PRODUCTS.length}`;
+  document.getElementById('lbTtl').textContent=p.t;
+  document.getElementById('lbPrice').textContent='$'+p.price;
+  document.getElementById('lbDesc').textContent='Screenprinted Authoritees original. Bold, built to last, and made to start conversations. Tap Order to grab it from the store.';
+  const img=document.getElementById('lbImg');img.src=p.img;img.alt=p.t;
+  document.getElementById('lbOrder').href=p.url;
+  lb.classList.add('open');document.body.style.overflow='hidden';
+}
+function closeLB(){lb.classList.remove('open');document.body.style.overflow=''}
+document.getElementById('lbClose').addEventListener('click',closeLB);
+document.getElementById('lbNext').addEventListener('click',()=>openLB((cur+1)%PRODUCTS.length));
+lb.addEventListener('click',e=>{if(e.target===lb)closeLB()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLB();if(lb.classList.contains('open')&&e.key==='ArrowRight')openLB((cur+1)%PRODUCTS.length)});
+
+/* ---------- hero image (first product, low opacity texture) ---------- */
+document.getElementById('heroBg').style.backgroundImage=`url("${PRODUCTS[0].img}")`;
+requestAnimationFrame(()=>document.querySelector('.hero').classList.add('in'));
+
+/* ---------- IntersectionObserver reveals ---------- */
+if('IntersectionObserver' in window){
+  const io=new IntersectionObserver((es)=>{
+    es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})
+  },{threshold:.15,rootMargin:'0px 0px -8% 0px'});
+  document.querySelectorAll('.rv,.split').forEach(el=>io.observe(el));
+}else{
+  document.querySelectorAll('.rv,.split').forEach(el=>el.classList.add('in'));
+}
+
+/* ---------- scroll progress + hero parallax ---------- */
+const prog=document.getElementById('progress');const heroBg=document.getElementById('heroBg');
+let ticking=false;
+function onScroll(){
+  if(ticking)return;ticking=true;
+  requestAnimationFrame(()=>{
+    const h=document.documentElement.scrollHeight-innerHeight;
+    prog.style.width=(scrollY/h*100)+'%';
+    if(scrollY<innerHeight)heroBg.style.transform=`translateY(${scrollY*.35}px) scale(1.05)`;
+    litManifesto();
+    ticking=false;
+  });
+}
+addEventListener('scroll',onScroll,{passive:true});
+
+/* ---------- manifesto word highlight on scroll ---------- */
+const mfEl=document.getElementById('manifestoText');
+const rawHTML=mfEl.innerHTML;
+// wrap plain words (keep <em>)
+mfEl.innerHTML=rawHTML.replace(/(<em>.*?<\/em>|[^\s<]+)/g,m=>`<span class="word">${m}</span>`);
+const words=[...mfEl.querySelectorAll('.word')];
+function litManifesto(){
+  const r=mfEl.getBoundingClientRect();
+  if(r.top>innerHeight||r.bottom<0)return;
+  const start=innerHeight*.85,end=innerHeight*.25;
+  const prog=Math.min(1,Math.max(0,(start-r.top)/(start-end)));
+  const n=Math.floor(prog*words.length);
+  words.forEach((w,i)=>w.classList.toggle('lit',i<=n));
+}
+litManifesto();
+
+/* ---------- magnetic buttons ---------- */
+if(matchMedia('(hover:hover)').matches && !matchMedia('(prefers-reduced-motion:reduce)').matches){
+  document.querySelectorAll('.mag').forEach(el=>{
+    el.addEventListener('mousemove',e=>{
+      const r=el.getBoundingClientRect();
+      el.style.transform=`translate(${(e.clientX-r.left-r.width/2)*.25}px,${(e.clientY-r.top-r.height/2)*.35}px)`;
+    });
+    el.addEventListener('mouseleave',()=>el.style.transform='');
+  });
+}
+
+/* ---------- marquee: pause on hover ---------- */
+const mq=document.getElementById('mq');
+mq.parentElement.addEventListener('mouseenter',()=>mq.style.animationPlayState='paused');
+mq.parentElement.addEventListener('mouseleave',()=>mq.style.animationPlayState='running');
+</script>
+</body>
+</html>
