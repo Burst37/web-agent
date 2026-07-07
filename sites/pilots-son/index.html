@@ -70,11 +70,16 @@
   #hero video,#hero img.fallback{width:100%;height:100%;object-fit:cover}
   #hero .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,13,15,.35),rgba(13,13,15,.15) 40%,rgba(13,13,15,.92) 96%)}
   #hero .content{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:0 5vw 9vh}
-  #hero h1{font-family:var(--font-display);text-transform:uppercase;line-height:.86;font-size:clamp(60px,12.5vw,205px);letter-spacing:0;margin-left:-.04em}
+  #hero h1{font-family:var(--font-display);text-transform:uppercase;line-height:.84;font-size:clamp(64px,15.5vw,260px);letter-spacing:0;margin-left:-.06em;white-space:nowrap}
   #hero h1 .l1{display:block;color:var(--cream)}
   #hero h1 .l2{display:block;color:transparent;-webkit-text-stroke:2px var(--gold);text-stroke:2px var(--gold)}
   #hero .sub{display:flex;flex-wrap:wrap;align-items:center;gap:26px;margin-top:34px}
   #hero .sub p{max-width:380px;color:var(--cream-dim);font-size:15px}
+  #hero .stats{display:flex;gap:0;margin-top:38px;border-top:1px solid rgba(217,210,193,.18)}
+  #hero .stats div{padding:18px 34px 0 0;margin-right:34px}
+  #hero .stats b{font-family:var(--font-display);font-weight:400;font-size:clamp(22px,2.6vw,38px);color:var(--cream)}
+  #hero .stats b i{font-style:normal;color:var(--gold)}
+  #hero .stats span{display:block;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--cream-dim);margin-top:4px}
   #drop-timer{display:flex;gap:18px;font-family:var(--font-display)}
   #drop-timer div{text-align:center}
   #drop-timer b{display:block;font-size:clamp(26px,3vw,44px);color:var(--gold-bright);font-weight:400}
@@ -247,6 +252,11 @@
         <div><b id="tS">00</b><span>Sec</span></div>
       </div>
       <a class="ringBtn" href="#shop">Enter the drop</a>
+    </div>
+    <div class="stats">
+      <div><b>14<i>+</i></b><span>Pieces in the drop</span></div>
+      <div><b>420<i>gsm</i></b><span>Heavyweight fleece</span></div>
+      <div><b>1974</b><span>Legacy est.</span></div>
     </div>
   </div>
   <div class="scrollcue">Scroll</div>
