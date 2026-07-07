@@ -123,8 +123,11 @@
   .scard:hover{filter:brightness(1.15)}
 
   /* ============ product grid ============ */
-  #shop{padding:16vh 0 10vh}
-  #shop .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:34px;margin-top:60px}
+  #shop{padding:16vh 0 8vh}
+  #gear{padding:4vh 0 14vh}
+  #shop .grid,#gear .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:34px;margin-top:60px}
+  .card .info .note{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin:2px 0 4px}
+  .card .info .osfa{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--cream-dim)}
   .card{background:var(--jet-2);border:1px solid rgba(217,210,193,.08);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;transition:transform .45s cubic-bezier(.2,.7,.2,1),border-color .45s}
   .card:hover{transform:translateY(-8px);border-color:rgba(199,154,85,.45)}
   .card .media{position:relative;aspect-ratio:1/1;overflow:hidden;background:#111}
@@ -235,6 +238,7 @@
   <a class="brand" href="#hero"><img src="assets/logo.webp" alt="logo">THE PILOT'S SON</a>
   <div class="links">
     <a href="#shop">The Drop</a>
+    <a href="#gear">Gear</a>
     <a href="#lineup">Lineup</a>
     <a href="#fabric">Craft</a>
     <a href="#notify">Notify</a>
@@ -301,6 +305,15 @@
     <p class="tag">The Drop — limited run</p>
     <h2 class="big">Cop the fit</h2>
     <div class="grid" id="grid"></div>
+  </div>
+</section>
+
+<!-- the gear: logo essentials -->
+<section id="gear">
+  <div class="wrap">
+    <p class="tag">The Gear — logo essentials</p>
+    <h2 class="big">Wear the name</h2>
+    <div class="grid" id="gearGrid"></div>
   </div>
 </section>
 
@@ -516,6 +529,44 @@ P.forEach(p=>{
     el.querySelectorAll('.sizes button').forEach(x=>x.classList.remove('on'));b.classList.add('on');size=b.dataset.s;
   }));
   el.querySelector('[data-s="M"]').classList.add('on');
+  el.querySelector('.add').addEventListener('click',()=>addToCart(p,size));
+});
+
+/* ---------- the gear (logo essentials) ---------- */
+const G=[
+  {id:'g-cap',   n:'Aviator Cap',        img:'merch-cap.webp',     price:38,  note:'13 colorways', badge:'New'},
+  {id:'g-socks', n:'Legacy Crew Socks',  img:'merch-socks.webp',   price:18,  note:'13 colorways'},
+  {id:'g-beanie',n:'Flight Beanie',      img:'merch-beanie.webp',  price:32,  osfa:true},
+  {id:'g-sweat', n:'Oversized Logo Sweater', img:'merch-sweater.webp', price:98, sizes:true, badge:'New'},
+  {id:'g-varsity',n:'Varsity Jacket',    img:'merch-varsity.webp', price:180, sizes:true, badge:'Heavy'},
+  {id:'g-bag',   n:'Legacy Backpack',    img:'merch-backpack.webp',price:88,  osfa:true},
+  {id:'g-slides',n:'Pilot Slides',       img:'merch-slides.webp',  price:48},
+  {id:'g-case',  n:'Logo iPhone Case',   img:'merch-iphone.webp',  price:34,  osfa:true},
+];
+const gearGrid=document.getElementById('gearGrid');
+G.forEach(p=>{
+  const el=document.createElement('article');el.className='card reveal';
+  const footer = p.sizes
+    ? `<div class="sizes">${SIZES.map(s=>`<button data-s="${s}">${s}</button>`).join('')}</div>`
+    : (p.note?`<p class="note">${p.note}</p>`:`<p class="osfa">One size</p>`);
+  el.innerHTML=`
+    <div class="media">
+      ${p.badge?`<span class="badge">${p.badge}</span>`:''}
+      <img src="assets/${p.img}" alt="${p.n}" loading="lazy">
+    </div>
+    <div class="info">
+      <div class="row"><h3>${p.n}</h3><span class="price">$${p.price}</span></div>
+      ${footer}
+      <button class="add">Add to cart</button>
+    </div>`;
+  gearGrid.appendChild(el);
+  let size = p.sizes ? 'M' : 'OS';
+  if(p.sizes){
+    el.querySelectorAll('.sizes button').forEach(b=>b.addEventListener('click',()=>{
+      el.querySelectorAll('.sizes button').forEach(x=>x.classList.remove('on'));b.classList.add('on');size=b.dataset.s;
+    }));
+    el.querySelector('[data-s="M"]').classList.add('on');
+  }
   el.querySelector('.add').addEventListener('click',()=>addToCart(p,size));
 });
 
