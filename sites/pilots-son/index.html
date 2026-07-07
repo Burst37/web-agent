@@ -170,10 +170,12 @@
 
   /* ============ flight path (arc draw on scroll) ============ */
   #flight{height:150vh}
-  #flight .pin{position:sticky;top:0;height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
-  #flight svg{position:absolute;inset:0;width:100%;height:100%}
-  #flight .plane{position:absolute;width:clamp(46px,5vw,72px);height:clamp(46px,5vw,72px);will-change:transform;filter:drop-shadow(0 18px 40px rgba(0,0,0,.6));display:flex;align-items:center;justify-content:center;background:var(--gold);border-radius:50%;font-size:clamp(20px,2.4vw,30px);color:var(--jet)}
-  #flight .quote{position:relative;z-index:2;text-align:center;max-width:760px;padding:0 6vw}
+  #flight .pin{position:sticky;top:0;height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--jet)}
+  #flight .sky{position:absolute;inset:0;background:url(assets/flight-sky.webp) center/cover no-repeat;transform:scale(1.08);will-change:transform;filter:saturate(1.05)}
+  #flight .skyfade{position:absolute;inset:0;background:radial-gradient(120% 90% at 60% 40%,transparent 0%,rgba(9,9,11,.28) 45%,rgba(9,9,11,.72) 100%),linear-gradient(180deg,rgba(9,9,11,.55),rgba(9,9,11,.2) 35%,rgba(9,9,11,.65))}
+  #flight svg{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+  #flight .plane{position:absolute;width:clamp(120px,15vw,240px);height:auto;will-change:transform,left,top;transform-origin:60% 55%;filter:drop-shadow(0 26px 44px rgba(0,0,0,.7));z-index:2;pointer-events:none}
+  #flight .quote{position:relative;z-index:3;text-align:center;max-width:760px;padding:0 6vw;text-shadow:0 4px 30px rgba(0,0,0,.6)}
   #flight .quote h2{font-family:var(--font-display);font-size:clamp(34px,5vw,72px);text-transform:uppercase;line-height:1.04}
   #flight .quote h2 b{color:var(--red);font-weight:400}
   #flight .quote p{margin-top:20px;color:var(--cream-dim);font-family:var(--font-script);font-size:26px}
@@ -327,11 +329,13 @@
 <!-- flight path -->
 <section id="flight">
   <div class="pin">
+    <div class="sky" aria-hidden="true"></div>
+    <div class="skyfade" aria-hidden="true"></div>
     <svg viewBox="0 0 1440 800" preserveAspectRatio="none" fill="none">
       <path id="arc" d="M-60,700 C300,640 620,260 1500,180" stroke="#C79A55" stroke-width="2.5" stroke-dasharray="1" stroke-dashoffset="1"/>
       <path d="M-60,700 C300,640 620,260 1500,180" stroke="rgba(217,210,193,.14)" stroke-width="1" stroke-dasharray="3 10"/>
     </svg>
-    <div class="plane" id="plane">✈</div>
+    <img class="plane" id="plane" src="assets/flight-plane.webp" alt="Vintage Pilot's Son warbird">
     <div class="quote" id="flightQuote" style="opacity:0;transform:translateY(30px)">
       <h2>The sky is <b>not</b> the limit.</h2>
       <p>Legacy is our altitude.</p>
@@ -544,14 +548,25 @@ const len=arc.getTotalLength();
 arc.style.strokeDasharray=len;arc.style.strokeDashoffset=len;
 const plane=document.getElementById('plane');
 const flightQuote=document.getElementById('flightQuote');
+const sky=document.querySelector('#flight .sky');
+const PLANE_BASE=-19; // built-in nose angle of the plane artwork (deg, screen coords)
 ScrollTrigger.create({trigger:'#flight',start:'top top',end:'bottom bottom',scrub:.6,
   onUpdate:s=>{
     arc.style.strokeDashoffset=len*(1-s.progress);
-    const pt=arc.getPointAtLength(len*Math.min(s.progress,.94));
     const svg=arc.ownerSVGElement,vb=svg.viewBox.baseVal,r=svg.getBoundingClientRect();
-    plane.style.left=(pt.x/vb.width*r.width-plane.offsetWidth/2)+'px';
-    plane.style.top=(pt.y/vb.height*r.height-plane.offsetHeight/2)+'px';
-    const qp=gsap.utils.clamp(0,1,gsap.utils.mapRange(.45,.85,0,1,s.progress));
+    const sx=r.width/vb.width, sy=r.height/vb.height;
+    const at=Math.min(s.progress,.94);
+    const pt=arc.getPointAtLength(len*at);
+    // tangent from two nearby samples, mapped to screen space for correct on-screen angle
+    const d=Math.max(len*.004,2);
+    const a=arc.getPointAtLength(Math.max(0,len*at-d));
+    const b=arc.getPointAtLength(Math.min(len,len*at+d));
+    const ang=Math.atan2((b.y-a.y)*sy,(b.x-a.x)*sx)*180/Math.PI;
+    plane.style.left=(pt.x*sx-plane.offsetWidth/2)+'px';
+    plane.style.top=(pt.y*sy-plane.offsetHeight/2)+'px';
+    plane.style.transform=`rotate(${ang-PLANE_BASE}deg)`;
+    if(sky) sky.style.transform=`scale(1.08) translate(${-3+s.progress*6}%, ${2-s.progress*5}%)`;
+    const qp=gsap.utils.clamp(0,1,gsap.utils.mapRange(.42,.82,0,1,s.progress));
     flightQuote.style.opacity=qp;
     flightQuote.style.transform=`translateY(${30*(1-qp)}px)`;
   }});
