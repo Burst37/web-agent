@@ -399,7 +399,6 @@ const P = [
   {id:'autobot',     n:'Chrome Autobot',   img:'autobot-chrome.webp',    price:94},
   {id:'stonegaze',   n:'Stone Gaze',       img:'medusa-stone.webp',      price:90},
   {id:'cupid',       n:"Cupid's Aim",      img:'cupid-front.webp',       price:86},
-  {id:'loveland',    n:'Love Land',        img:'cupid-back.webp',        price:86},
   {id:'geisha',      n:'Cyber Geisha',     img:'geisha-cyber.webp',      price:96, badge:'New'},
   {id:'vintage',     n:'Vintage Flyer',    img:'vintage-pilot-art.webp', price:80},
   {id:'pegasus',     n:'Winged Pegasus',   img:'pegasus-unicorn.webp',   price:92, badge:'New'},
@@ -526,7 +525,7 @@ const lineup=document.getElementById('lineup');
  ['Deception','decepticon-nebula.webp','Cybertron run'],
  ['Medusa','medusa-chibi.webp','Myth series'],
  ['Cyber Geisha','geisha-cyber.webp','Neon Tokyo'],
- ['Cupid','cupid-front.webp','Love land'],
+ ['Cupid','cupid-front.webp','Struck'],
  ['Fly Boy','vintage-pilot-art.webp','Heritage']].forEach(([n,img,tag])=>{
   const r=document.createElement('div');r.className='row';
   r.innerHTML=`${n.split(' ')[0]} <span class="thumb"><img src="assets/${img}" alt="" loading="lazy"></span> ${n.split(' ').slice(1).join(' ')} <small>${tag}</small>`;
