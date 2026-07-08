@@ -129,25 +129,25 @@
   #shop .grid,#gear .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:34px;margin-top:60px}
   .card .info .note{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin:2px 0 4px}
   .card .info .osfa{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--cream-dim)}
-  .swatches{display:flex;flex-wrap:wrap;gap:8px}
-  .swatch{width:22px;height:22px;border-radius:50%;border:2px solid rgba(217,210,193,.25);cursor:pointer;padding:0;transition:transform .2s,border-color .2s}
+  .swatches{display:flex;flex-wrap:wrap;gap:14px}
+  .swatch{width:34px;height:34px;border-radius:50%;border:2px solid rgba(217,210,193,.25);cursor:pointer;padding:0;transition:transform .2s,border-color .2s}
   .swatch:hover{transform:scale(1.15)}
   .swatch.on{border-color:var(--gold-bright);transform:scale(1.15)}
   .colorname{font-size:12px;color:var(--cream-dim);letter-spacing:.05em}
   .colorname .note{display:inline;letter-spacing:.05em;text-transform:none;color:var(--cream-dim);font-size:12px}
 
   /* ============ quick view ============ */
-  #qvOverlay{position:fixed;inset:0;background:rgba(9,9,11,.8);backdrop-filter:blur(6px);z-index:998;opacity:0;visibility:hidden;transition:opacity .35s,visibility .35s}
+  #qvOverlay{position:fixed;inset:0;background:rgba(9,9,11,.82);backdrop-filter:blur(10px);z-index:998;opacity:0;visibility:hidden;transition:opacity .4s,visibility .4s}
   #qvOverlay.on{opacity:1;visibility:visible}
-  #qv{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.96);width:min(1000px,92vw);max-height:88vh;background:var(--jet-2);border-radius:20px;z-index:999;display:grid;grid-template-columns:1fr 1fr;overflow:hidden;opacity:0;visibility:hidden;transition:opacity .35s,visibility .35s,transform .35s;box-shadow:0 40px 100px rgba(0,0,0,.6)}
-  #qv.on{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}
-  #qvClose{position:absolute;top:16px;right:16px;z-index:3;background:rgba(13,13,15,.6);border:1px solid rgba(217,210,193,.2);color:var(--cream);width:38px;height:38px;border-radius:50%;font-size:20px;cursor:pointer}
-  .qvInfo{padding:48px 40px;display:flex;flex-direction:column;gap:16px;justify-content:center;overflow-y:auto}
-  .qvInfo h2{font-family:var(--font-display);font-size:clamp(28px,3vw,40px);text-transform:uppercase;line-height:1.05}
+  #qv{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(1100px,94vw);max-height:88vh;z-index:999;display:grid;grid-template-columns:1fr 1.3fr;align-items:center;gap:6vw;opacity:0;visibility:hidden;transition:opacity .4s,visibility .4s;pointer-events:none}
+  #qv.on{opacity:1;visibility:visible;pointer-events:auto}
+  #qvClose{position:absolute;top:-46px;right:0;z-index:3;background:none;border:1px solid rgba(217,210,193,.3);color:var(--cream);width:38px;height:38px;border-radius:50%;font-size:20px;cursor:pointer}
+  .qvInfo{display:flex;flex-direction:column;gap:14px}
+  .qvInfo h2{font-family:var(--font-display);font-size:clamp(30px,3.4vw,46px);text-transform:uppercase;line-height:1.05}
   .qvInfo .price{color:var(--gold-bright);font-size:22px;font-weight:600}
-  .qvMedia{position:relative;aspect-ratio:1/1;background:#111;overflow:hidden}
+  .qvMedia{position:relative;aspect-ratio:1/1;overflow:hidden;border-radius:16px}
   .qvMedia img{width:100%;height:100%;object-fit:cover}
-  @media(max-width:760px){#qv{grid-template-columns:1fr;max-height:92vh}.qvMedia{aspect-ratio:1/1}}
+  @media(max-width:760px){#qv{grid-template-columns:1fr;max-height:92vh;overflow-y:auto}.qvMedia{aspect-ratio:1/1}}
   .card{--blob-size:260px;--border-size:2px;--border-angle:0deg;background:var(--jet-2);border:1px solid rgba(217,210,193,.08);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;position:relative;transition:transform .45s cubic-bezier(.2,.7,.2,1),border-color .45s}
   .card:hover{transform:translateY(-8px);border-color:rgba(199,154,85,.45)}
   /* moving border glow */
@@ -439,13 +439,10 @@
 <div id="qv">
   <button id="qvClose">×</button>
   <div class="qvInfo">
-    <p class="tag" id="qvBadge"></p>
     <h2 id="qvName"></h2>
     <span class="price" id="qvPrice"></span>
-    <div class="sizes" id="qvSizes"></div>
     <div class="swatches" id="qvSwatches"></div>
     <p class="colorname" id="qvColorname"></p>
-    <button class="add" id="qvAdd">Add to cart</button>
   </div>
   <div class="qvMedia"><img id="qvImg" src="" alt=""></div>
 </div>
@@ -771,21 +768,15 @@ function renderCart(){
 /* ---------- quick view ---------- */
 const qv=document.getElementById('qv'),qvOverlay=document.getElementById('qvOverlay');
 const qvImg=document.getElementById('qvImg'),qvName=document.getElementById('qvName'),qvPrice=document.getElementById('qvPrice');
-const qvBadge=document.getElementById('qvBadge'),qvSizes=document.getElementById('qvSizes'),qvSwatches=document.getElementById('qvSwatches'),qvColorname=document.getElementById('qvColorname'),qvAdd=document.getElementById('qvAdd');
+const qvSwatches=document.getElementById('qvSwatches'),qvColorname=document.getElementById('qvColorname');
 function openQuickView(p,kind,startIdx){
-  let size = kind==='sizes' ? 'M' : 'OS';
   let colorIdx = startIdx||0;
   const setImg=(src)=>{qvImg.src='assets/'+src};
   setImg(p.colors ? p.colors[colorIdx].img : p.img);
   qvName.textContent=p.n;
   qvPrice.textContent='$'+p.price;
-  qvBadge.textContent=p.badge||'The Pilot\'s Son';
-  qvSizes.innerHTML = kind==='sizes' ? SIZES.map(s=>`<button data-s="${s}"${s==='M'?' class="on"':''}>${s}</button>`).join('') : '';
   qvSwatches.innerHTML = kind==='colors' ? p.colors.map((c,i)=>`<button class="swatch${i===colorIdx?' on':''}" style="background:${c.hex}" data-i="${i}" title="${c.n}"></button>`).join('') : '';
-  qvColorname.textContent = kind==='colors' ? p.colors[colorIdx].n+' — '+p.colors.length+' colorways' : (kind==='note' ? p.note : (kind==='osfa' ? 'One size' : ''));
-  qvSizes.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
-    qvSizes.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');size=b.dataset.s;
-  }));
+  qvColorname.textContent = kind==='colors' ? p.colors[colorIdx].n+' — '+p.colors.length+' colorways' : '';
   qvSwatches.querySelectorAll('.swatch').forEach(b=>b.addEventListener('click',()=>{
     const i=+b.dataset.i; if(i===colorIdx)return; colorIdx=i;
     qvSwatches.querySelectorAll('.swatch').forEach(x=>x.classList.remove('on'));b.classList.add('on');
@@ -794,13 +785,9 @@ function openQuickView(p,kind,startIdx){
       .call(()=>{setImg(p.colors[i].img);qvColorname.textContent=p.colors[i].n+' — '+p.colors.length+' colorways';})
       .fromTo(qvImg,{xPercent:14,opacity:0},{xPercent:0,opacity:1,duration:.4,ease:'power3.out'});
   }));
-  qvAdd.onclick=()=>{
-    const finalP = kind==='colors' ? {...p,n:p.n+' — '+p.colors[colorIdx].n} : p;
-    addToCart(finalP,size); closeQuickView();
-  };
   qvOverlay.classList.add('on'); qv.classList.add('on');
   gsap.fromTo(qvImg,{xPercent:-16,opacity:0},{xPercent:0,opacity:1,duration:.55,ease:'power3.out',delay:.08});
-  gsap.fromTo([qvBadge,qvName,qvPrice,qvSizes,qvSwatches,qvColorname,qvAdd],{xPercent:16,opacity:0},{xPercent:0,opacity:1,duration:.55,ease:'power3.out',stagger:.04,delay:.08});
+  gsap.fromTo([qvName,qvPrice,qvSwatches,qvColorname],{xPercent:16,opacity:0},{xPercent:0,opacity:1,duration:.55,ease:'power3.out',stagger:.04,delay:.08});
 }
 function closeQuickView(){qvOverlay.classList.remove('on');qv.classList.remove('on')}
 document.getElementById('qvClose').addEventListener('click',closeQuickView);
