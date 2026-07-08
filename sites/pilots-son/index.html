@@ -129,6 +129,12 @@
   #shop .grid,#gear .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:34px;margin-top:60px}
   .card .info .note{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin:2px 0 4px}
   .card .info .osfa{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--cream-dim)}
+  .swatches{display:flex;flex-wrap:wrap;gap:8px}
+  .swatch{width:22px;height:22px;border-radius:50%;border:2px solid rgba(217,210,193,.25);cursor:pointer;padding:0;transition:transform .2s,border-color .2s}
+  .swatch:hover{transform:scale(1.15)}
+  .swatch.on{border-color:var(--gold-bright);transform:scale(1.15)}
+  .colorname{font-size:12px;color:var(--cream-dim);letter-spacing:.05em}
+  .colorname .note{display:inline;letter-spacing:.05em;text-transform:none;color:var(--cream-dim);font-size:12px}
   .card{--blob-size:260px;--border-size:2px;--border-angle:0deg;background:var(--jet-2);border:1px solid rgba(217,210,193,.08);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;position:relative;transition:transform .45s cubic-bezier(.2,.7,.2,1),border-color .45s}
   .card:hover{transform:translateY(-8px);border-color:rgba(199,154,85,.45)}
   /* moving border glow */
@@ -441,6 +447,8 @@ const P = [
   {id:'phoenixflame',n:'Phoenix Flame',    img:'phoenix-flame.webp',     price:94},
   {id:'stonegazeteal',n:'Stone Gaze Teal', img:'medusa-stone-teal.webp', price:90},
   {id:'prism',       n:'Prism Light',      img:'prism-crystal.webp',     price:88},
+  {id:'poseidon',    n:'Poseidon',         img:'poseidon.webp',          price:96, badge:'New'},
+  {id:'seagreen-medusa',n:'Medusa Seafoam',img:'medusa-seagreen.webp',   price:90, badge:'New'},
 ];
 const SIZES=['S','M','L','XL','2X'];
 
@@ -556,10 +564,30 @@ P.forEach(p=>{
 });
 
 /* ---------- the gear (logo essentials) ---------- */
+const CAP_COLORS=[
+  {n:'Purple',hex:'#6b3fa0',img:'cap-purple.webp'},{n:'Kelly Green',hex:'#1f9d55',img:'cap-green.webp'},
+  {n:'Sea Green',hex:'#4fc9a5',img:'cap-seagreen.webp'},{n:'White',hex:'#f2f0ea',img:'cap-white.webp'},
+  {n:'Black',hex:'#17171a',img:'cap-black.webp'},{n:'Heather Grey',hex:'#9a9a9a',img:'cap-grey.webp'},
+  {n:'Tan',hex:'#c9a876',img:'cap-tan.webp'},{n:'Red',hex:'#cf2a2a',img:'cap-red.webp'},
+  {n:'Burgundy',hex:'#6b1f2a',img:'cap-burgundy.webp'},{n:'Butter Yellow',hex:'#e8d27a',img:'cap-yellow.webp'},
+  {n:'Pink',hex:'#f2b8c6',img:'cap-pink.webp'},{n:'Royal Blue',hex:'#2447c9',img:'cap-blue.webp'},
+  {n:'Denim Blue',hex:'#4a6f96',img:'cap-denim.webp'}];
+const SOCKS_COLORS=[
+  {n:'Purple',hex:'#6b3fa0',img:'socks-purple.webp'},{n:'Kelly Green',hex:'#1f9d55',img:'socks-green.webp'},
+  {n:'Sea Green',hex:'#4fc9a5',img:'socks-seagreen.webp'},{n:'White',hex:'#f2f0ea',img:'socks-white.webp'},
+  {n:'Black',hex:'#17171a',img:'socks-black.webp'},{n:'Heather Grey',hex:'#9a9a9a',img:'socks-grey.webp'},
+  {n:'Tan',hex:'#c9a876',img:'socks-tan.webp'},{n:'Red',hex:'#cf2a2a',img:'socks-red.webp'},
+  {n:'Burgundy',hex:'#6b1f2a',img:'socks-burgundy.webp'},{n:'Butter Yellow',hex:'#e8d27a',img:'socks-yellow.webp'},
+  {n:'Pink',hex:'#f2b8c6',img:'socks-pink.webp'},{n:'Royal Blue',hex:'#2447c9',img:'socks-blue.webp'},
+  {n:'Denim Blue',hex:'#4a6f96',img:'socks-denim.webp'}];
+const BEANIE_COLORS=[
+  {n:'Red',hex:'#cf2a2a',img:'beanie-red.webp'},{n:'Navy',hex:'#16234a',img:'beanie-navy.webp'},
+  {n:'Tan',hex:'#c9a876',img:'beanie-tan.webp'},{n:'Pine Green',hex:'#17512f',img:'beanie-pine.webp'},
+  {n:'Burgundy',hex:'#6b1f2a',img:'beanie-burgundy.webp'},{n:'Denim Blue',hex:'#4a6f96',img:'beanie-denim.webp'}];
 const G=[
-  {id:'g-cap',   n:'Aviator Cap',        img:'merch-cap.webp',     price:38,  note:'13 colorways', badge:'New'},
-  {id:'g-socks', n:'Legacy Crew Socks',  img:'merch-socks.webp',   price:18,  note:'13 colorways'},
-  {id:'g-beanie',n:'Flight Beanie',      img:'merch-beanie.webp',  price:32,  osfa:true},
+  {id:'g-cap',   n:'Aviator Cap',        img:'merch-cap.webp',     price:38,  colors:CAP_COLORS, badge:'New'},
+  {id:'g-socks', n:'Legacy Crew Socks',  img:'merch-socks.webp',   price:18,  colors:SOCKS_COLORS},
+  {id:'g-beanie',n:'Flight Beanie',      img:'merch-beanie.webp',  price:32,  colors:BEANIE_COLORS},
   {id:'g-sweat', n:'Oversized Logo Sweater', img:'merch-sweater.webp', price:98, sizes:true, badge:'New'},
   {id:'g-varsity',n:'Varsity Jacket',    img:'merch-varsity.webp', price:180, sizes:true, badge:'Heavy'},
   {id:'g-bag',   n:'Legacy Backpack',    img:'merch-backpack.webp',price:88,  osfa:true},
@@ -567,16 +595,28 @@ const G=[
   {id:'g-case',  n:'Logo iPhone Case',   img:'merch-iphone.webp',  price:34,  osfa:true},
 ];
 const gearGrid=document.getElementById('gearGrid');
+function swapVariant(el,img,color){
+  const imgEl=el.querySelector('.media img');
+  const infoBits=el.querySelectorAll('.info h3, .info .price, .info .colorname');
+  const tl=gsap.timeline();
+  tl.to(imgEl,{xPercent:-6,opacity:0,duration:.22,ease:'power2.in'})
+    .to(infoBits,{xPercent:6,opacity:0,duration:.22,ease:'power2.in'},'<')
+    .call(()=>{imgEl.src='assets/'+img; const cn=el.querySelector('.colorname'); if(cn)cn.firstChild.textContent=color+' ';})
+    .fromTo(imgEl,{xPercent:10,opacity:0},{xPercent:0,opacity:1,duration:.4,ease:'power3.out'})
+    .fromTo(infoBits,{xPercent:-10,opacity:0},{xPercent:0,opacity:1,duration:.4,ease:'power3.out'},'<');
+}
 G.forEach(p=>{
   const el=document.createElement('article');el.className='card reveal';
+  const displayImg = p.colors ? p.colors[0].img : p.img;
+  const swatchRow = p.colors ? `<div class="swatches">${p.colors.map((c,i)=>`<button class="swatch${i===0?' on':''}" style="background:${c.hex}" data-i="${i}" title="${c.n}" aria-label="${c.n}"></button>`).join('')}</div><p class="colorname">${p.colors[0].n} <span class="note">— ${p.colors.length} colorways</span></p>` : '';
   const footer = p.sizes
     ? `<div class="sizes">${SIZES.map(s=>`<button data-s="${s}">${s}</button>`).join('')}</div>`
-    : (p.note?`<p class="note">${p.note}</p>`:`<p class="osfa">One size</p>`);
+    : (p.colors ? swatchRow : (p.note?`<p class="note">${p.note}</p>`:`<p class="osfa">One size</p>`));
   el.innerHTML=`
     <div class="hover-color"></div><div class="fakecolor"></div>
     <div class="media">
       ${p.badge?`<span class="badge">${p.badge}</span>`:''}
-      <img src="assets/${p.img}" alt="${p.n}" loading="lazy">
+      <img src="assets/${displayImg}" alt="${p.n}" loading="lazy">
     </div>
     <div class="info">
       <div class="row"><h3>${p.n}</h3><span class="price">$${p.price}</span></div>
@@ -585,13 +625,21 @@ G.forEach(p=>{
     </div>`;
   gearGrid.appendChild(el);
   let size = p.sizes ? 'M' : 'OS';
+  let colorIdx = 0;
   if(p.sizes){
     el.querySelectorAll('.sizes button').forEach(b=>b.addEventListener('click',()=>{
       el.querySelectorAll('.sizes button').forEach(x=>x.classList.remove('on'));b.classList.add('on');size=b.dataset.s;
     }));
     el.querySelector('[data-s="M"]').classList.add('on');
   }
-  el.querySelector('.add').addEventListener('click',()=>addToCart(p,size));
+  if(p.colors){
+    el.querySelectorAll('.swatch').forEach(b=>b.addEventListener('click',()=>{
+      const i=+b.dataset.i; if(i===colorIdx)return; colorIdx=i;
+      el.querySelectorAll('.swatch').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+      swapVariant(el,p.colors[i].img,p.colors[i].n);
+    }));
+  }
+  el.querySelector('.add').addEventListener('click',()=>addToCart(p.colors?{...p,n:p.n+' — '+p.colors[colorIdx].n}:p,size));
 });
 
 /* ---------- kinetic lineup ---------- */
