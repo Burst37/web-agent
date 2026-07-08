@@ -115,13 +115,15 @@
 
   /* ============ SPIRAL 3D gallery (ref: Jupiter showreel) ============ */
   #spiral{height:320vh}
-  #spiral .pin{position:sticky;top:0;height:100vh;overflow:hidden;perspective:1200px;background:radial-gradient(60% 60% at 50% 45%,#17171d 0%,var(--jet) 70%)}
+  #spiral .pin{position:sticky;top:0;height:100vh;overflow:hidden;perspective:1200px;background:url(assets/flight-sky.webp) center/cover no-repeat}
+  #spiral .pin::before{content:"";position:absolute;inset:0;z-index:0;background:radial-gradient(60% 60% at 50% 45%,rgba(23,23,29,.35) 0%,rgba(13,13,15,.82) 75%)}
+  #spiral .hint,#spiral .stage{position:absolute;z-index:1}
   #spiral .hint{position:absolute;top:9vh;width:100%;text-align:center;z-index:5}
   #spiral .stage{position:absolute;inset:0;transform-style:preserve-3d}
   .scard{position:absolute;left:50%;top:50%;width:clamp(150px,17vw,280px);aspect-ratio:1/1;margin:calc(clamp(150px,17vw,280px)/-2) 0 0 calc(clamp(150px,17vw,280px)/-2);border-radius:14px;overflow:hidden;transform-style:preserve-3d;box-shadow:0 24px 70px rgba(0,0,0,.6);transition:filter .3s}
   .scard img{width:100%;height:100%;object-fit:cover}
   .scard .label{position:absolute;left:0;right:0;bottom:0;padding:26px 12px 10px;background:linear-gradient(180deg,transparent,rgba(13,13,15,.9));font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--cream)}
-  .scard:hover{filter:brightness(1.15)}
+  .scard:hover{filter:brightness(1.15);cursor:pointer}
 
   /* ============ product grid ============ */
   #shop{padding:16vh 0 8vh}
@@ -540,6 +542,7 @@ const RADIUS=Math.min(innerWidth*.42,620);
 P.forEach((p,i)=>{
   const c=document.createElement('div');c.className='scard';c.dataset.i=i;
   c.innerHTML=`<img src="assets/${p.img}" alt="${p.n}" loading="lazy"><div class="label">${p.n}</div>`;
+  c.addEventListener('click',()=>openQuickView(p,'sizes'));
   stage.appendChild(c);
 });
 const cards=gsap.utils.toArray('.scard');
