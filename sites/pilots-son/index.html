@@ -135,6 +135,19 @@
   .swatch.on{border-color:var(--gold-bright);transform:scale(1.15)}
   .colorname{font-size:12px;color:var(--cream-dim);letter-spacing:.05em}
   .colorname .note{display:inline;letter-spacing:.05em;text-transform:none;color:var(--cream-dim);font-size:12px}
+
+  /* ============ quick view ============ */
+  #qvOverlay{position:fixed;inset:0;background:rgba(9,9,11,.8);backdrop-filter:blur(6px);z-index:998;opacity:0;visibility:hidden;transition:opacity .35s,visibility .35s}
+  #qvOverlay.on{opacity:1;visibility:visible}
+  #qv{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(.96);width:min(1000px,92vw);max-height:88vh;background:var(--jet-2);border-radius:20px;z-index:999;display:grid;grid-template-columns:1fr 1fr;overflow:hidden;opacity:0;visibility:hidden;transition:opacity .35s,visibility .35s,transform .35s;box-shadow:0 40px 100px rgba(0,0,0,.6)}
+  #qv.on{opacity:1;visibility:visible;transform:translate(-50%,-50%) scale(1)}
+  #qvClose{position:absolute;top:16px;right:16px;z-index:3;background:rgba(13,13,15,.6);border:1px solid rgba(217,210,193,.2);color:var(--cream);width:38px;height:38px;border-radius:50%;font-size:20px;cursor:pointer}
+  .qvInfo{padding:48px 40px;display:flex;flex-direction:column;gap:16px;justify-content:center;overflow-y:auto}
+  .qvInfo h2{font-family:var(--font-display);font-size:clamp(28px,3vw,40px);text-transform:uppercase;line-height:1.05}
+  .qvInfo .price{color:var(--gold-bright);font-size:22px;font-weight:600}
+  .qvMedia{position:relative;aspect-ratio:1/1;background:#111;overflow:hidden}
+  .qvMedia img{width:100%;height:100%;object-fit:cover}
+  @media(max-width:760px){#qv{grid-template-columns:1fr;max-height:92vh}.qvMedia{aspect-ratio:1/1}}
   .card{--blob-size:260px;--border-size:2px;--border-angle:0deg;background:var(--jet-2);border:1px solid rgba(217,210,193,.08);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;position:relative;transition:transform .45s cubic-bezier(.2,.7,.2,1),border-color .45s}
   .card:hover{transform:translateY(-8px);border-color:rgba(199,154,85,.45)}
   /* moving border glow */
@@ -421,6 +434,22 @@
   </footer>
 </aside>
 
+<!-- quick view -->
+<div id="qvOverlay"></div>
+<div id="qv">
+  <button id="qvClose">×</button>
+  <div class="qvInfo">
+    <p class="tag" id="qvBadge"></p>
+    <h2 id="qvName"></h2>
+    <span class="price" id="qvPrice"></span>
+    <div class="sizes" id="qvSizes"></div>
+    <div class="swatches" id="qvSwatches"></div>
+    <p class="colorname" id="qvColorname"></p>
+    <button class="add" id="qvAdd">Add to cart</button>
+  </div>
+  <div class="qvMedia"><img id="qvImg" src="" alt=""></div>
+</div>
+
 <script src="vendor/gsap.min.js"></script>
 <script src="vendor/ScrollTrigger.min.js"></script>
 <script src="vendor/lenis.min.js"></script>
@@ -561,6 +590,7 @@ P.forEach(p=>{
   }));
   el.querySelector('[data-s="M"]').classList.add('on');
   el.querySelector('.add').addEventListener('click',()=>addToCart(p,size));
+  el.querySelector('.media').addEventListener('click',()=>openQuickView(p,'sizes'));
 });
 
 /* ---------- the gear (logo essentials) ---------- */
@@ -640,6 +670,7 @@ G.forEach(p=>{
     }));
   }
   el.querySelector('.add').addEventListener('click',()=>addToCart(p.colors?{...p,n:p.n+' — '+p.colors[colorIdx].n}:p,size));
+  el.querySelector('.media').addEventListener('click',()=>openQuickView(p, p.sizes?'sizes':(p.colors?'colors':(p.note?'note':'osfa')), p.colors?colorIdx:0));
 });
 
 /* ---------- kinetic lineup ---------- */
@@ -736,6 +767,44 @@ function renderCart(){
     </div>`).join('');
   cartTotal.textContent='$'+cart.reduce((a,c)=>a+c.price,0);
 }
+
+/* ---------- quick view ---------- */
+const qv=document.getElementById('qv'),qvOverlay=document.getElementById('qvOverlay');
+const qvImg=document.getElementById('qvImg'),qvName=document.getElementById('qvName'),qvPrice=document.getElementById('qvPrice');
+const qvBadge=document.getElementById('qvBadge'),qvSizes=document.getElementById('qvSizes'),qvSwatches=document.getElementById('qvSwatches'),qvColorname=document.getElementById('qvColorname'),qvAdd=document.getElementById('qvAdd');
+function openQuickView(p,kind,startIdx){
+  let size = kind==='sizes' ? 'M' : 'OS';
+  let colorIdx = startIdx||0;
+  const setImg=(src)=>{qvImg.src='assets/'+src};
+  setImg(p.colors ? p.colors[colorIdx].img : p.img);
+  qvName.textContent=p.n;
+  qvPrice.textContent='$'+p.price;
+  qvBadge.textContent=p.badge||'The Pilot\'s Son';
+  qvSizes.innerHTML = kind==='sizes' ? SIZES.map(s=>`<button data-s="${s}"${s==='M'?' class="on"':''}>${s}</button>`).join('') : '';
+  qvSwatches.innerHTML = kind==='colors' ? p.colors.map((c,i)=>`<button class="swatch${i===colorIdx?' on':''}" style="background:${c.hex}" data-i="${i}" title="${c.n}"></button>`).join('') : '';
+  qvColorname.textContent = kind==='colors' ? p.colors[colorIdx].n+' — '+p.colors.length+' colorways' : (kind==='note' ? p.note : (kind==='osfa' ? 'One size' : ''));
+  qvSizes.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+    qvSizes.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');size=b.dataset.s;
+  }));
+  qvSwatches.querySelectorAll('.swatch').forEach(b=>b.addEventListener('click',()=>{
+    const i=+b.dataset.i; if(i===colorIdx)return; colorIdx=i;
+    qvSwatches.querySelectorAll('.swatch').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+    const tl=gsap.timeline();
+    tl.to(qvImg,{xPercent:-8,opacity:0,duration:.2,ease:'power2.in'})
+      .call(()=>{setImg(p.colors[i].img);qvColorname.textContent=p.colors[i].n+' — '+p.colors.length+' colorways';})
+      .fromTo(qvImg,{xPercent:14,opacity:0},{xPercent:0,opacity:1,duration:.4,ease:'power3.out'});
+  }));
+  qvAdd.onclick=()=>{
+    const finalP = kind==='colors' ? {...p,n:p.n+' — '+p.colors[colorIdx].n} : p;
+    addToCart(finalP,size); closeQuickView();
+  };
+  qvOverlay.classList.add('on'); qv.classList.add('on');
+  gsap.fromTo(qvImg,{xPercent:-16,opacity:0},{xPercent:0,opacity:1,duration:.55,ease:'power3.out',delay:.08});
+  gsap.fromTo([qvBadge,qvName,qvPrice,qvSizes,qvSwatches,qvColorname,qvAdd],{xPercent:16,opacity:0},{xPercent:0,opacity:1,duration:.55,ease:'power3.out',stagger:.04,delay:.08});
+}
+function closeQuickView(){qvOverlay.classList.remove('on');qv.classList.remove('on')}
+document.getElementById('qvClose').addEventListener('click',closeQuickView);
+qvOverlay.addEventListener('click',closeQuickView);
 
 /* ---------- notify ---------- */
 document.getElementById('notifyForm').addEventListener('submit',e=>{
