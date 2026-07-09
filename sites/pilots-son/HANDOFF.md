@@ -11,23 +11,25 @@ Cinematic e-commerce site. Single-file HTML, no build step.
 - **Local test:** `python3 -m http.server 8321` (needs `run_in_background:true`) → only `localhost:8321` reachable by sandbox Playwright, never the live URL.
 - **Image tooling:** `sharp` at `/home/user/web-agent/node_modules` (crop/resize/webp).
 
-## ⚠️ GIT STATE — two commits made, NEITHER PUSHED
-```
-1d69bb3 fix: iPhone case photo (logo now contained on case)   ← NOT pushed
-2c37690 feat: orbit gallery sky bg + clickable spiral cards    ← NOT pushed
-```
-Next session: `git push -u origin claude/pilots-son-apparel-site-vpnlmu`, then redeploy Vercel. Nothing since 2c37690 is live yet.
-> Note: prior commit was stop-hook flagged "Unverified" (wrong committer email, should be `noreply@anthropic.com`). User said "Tomorrow" — still unresolved.
+## GIT STATE — all work pushed (2026-07-09 session 2)
+Branch tip `2ba886d` on `origin/claude/pilots-son-apparel-site-vpnlmu` (includes the
+previously-unpushed 2c37690 orbit gallery + 1d69bb3 iPhone case fix — they were
+already on the remote). Draft PR #14 open, session subscribed to its activity.
 
-## DONE this session
-- **iPhone case fixed** — regenerated via GPT Image 2 (job `0a01ce81-fa3c-4f23-a1ad-8239f806ccf0`), logo now sits neatly inside case edges, no bleed. Saved to `assets/merch-iphone.webp` (same filename `g-case` already references). Committed 1d69bb3.
+## 🔴 DEPLOY BLOCKED — nothing after dpl_5kbVpPgv... is live
+This container has NO Vercel credentials (`vercel` CLI hangs on login, no VERCEL_TOKEN,
+MCP deploy tool can't inline a 29MB site). The socks fix + orbit gallery + iPhone case
+fix are pushed to GitHub but NOT live. User must either run the deploy command above
+from a machine with Vercel auth, or add VERCEL_TOKEN to the Claude environment config.
 
-## 🔴 ACTIVE BUG — socks crops are wrong (user just flagged)
-User screenshot: "Legacy Crew Socks" quick view with **Pink** swatch selected shows a **yellow** sock, massively zoomed.
-Root cause confirmed:
-- Per-color sock files (`assets/socks-*.webp`) are **400×1258 tall single-sock crops** sliced from a wide group shot — but the slices are **misaligned**: `socks-pink.webp` actually contains a yellow sock in the foreground + pink behind (verified by eye). Each color file has the wrong/adjacent sock in frame.
-- Second problem: the Quick View media box is a **1:1 square with `object-fit:cover`**, so a 400×1258 tall image gets cropped to its middle third → the "way too zoomed in" look the user sees.
-- Fix path: (a) re-slice the original wide socks group shot so each colorway lands centered in its own file (find the source wide render — likely `merch-socks.webp` or a scratch group shot; verify actual colors present before slicing), OR regenerate per-color socks cleanly; and (b) either pad the sock images to square or set `.qvMedia` to `object-fit:contain` / a taller aspect-ratio for sock-type products so the whole sock shows. Same tall-crop risk applies to **caps** (`cap-*.webp`) — sanity-check those too.
+## DONE 2026-07-09 session 2
+- **Socks bug FIXED** — all 13 `socks-*.webp` rebuilt from the `merch-socks.webp`
+  group shot via OpenCV (rotate 9°, border flood-fill, color-anchored split, manual
+  polygon for the black sock, pull-push background plate). Each file is now a square
+  900×900 with the CORRECT colorway centered, whole sock visible, seamless dark bg +
+  soft shadow. Verified in Quick View via Playwright (pink swatch → pink sock).
+  No CSS change needed — square images fix the object-fit:cover zoom.
+- Caps sanity-checked: all cap-*.webp are clean 900×900 squares, no action needed.
 
 ## PENDING (user asked, not done)
 1. **iPhone case — add the 13 color variants.** User confirmed "Same 13-color set" (cap/socks palette: purple, green, sea green, white, black, grey, tan, red, burgundy, butter yellow, pink, blue, denim). Setup already done: red case uploaded as Higgsfield reference **media_id `ba3c27b8-509f-4a8c-8fb1-8e053b50ee10`**. Cost preflighted with `gpt_image_2` img2img: **high/2k = 7 credits each (91 total)**, low/1k = 0.5 each (~7 total). User was asked which quality tier and had NOT answered when they pivoted to the socks bug — **ask again before spending.** After generating: download → webp → build a `CASE_COLORS` array + wire `g-case` to `colors:` like the caps/socks so swatches work.
