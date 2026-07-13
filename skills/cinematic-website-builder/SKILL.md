@@ -147,6 +147,7 @@ gsap.to(".mask-text-fill", {
 
 ### MODULE 02 — STICKY STACK NARRATIVE
 **Category:** Scroll-Driven | **Best for:** Product feature walkthroughs, service explanations
+**Canonical source:** `gsap-supercharged` skill (with `gsap-core`, `gsap-scrolltrigger`, `gsap-timeline`) — prefer its Sticky Stack implementation; the snippet below is the inline fallback.
 
 ```html
 <style>
@@ -222,6 +223,7 @@ layers.forEach(({ el, speed }) => {
 
 ### MODULE 04 — HORIZONTAL SCROLL HIJACK
 **Category:** Scroll-Driven | **Best for:** Portfolios, product galleries, timelines
+**Canonical source:** `gsap-supercharged` skill (with `gsap-core`, `gsap-scrolltrigger`, `gsap-timeline`) — prefer its Horizontal Pan implementation; the snippet below is the inline fallback.
 
 ```html
 <style>

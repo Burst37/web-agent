@@ -22,7 +22,11 @@ Never skip Phase 1 even if you think you know the brand. Always fetch fresh.
 ## PHASE 1 — EXTRACTION
 
 ### Step 1: Fetch the site
-Use web_fetch on the provided URL. If no URL is given, ask for it before proceeding.
+Fetch engine: the **firecrawl-mcp** skill (`firecrawl_scrape` for a single page,
+`firecrawl_map` + batch scrape when the homepage is sparse). It handles
+JS-rendered SPAs and returns clean HTML/markdown with inline CSS intact. Fall
+back to web_fetch only if Firecrawl is unavailable.
+If no URL is given, ask for it before proceeding.
 Also fetch: [client URL]/about  (if homepage is sparse)
 
 Look for:

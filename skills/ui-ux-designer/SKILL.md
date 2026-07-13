@@ -109,6 +109,26 @@ Every design should feel like:
 
 ---
 
+## PHASE 0 — DESIGN RESEARCH (run before any direction is chosen)
+
+Pull real references before committing to a visual direction. Five sources, in
+priority order:
+
+1. **mobbin-operator skill** — strongest source: real shipped production UI, not
+   marketing renders. Use its `mobbin-pp-cli` `deck` / `bench` / `grab` commands
+   per that skill's SKILL.md to pull screens matching the client's vertical and
+   the intended moodboard.
+2. Awwwards — cinematic/award-tier motion and layout patterns
+3. Dribbble — visual styling and component treatments
+4. Behance — full case studies and brand systems
+5. Pinterest — broad aesthetic boards
+
+For fetching any live site referenced in research (competitor sites, client
+inspiration links), use the **firecrawl-mcp** skill as the fetch engine rather
+than raw web fetch.
+
+---
+
 ## CORE DESIGN PHILOSOPHY
 
 ### PRIMARY DESIGN OBJECTIVE
