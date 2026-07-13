@@ -9,13 +9,13 @@ description: >
   agent deployed and one outbound call queued. Knows Vapi's full API surface — assistants,
   phone numbers, calls, squads, tools, and webhooks. Use IMMEDIATELY when a lead needs
   to be called. Trigger on: "deploy the vapi agent", "make the call", "set up the voice
-  agent", "queue the outbound call", or when n8n reaches the voice agent step.
+  agent", "queue the outbound call", or when the pipeline reaches the voice agent step.
 ---
 
 # VAPI ORCHESTRATOR SKILL
 ## Space Age AI Solutions — Voice Agent Deployment Layer
 
-This skill takes the Vapi script from outreach-copywriter and the business data from lead-to-brief and produces everything needed to deploy a live outbound Vapi agent in one n8n HTTP call.
+This skill takes the Vapi script from outreach-copywriter and the business data from lead-to-brief and produces everything needed to deploy a live outbound Vapi agent via direct API calls from the calling script/process — no n8n. Status is reported through a Hermes Telegram ping on completion (SA standing infra rule: direct API calls + Hermes Telegram control only).
 
 ---
 
@@ -95,7 +95,7 @@ This is the complete JSON payload for the Vapi `POST /assistant` endpoint:
       }
     }
   },
-  "serverUrl": "{n8n_webhook_url}/vapi-outcomes",
+  "serverUrl": "{OUTCOME_WEBHOOK_URL}/vapi-outcomes",
   "serverUrlSecret": "{VAPI_WEBHOOK_SECRET}"
 }
 ```
@@ -145,7 +145,7 @@ After creating the assistant, queue the call:
   "scheduledAt": "{ISO_timestamp}",
   "metadata": {
     "lead_id": "{brief_id}",
-    "crm_update_url": "{n8n_webhook}/crm-update"
+    "crm_update_url": "{CRM_UPDATE_URL}/crm-update"
   }
 }
 ```
@@ -157,31 +157,40 @@ After creating the assistant, queue the call:
 
 ---
 
-## N8N WORKFLOW NODES (3 API calls)
+## DIRECT API CALLS (3 steps, run from the calling script/process)
 
-```javascript
-// NODE 1 — Create Vapi Assistant
-POST https://api.vapi.ai/assistant
-Authorization: Bearer {VAPI_API_KEY}
-Body: {assistant_config_json}
+```bash
+# STEP 1 — Create Vapi Assistant
+curl -sS -X POST https://api.vapi.ai/assistant \
+  -H "Authorization: Bearer ${VAPI_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d @assistant_config.json
+# → capture .id from the response as {created_assistant_id}
 
-// NODE 2 — Store assistant_id in Sheets row
-// (use Google Sheets "Update Row" node)
+# STEP 2 — Store assistant_id back on the lead row
+# (direct Sheets/Airtable API call from the same script — no middleware)
 
-// NODE 3 — Queue outbound call
-POST https://api.vapi.ai/call/phone
-Authorization: Bearer {VAPI_API_KEY}  
-Body: {call_payload_json}
+# STEP 3 — Queue outbound call
+curl -sS -X POST https://api.vapi.ai/call/phone \
+  -H "Authorization: Bearer ${VAPI_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d @call_payload.json
+
+# COMPLETION — Hermes Telegram status ping (never embed the token; env var only)
+curl -sS -X POST "https://api.telegram.org/bot${HERMES_TOKEN}/sendMessage" \
+  -d chat_id="${HERMES_CHAT_ID}" \
+  -d text="[vapi-orchestrator] deployed + call queued: {lead_id} / {business_name}"
 ```
 
 ---
 
-## WEBHOOK HANDLER (n8n receives Vapi outcomes)
+## WEBHOOK HANDLER (your endpoint receives Vapi outcomes)
 
-When Vapi POSTs to your `serverUrl` after each call:
+A small HTTP endpoint you control (the calling process, a serverless function, or the
+Hermes host) receives the POST Vapi sends to `serverUrl` after each call:
 
 ```javascript
-// n8n Webhook node receives:
+// Handler receives (payload shape unchanged — this is the validated data contract):
 {
   "type": "end-of-call-report",
   "call": { "id": "...", "duration": 180 },
@@ -197,12 +206,14 @@ When Vapi POSTs to your `serverUrl` after each call:
   "metadata": { "lead_id": "...", "business_name": "..." }
 }
 
-// Route based on outcome:
+// Route based on outcome (direct API calls, then Hermes ping):
 // "booked" → update Sheets status, notify via SMS/email
 // "interested_no_book" → schedule follow-up email in 24hrs
 // "declined" → mark closed-lost in Sheets
 // "callback" → schedule call at requested time
 // "no_answer" → retry once after 4 hours, then email-only
+// ALWAYS → Hermes Telegram ping:
+//   [vapi-orchestrator] outcome {outcome}: {lead_id} / {business_name}
 ```
 
 ---
@@ -212,7 +223,7 @@ When Vapi POSTs to your `serverUrl` after each call:
 One-time setup in Vapi dashboard:
 1. Connect your Twilio account to Vapi
 2. Buy a local Dallas area code number (+1 972 or +1 214) — looks local to Mesquite targets
-3. Note the `phoneNumberId` — hardcode into your n8n node
+3. Note the `phoneNumberId` — export it as `VAPI_PHONE_NUMBER_ID` in the calling script's environment
 
 **Cost:** ~$1.15/month for a Twilio number through Vapi
 
@@ -230,5 +241,5 @@ One-time setup in Vapi dashboard:
 ## SKILL CONNECTIONS
 - **Upstream:** outreach-copywriter (reads vapi_script block)
 - **Upstream:** lead-to-brief (reads business.phone, business.name, deploy.preview_subdomain)
-- **Downstream → Airtable/Sheets CRM:** writes outcome, duration, objections back to lead row
-- **Downstream → n8n follow-up:** triggers email or callback sequence based on outcome
+- **Downstream → Airtable/Sheets CRM:** writes outcome, duration, objections back to lead row (direct API)
+- **Downstream → follow-up:** the webhook handler triggers email or callback sequence directly based on outcome, and pings Hermes Telegram with the result
