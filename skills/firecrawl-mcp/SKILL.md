@@ -1,85 +1,58 @@
 ---
 name: firecrawl-mcp
+display_name: SPACE AGE — Firecrawl MCP
+version: 1.0.0
+last_updated: 2026-05
 description: >
-  Official Firecrawl MCP server for web scraping, search, crawling, and autonomous deep
-  research. Search the web + scrape any URL into clean structured data + interact with pages
-  (click, navigate) + autonomous deep research agent. Integrates with all MCP-compatible
-  agents. Use for lead gen scraping, competitor research, client site analysis, and brand
-  extraction. Trigger on: "firecrawl", "scrape this URL", "web scrape", "crawl this site",
-  "deep research", "extract from web", "firecrawl MCP", "fc-".
-source: https://github.com/firecrawl/firecrawl-mcp-server
-stack: TypeScript + Node.js
-requires: Firecrawl API key (fc-...) or self-hosted instance
+  Connects Claude to the live web via Firecrawl — scrape any URL, search the web with
+  full page content, map site structure, batch scrape, extract structured data, and run
+  autonomous research agents. Replaces WebFetch for all webpage extraction tasks.
+  Trigger on: any URL + "scrape/grab/fetch/pull", "search the web", "map this site",
+  "extract from", "research", or any task needing live web data.
+trigger_phrases:
+  - scrape
+  - fetch this page
+  - search the web
+  - map the site
+  - extract from url
+  - research online
+  - crawl
+  - web search
+  - firecrawl
 ---
 
-# Firecrawl MCP Server — Web Intelligence for Agents
+# FIRECRAWL MCP SKILL
+## Space Age AI Solutions — Live Web Access Layer
 
-Search + scrape + crawl + research. Full web interaction layer for any MCP-compatible agent. Automatic retries, rate limiting, cloud and self-hosted support.
-
----
-
-## Space Age Integration
-
-| Space Age Use Case | Firecrawl Capability |
-|---|---|
-| Cinematic Website Builder Phase 0.5 | Scrape client URL → extract brand tokens |
-| Lead gen competitor analysis | Deep crawl competitor sites → extract positioning |
-| Lead profile enrichment | Scrape business website → extract NAP, services, reviews |
-| Outreach personalization | Scrape lead's site → feed rapport profiles to Vapi |
-| SEO audit | Crawl entire site → extract all meta, headings, schema |
-| Price monitoring | Scrape competitor pricing pages |
+Firecrawl gives Claude direct access to the live web. Handles JS-rendered SPAs,
+authenticated pages, structured extraction, and autonomous multi-source research.
 
 ---
 
-## Install
+## INSTALLATION
 
 ```bash
-# Option 1: npx (zero install)
-env FIRECRAWL_API_KEY=fc-YOUR_KEY npx -y firecrawl-mcp
+# Install CLI + 29 skills
+npx -y firecrawl-cli@latest init --all --browser
 
-# Option 2: Global install
-npm install -g firecrawl-mcp
+# Authenticate (run locally, not in container)
+firecrawl login
 
-# Option 3: Docker
-docker build -t firecrawl-mcp .
-docker run -e FIRECRAWL_API_KEY=fc-YOUR_KEY firecrawl-mcp
+# Set up MCP server
+firecrawl setup mcp
+
+# Or add manually to claude_desktop_config.json / .mcp.json:
 ```
 
-Get API key: [firecrawl.dev](https://firecrawl.dev)
-
----
-
-## MCP Server Config
-
-### Claude Code
-```bash
-claude mcp add --transport stdio firecrawl -- npx -y firecrawl-mcp
-# Set env: FIRECRAWL_API_KEY=fc-...
-```
-
-### Hermes Agent (VPS)
-```json
-{
-  "mcp_servers": {
-    "firecrawl": {
-      "command": "npx",
-      "args": ["-y", "firecrawl-mcp"],
-      "env": {
-        "FIRECRAWL_API_KEY": "fc-YOUR_KEY"
-      }
-    }
-  }
-}
-```
-
-### Cursor
 ```json
 {
   "mcpServers": {
     "firecrawl-mcp": {
       "command": "npx",
       "args": ["-y", "firecrawl-mcp"],
-      "env": { "FIRECRAWL_API_KEY": "fc-YOUR_KEY" }
+      "env": {
+        "FIRECRAWL_API_KEY": "fc-YOUR_API_KEY"
+      }
     }
   }
 }
@@ -87,114 +60,176 @@ claude mcp add --transport stdio firecrawl -- npx -y firecrawl-mcp
 
 ---
 
-## Tools Available
+## MCP TOOLS
 
-| Tool | What It Does |
-|---|---|
-| `scrape` | Scrape any URL → clean markdown/structured data |
-| `search` | Web search + return full page content |
-| `crawl` | Crawl entire site recursively |
-| `interact` | Click buttons, fill forms, navigate pages |
-| `deep_research` | Autonomous research agent — multi-hop web research |
-| `cloud_browser` | Full browser session with agent automation |
-
----
-
-## Key Use Cases
-
-### 1. Brand Extraction (Phase 0.5 of Cinematic Website Builder)
-```javascript
-// Auto-triggers when any client URL is provided
-scrape({
-  url: "https://clientwebsite.com",
-  formats: ["markdown", "extract"],
-  extract: {
-    schema: {
-      colors: "array",
-      fonts: "array",
-      tagline: "string",
-      services: "array",
-      tone: "string"
-    }
-  }
-})
-```
-
-### 2. Lead Enrichment
-```javascript
-// After Google Maps scrape, enrich each lead
-scrape({
-  url: lead.website,
-  formats: ["extract"],
-  extract: {
-    schema: {
-      owner_name: "string",
-      services: "array",
-      pricing: "string",
-      years_in_business: "number",
-      reviews_summary: "string"
-    }
-  }
-})
-```
-
-### 3. Deep Competitor Research
-```javascript
-deep_research({
-  query: "top HVAC companies Dallas TX pricing and services",
-  maxDepth: 3,
-  maxPages: 20
-})
-```
-
-### 4. Crawl Client Site for SEO Audit
-```javascript
-crawl({
-  url: "https://clientsite.com",
-  limit: 100,
-  scrapeOptions: {
-    formats: ["markdown"],
-    onlyMainContent: true
-  }
-})
-```
+| Tool | What It Does | When to Use |
+|------|-------------|-------------|
+| `firecrawl_scrape` | Extract clean markdown from one URL | Any single webpage |
+| `firecrawl_batch_scrape` | Scrape multiple known URLs at once | Product pages, docs |
+| `firecrawl_search` | Web search + extract full page content | Research, news, lookups |
+| `firecrawl_map` | Discover all URLs on a domain | Find where content lives |
+| `firecrawl_crawl` | Async multi-page crawl | Full site extraction |
+| `firecrawl_extract` | LLM-powered structured extraction | Schema-defined data pull |
+| `firecrawl_agent` | Autonomous multi-source research | Complex research tasks |
+| `firecrawl_check_batch_status` | Poll batch job progress | After batch_scrape |
+| `firecrawl_check_crawl_status` | Poll crawl job progress | After crawl |
+| `firecrawl_agent_status` | Poll agent research results | After agent call |
 
 ---
 
-## Self-Hosted Option
+## ROUTING RULES (vs other tools)
 
-For high-volume lead gen scraping (avoid API rate limits):
+| Situation | Use |
+|-----------|-----|
+| Single URL content needed | `firecrawl_scrape` (not WebFetch) |
+| Multiple URLs known | `firecrawl_batch_scrape` |
+| Need to find a page on a site | `firecrawl_map` first, then scrape |
+| Research topic / news | `firecrawl_search` |
+| Extract structured data (prices, contacts) | `firecrawl_extract` with schema |
+| Deep multi-source research | `firecrawl_agent` |
+| JS-rendered SPA | `firecrawl_scrape` (handles it) |
+| PDF / local file | `firecrawl_parse` skill instead |
+
+**Always prefer firecrawl_scrape over WebFetch for webpage content.**
+
+---
+
+## USAGE PATTERNS
+
+### Scrape a page
+```json
+{
+  "name": "firecrawl_scrape",
+  "arguments": {
+    "url": "https://example.com/pricing",
+    "formats": ["markdown"]
+  }
+}
+```
+
+### Search with full content
+```json
+{
+  "name": "firecrawl_search",
+  "arguments": {
+    "query": "DeepSeek V4 pricing 2026",
+    "limit": 5,
+    "scrapeOptions": { "formats": ["markdown"] }
+  }
+}
+```
+
+### Extract structured data
+```json
+{
+  "name": "firecrawl_extract",
+  "arguments": {
+    "urls": ["https://example.com/team"],
+    "prompt": "Extract all team members with name, title, email",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "team": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "title": { "type": "string" },
+              "email": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+### Map a site
+```json
+{
+  "name": "firecrawl_map",
+  "arguments": {
+    "url": "https://docs.example.com",
+    "search": "authentication"
+  }
+}
+```
+
+### Autonomous research agent
+```json
+{
+  "name": "firecrawl_agent",
+  "arguments": {
+    "prompt": "Research the top 5 HVAC companies in Mesquite TX — find their phone numbers, websites, and Google ratings"
+  }
+}
+```
+
+---
+
+## SA PIPELINE INTEGRATION
+
+### Lead Gen (with browserbase-scraper)
+```
+browserbase-scraper → Google Maps CSV
+firecrawl_scrape   → Enrich each lead's website (brand tokens)
+firecrawl_extract  → Pull phone, hours, services from their site
+lead-to-brief      → Build enriched brief with web data
+```
+
+### Brand Extractor Enhancement
+```
+brand-extractor uses firecrawl_scrape instead of WebFetch
+→ Handles JS-rendered sites (Shopify, Webflow, etc.)
+→ Returns clean markdown for token extraction
+```
+
+### Competitor Intelligence
+```
+firecrawl_search   → Find competitor pricing pages
+firecrawl_extract  → Extract structured pricing tiers
+firecrawl_agent    → Ongoing monitoring task
+```
+
+---
+
+## CREDIT MONITORING
+
+Set env vars to get warnings before credits run out:
 ```bash
-# Deploy Firecrawl on VPS alongside Hermes
-git clone https://github.com/firecrawl/firecrawl.git
-cd firecrawl
-docker-compose up -d
-
-# Point MCP server to local instance
-FIRECRAWL_API_URL=http://localhost:3002 npx firecrawl-mcp
+export FIRECRAWL_CREDIT_WARNING_THRESHOLD=1000
+export FIRECRAWL_CREDIT_CRITICAL_THRESHOLD=100
 ```
 
 ---
 
-## Rate Limits + Retry Logic
-
-Firecrawl MCP handles:
-- Automatic retries on 429/503
-- Exponential backoff
-- Queue management for bulk scraping
-- Cloud + self-hosted failover
-
----
-
-## Integration with Existing SA Firecrawl CLI Skill
-
-Your existing `firecrawl-cli` skill at `/mnt/skills/user/firecrawl-cli/` handles the programmatic extraction workflows. This MCP server is the **agent-native** complement — use it when Hermes or Claude Code needs to trigger web research as part of a larger task.
+## NEVER DO
+- Never use WebFetch when a URL is the target — use firecrawl_scrape
+- Never scrape `do_not_call` flagged leads' sites without consent
+- Never run firecrawl_agent for tasks firecrawl_search can handle (costs more credits)
+- Never hardcode FIRECRAWL_API_KEY — always use env var
+- Never call firecrawl_crawl synchronously and wait — it's async, poll with check_crawl_status
 
 ---
 
-## Trigger This Skill When
-- Scraping any URL for brand extraction, lead enrichment, or research
-- User says: "firecrawl", "scrape this", "crawl this site", "deep research", "fc-"
-- Cinematic Website Builder Phase 0.5 (client URL analysis)
-- Setting up Firecrawl MCP on Hermes Agent or Claude Code
-- Any web data extraction task in the pipeline
+## CLI COMMANDS
+
+```bash
+firecrawl scrape https://example.com          # Quick scrape
+firecrawl search "query here"                 # Web search
+firecrawl interact "click login, fill form"   # Browser interaction
+firecrawl login                               # Re-authenticate
+firecrawl setup mcp                           # Add to MCP config
+firecrawl --help                              # All commands
+```
+
+---
+
+## SKILL CONNECTIONS
+- **browserbase-scraper** — Firecrawl handles enrichment; Browserbase handles Google Maps (geo-matched proxy)
+- **brand-extractor** — use firecrawl_scrape for all client website analysis
+- **lead-to-brief** — enrich leads with firecrawl_extract before building brief
+- **outreach-copywriter** — firecrawl_scrape prospect site for personalization hooks
+- **sa-orchestrator TIER 3** — Firecrawl MCP registered here
