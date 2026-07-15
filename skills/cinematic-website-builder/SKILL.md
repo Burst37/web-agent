@@ -4,38 +4,57 @@ description: >
   Build cinematic, production-grade websites using 30 scroll, cursor, click, and ambient effect
   modules. Use when the user asks to build a landing page, website, hero section, portfolio,
   product page, or any web experience that should feel premium, dynamic, or visually
-  extraordinary. All output is single-file HTML — no frameworks, no build step. GSAP +
-  ScrollTrigger via CDN only. This skill is the PRODUCTION LAYER of a three-skill pipeline —
-  it receives a Handoff Package from UI/UX Designer and/or a Build Brief from Google Stitch.
-  If the user hasn't gone through those skills yet and the design direction is unclear, trigger
-  ui-ux-designer first.
+  extraordinary. Standard-path output is single-file production HTML (GSAP + ScrollTrigger via
+  CDN, no build step); Premium builds add real design tokens + physics motion + 3D via
+  sa-figma-framer-spline. This skill is STAGE 3 (BUILD) of the SA master website pipeline — the
+  orchestration hub that references the single-source-of-truth skills rather than carrying its
+  own copies: motion from design-motion-principles / gsap-supercharged, moodboards+type+color
+  from ui-ux-designer / ui-ux-pro-max, anti-slop from design-taste-frontend, SEO from
+  sa-local-seo-geo. If the design direction (moodboard, color, font, sections) is unclear,
+  trigger ui-ux-designer first.
 ---
 
 # CINEMATIC WEBSITE BUILDER SKILL
 ## Space Age AI Solutions — Production Web Experience Layer
 
-This skill is the **final stage** of the three-skill website pipeline. It takes a locked design direction and produces the real, animated, production-grade single-file HTML. Never skip to this skill without knowing the moodboard, color system, font stack, and section structure — if those are unclear, load ui-ux-designer first.
+This skill is **Stage 3 (BUILD)** of the SA master website pipeline. It takes a locked design direction and produces the real, animated, production-grade single-file HTML. Never skip to this skill without knowing the moodboard, color system, font stack, and section structure — if those are unclear, load `ui-ux-designer` first.
 
 ---
 
-## THE THREE-SKILL PIPELINE (READ THIS FIRST)
+## POSITION IN THE MASTER PIPELINE
 
 ```
-╔══════════════════╗     ╔══════════════════╗     ╔══════════════════════════╗
-║  UI/UX DESIGNER  ║ ─► ║  GOOGLE STITCH   ║ ─► ║  CINEMATIC WEBSITE       ║
-║                  ║     ║                  ║     ║  BUILDER  ← YOU ARE HERE ║
-║  • Brand audit   ║     ║  • Rapid layout  ║     ║                          ║
-║  • Moodboard A–N ║     ║    ideation      ║     ║  • 30 effect modules     ║
-║  • Design system  ║     ║  • Screen protos ║     ║  • GSAP animations       ║
-║  • User flow map  ║     ║  • Variation set ║     ║  • Single-file HTML      ║
-║  • Handoff pkg   ║     ║  • Build brief   ║     ║  • Production delivery   ║
-╚══════════════════╝     ╚══════════════════╝     ╚══════════════════════════╝
+STAGE 1 BRIEF (lead-to-brief)
+   → STAGE 2 DIRECTION (ui-ux-designer)
+      → [STAGE 2.5 Google Stitch — Premium path only]
+         → STAGE 3 BUILD  ← YOU ARE HERE
+            → STAGE 4 QA GATE (blocking)
+               → STAGE 5 DEPLOY (sa-deploy-operator)
+                  → STAGE 6 VOICE → STAGE 7 OUTREACH → STAGE 8 VAULT LOG
 ```
+
+### STAGE 3 build load order (pull on demand, don't restate)
+1. **`ui-ux-designer`** (+ `ui-ux-pro-max`) — locked moodboard, color/font tokens, section structure.
+2. **`design-motion-principles`** (+ `gsap-supercharged`, `gsap-core/scrolltrigger/timeline`) — motion, per module.
+3. **`design-taste-frontend`** — anti-slop ban lists + three-dial check.
+4. **`sa-local-seo-geo`** — SEO/GEO injection into the built HTML.
+5. **Visual assets** — Higgsfield-generated media (presigned URLs → re-hosted at QA, Stage 4).
+6. **Premium only:** `sa-figma-framer-spline` — real Figma design tokens, Framer-Motion physics, and Spline/WebGL 3D where CSS can't fake the material (liquid glass, true depth).
+
+## SINGLE SOURCE OF TRUTH (reference it, never restate it)
+
+| Domain | Owned by | This skill |
+|---|---|---|
+| Moodboards, typography pairing, color systems | `ui-ux-designer` (+ `ui-ux-pro-max` DB) | references, applies tokens |
+| GSAP motion skeletons (sticky stack, horizontal pan, etc.) | `design-motion-principles` / `gsap-supercharged` | modules point there, no 2nd copy |
+| Anti-slop ban lists, three-dial system | `design-taste-frontend` | loads for the QA check only |
+| SEO 6-layer / GEO injection | `sa-local-seo-geo` | calls it, doesn't hand-write schema |
 
 ### When to call other skills:
-- **User says "I don't know what I want"** → Load `ui-ux-designer` first
-- **User wants to SEE layout options** → Load `google-stitch` after UI/UX
-- **Design + layout is locked** → Build directly in this skill
+- **Design direction unclear / "I don't know what I want"** → load `ui-ux-designer` first.
+- **Premium client wants to SEE layout options** → `google-stitch` (Stage 2.5) after UI/UX; skipped on the Standard mass-production path.
+- **Premium build needs real 3D / liquid glass / design tokens** → `sa-figma-framer-spline`.
+- **Design + layout locked** → build directly here.
 
 ### If arriving with a Handoff Package, read these fields:
 ```yaml
@@ -66,7 +85,13 @@ Answer these before writing a single line:
 
 **Never use more than 6-8 modules per page. Restraint is cinematic. Pile-on is noise.**
 
-### Moodboard Quick Reference (from UI/UX Designer skill):
+### Moodboard Quick Reference (canonical source: `ui-ux-designer` / `ui-ux-pro-max`):
+> This is a lookup shortcut only. The authoritative moodboard, color, and typography
+> definitions live in `ui-ux-designer` (SA-brand layer) backed by `ui-ux-pro-max` (deep
+> palette/pairing DB). Known gap: only A–N are documented today; `design-taste-frontend`
+> routes to FF/HH which aren't defined yet — if a build needs a moodboard beyond N, flag it
+> and pull the definition, don't improvise it silently.
+
 | Letter | Aesthetic | Primary Use |
 |--------|-----------|-------------|
 | A | Space Age Dark Data-Viz | LoyaltyBot, dashboards |
@@ -86,7 +111,10 @@ Answer these before writing a single line:
 
 ---
 
-## TECH STACK (ALWAYS USE THESE CDNs)
+## TECH STACK
+
+**Standard path (mass-production lead-gen):** single-file production HTML, GSAP + ScrollTrigger
+via CDN, no build step. This stays the default — it's the fastest to build and deploy at volume.
 
 ```html
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
@@ -95,6 +123,13 @@ Answer these before writing a single line:
 ```
 
 Always register ScrollTrigger: `gsap.registerPlugin(ScrollTrigger);`
+
+- **Advanced motion:** for anything beyond the inline module recipes (SplitText, MorphSVG, Flip,
+  Physics2D, pinned multi-scene, ScrollSmoother), load `gsap-supercharged` — the canonical source.
+- **Premium path:** when a build needs real design-token fidelity, physics-based interaction, or
+  genuine 3D/liquid-glass material (which CSS can only fake), switch to a React/Vite build via
+  `sa-figma-framer-spline` (Figma tokens → Framer Motion → Spline). Single-file HTML is the
+  Standard default, not a hard constraint — escalate for named/high-ticket clients.
 
 ---
 
@@ -1259,6 +1294,26 @@ WRONG ORDER (causes rework):
 
 ---
 
+## STAGE 4 — QA GATE (blocking, hard stop)
+
+A build does **not** proceed to deploy until every box passes. This is the one manual
+sign-off point in the pipeline; everything else runs unattended.
+
+- [ ] One unforgettable moment on the page (the effect users mention).
+- [ ] Modules serve content, not showing off — **max 6–8 of the 30 per page**.
+- [ ] Loads fast — no oversized placeholder images; LCP element not animation-delayed.
+- [ ] Cursor/hover effects feel premium, not janky.
+- [ ] Typography is real (from `ui-ux-designer` tokens) — never Arial/Roboto default.
+- [ ] Scroll feels tuned, not snappy; reduced-motion fallback present.
+- [ ] Works on mobile — touch events, no cursor-dependent effects, no horizontal overflow.
+- [ ] **Assets re-hosted:** every Higgsfield presigned URL downloaded and served from
+      `/assets/` — nothing ships with a time-limited URL as a permanent source.
+- [ ] **SEO JSON-LD validates** (no trailing commas, correct `@type`) — from `sa-local-seo-geo`.
+
+Fail any box → back to Stage 3, do not deploy. On pass → hand off to `sa-deploy-operator`.
+
+---
+
 ## FULL PIPELINE MAP
 
 ```
@@ -1283,10 +1338,14 @@ WRONG ORDER (causes rework):
                                                     CLIENT DELIVERY ✅
 ```
 
-**Skill load order for a full website project:**
-1. `ui-ux-designer` → design direction
-2. `google-stitch` → layout confirmed
-3. `asset-automation` → assets generated (parallel)
-4. `animated-website-pipeline` → if using Next.js + scroll scrub
-5. `cinematic-website-builder` → HTML production ← THIS SKILL
-6. `playwright-browser-automation` → QA + delivery validation
+**Master pipeline load order (Standard path):**
+1. `lead-to-brief` → Stage 1 brief
+2. `ui-ux-designer` (+ `ui-ux-pro-max`) → Stage 2 direction (moodboard, tokens)
+3. *(Premium only)* `google-stitch` → Stage 2.5 layout review
+4. `cinematic-website-builder` → Stage 3 build ← THIS SKILL
+   (pulls `design-motion-principles`/`gsap-supercharged`, `design-taste-frontend`,
+   `sa-local-seo-geo`, Higgsfield assets on demand)
+5. **Stage 4 QA GATE** (below) → blocking checklist
+6. `sa-deploy-operator` → Stage 5 deploy (Vercel → live URL → Hermes → vault)
+7. `sa-voice-agent-builder` / `vapi-orchestrator` → Stage 6 voice
+8. `outreach-copywriter` → Stage 7 outreach → Stage 8 vault log
