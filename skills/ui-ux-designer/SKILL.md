@@ -288,6 +288,11 @@ Best for: AI services / SaaS / Analytics / Dashboards / Productized services
 
 ## MOTION DESIGN SYSTEM
 
+> Canonical motion source: `gsap-supercharged` (implementation) and
+> `design-motion-principles` (which motion to use and why). This section sets the
+> *direction* for a build's motion; reach for those skills for the actual patterns
+> rather than re-specifying them here.
+
 ### GSAP SCROLLTRIGGER — Primary Animation Framework
 Use for:
 - Pinned sections

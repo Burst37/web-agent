@@ -17,6 +17,11 @@ description: >
 
 This skill takes the Vapi script from outreach-copywriter and the business data from lead-to-brief and produces everything needed to deploy a live outbound Vapi agent via direct API calls (SA standing infra: direct API + Hermes Telegram control, no n8n).
 
+> **Role:** rush / fast-path (turnkey, single urgent lead). For mass-production volume the
+> default is `sa-voice-agent-builder` (Gemini Flash Live, lower cost at volume). Both
+> consume the same `vapi_script` + `build_brief` contract, so a lead routes to either
+> without regenerating copy.
+
 ---
 
 ## VAPI PLATFORM OVERVIEW

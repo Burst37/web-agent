@@ -60,6 +60,13 @@ Default Space Age baseline: VARIANCE=7, MOTION=8, DENSITY=4
 
 ## Approved Font Pairings
 
+> Canonical typography + color definitions live in `ui-ux-designer` (SA-brand layer)
+> and `ui-ux-pro-max` (deep font-pairing/palette database). The table below is a quick
+> reference for taste routing; when you need the full system or more pairings, pull from
+> those sources so definitions don't drift. What's unique to *this* skill — and stays
+> here — is the AI-tell **Banned Fonts** list and the **Three Dials** (VARIANCE / MOTION
+> / DENSITY).
+
 | Display | Body | Mono | Use Case |
 |---|---|---|---|
 | Orbitron | DM Sans | JetBrains Mono | AI / Tech / Agency |
