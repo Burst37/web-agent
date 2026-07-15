@@ -6,10 +6,29 @@ import { parseSkillFrontmatter } from "./parser";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_SKILLS_DIR = path.join(__dirname, "definitions");
+// Space Age pipeline skills live at the repo root (web-agent/skills/), alongside
+// agent-core rather than inside it. Resolved relative to this module:
+// agent-core/src/skills -> ../../../skills. When agent-core is published/vendored
+// without a sibling skills/ dir, this path simply doesn't exist and is skipped.
+const REPO_SKILLS_DIR = path.join(__dirname, "..", "..", "..", "skills");
 
 /** Returns the path to the built-in skills directory. */
 export function getDefaultSkillsDir(): string {
   return DEFAULT_SKILLS_DIR;
+}
+
+/** Returns the path to the repo-root Space Age skills directory. */
+export function getRepoSkillsDir(): string {
+  return REPO_SKILLS_DIR;
+}
+
+/**
+ * The directories discoverSkills scans by default: the framework's built-in
+ * skills plus the repo-root Space Age pipeline skills. Missing directories are
+ * skipped, so this is safe when agent-core is consumed standalone.
+ */
+export function getDefaultSkillDirs(): string[] {
+  return [DEFAULT_SKILLS_DIR, REPO_SKILLS_DIR];
 }
 
 async function discoverSitePlaybooks(skillDir: string): Promise<SitePlaybook[]> {
@@ -37,9 +56,33 @@ async function discoverSitePlaybooks(skillDir: string): Promise<SitePlaybook[]> 
   }
 }
 
+/**
+ * Discover skills from one or more directories.
+ *
+ * Accepts a single directory or a list. When given a list, results are merged
+ * and de-duplicated by skill name (earlier directories win), so the built-in
+ * framework skills take precedence over any repo-root skill of the same name.
+ * Defaults to the framework + repo-root Space Age skill directories.
+ */
 export async function discoverSkills(
-  skillsDir: string = DEFAULT_SKILLS_DIR,
+  skillsDir: string | string[] = getDefaultSkillDirs(),
 ): Promise<SkillMetadata[]> {
+  const dirs = Array.isArray(skillsDir) ? skillsDir : [skillsDir];
+  const skills: SkillMetadata[] = [];
+  const seen = new Set<string>();
+
+  for (const dir of dirs) {
+    for (const skill of await discoverSkillsInDir(dir)) {
+      if (seen.has(skill.name)) continue;
+      seen.add(skill.name);
+      skills.push(skill);
+    }
+  }
+
+  return skills;
+}
+
+async function discoverSkillsInDir(skillsDir: string): Promise<SkillMetadata[]> {
   try {
     const entries = await fs.readdir(skillsDir, { withFileTypes: true });
     const skills: SkillMetadata[] = [];
