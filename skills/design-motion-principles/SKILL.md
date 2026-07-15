@@ -55,48 +55,17 @@ gsap.ticker.lagSmoothing(0);
 
 ## Canonical ScrollTrigger Patterns
 
-```javascript
-// Reveal on scroll — standard
-gsap.from('.reveal', {
-  y: 60,
-  opacity: 0,
-  duration: 0.8,
-  ease: 'power3.out',
-  scrollTrigger: {
-    trigger: '.reveal',
-    start: 'top 85%',
-    end: 'top 40%',
-    toggleActions: 'play none none reverse'
-  }
-});
+**Implementation lives in `gsap-supercharged`** (with prerequisites `gsap-core`,
+`gsap-scrolltrigger`, `gsap-timeline`). Load that skill for the canonical,
+copy-ready implementations — reveal-on-scroll, pinned horizontal scroll, parallax
+rigs, staggers, SplitText, magnetic hover, counters, page transitions. This skill
+defines *which* motion to reach for and *why* (see the vocabulary and hierarchy
+tables above); `gsap-supercharged` defines *how* to build it. Do not re-inline
+those effect skeletons here — reference the one source so patterns don't drift.
 
-// Pinned horizontal scroll
-const tl = gsap.timeline({
-  scrollTrigger: {
-    trigger: '.gallery',
-    pin: true,
-    scrub: 1,
-    start: 'top top',
-    end: () => `+=${document.querySelector('.gallery-track').scrollWidth}`
-  }
-});
-
-// Parallax depth
-gsap.utils.toArray('.parallax').forEach(el => {
-  gsap.to(el, {
-    y: () => el.getAttribute('data-speed') * -100,
-    ease: 'none',
-    scrollTrigger: { trigger: el, scrub: true }
-  });
-});
-
-// Cleanup (CRITICAL — prevent memory leaks)
-// In React/Next.js:
-useEffect(() => {
-  const ctx = gsap.context(() => { /* animations here */ });
-  return () => ctx.revert();
-}, []);
-```
+The only non-negotiable this skill still pins down is cleanup: in React/Next.js,
+every GSAP animation must run inside `gsap.context()` (or `useGSAP()`) and be
+reverted on unmount to prevent ScrollTrigger memory leaks.
 
 ## Reduced Motion Law (Non-Negotiable)
 

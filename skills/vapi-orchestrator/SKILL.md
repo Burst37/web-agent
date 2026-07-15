@@ -9,13 +9,13 @@ description: >
   agent deployed and one outbound call queued. Knows Vapi's full API surface — assistants,
   phone numbers, calls, squads, tools, and webhooks. Use IMMEDIATELY when a lead needs
   to be called. Trigger on: "deploy the vapi agent", "make the call", "set up the voice
-  agent", "queue the outbound call", or when n8n reaches the voice agent step.
+  agent", "queue the outbound call", or when the pipeline reaches the voice agent step.
 ---
 
 # VAPI ORCHESTRATOR SKILL
 ## Space Age AI Solutions — Voice Agent Deployment Layer
 
-This skill takes the Vapi script from outreach-copywriter and the business data from lead-to-brief and produces everything needed to deploy a live outbound Vapi agent in one n8n HTTP call.
+This skill takes the Vapi script from outreach-copywriter and the business data from lead-to-brief and produces everything needed to deploy a live outbound Vapi agent via direct API calls (SA standing infra: direct API + Hermes Telegram control, no n8n).
 
 ---
 
@@ -95,7 +95,7 @@ This is the complete JSON payload for the Vapi `POST /assistant` endpoint:
       }
     }
   },
-  "serverUrl": "{n8n_webhook_url}/vapi-outcomes",
+  "serverUrl": "{outcome_handler_url}/vapi-outcomes",
   "serverUrlSecret": "{VAPI_WEBHOOK_SECRET}"
 }
 ```
@@ -145,7 +145,7 @@ After creating the assistant, queue the call:
   "scheduledAt": "{ISO_timestamp}",
   "metadata": {
     "lead_id": "{brief_id}",
-    "crm_update_url": "{n8n_webhook}/crm-update"
+    "crm_update_url": "{crm_update_url}"
   }
 }
 ```
@@ -157,31 +157,40 @@ After creating the assistant, queue the call:
 
 ---
 
-## N8N WORKFLOW NODES (3 API calls)
+## DEPLOYMENT — DIRECT API CALLS (3 calls)
 
-```javascript
-// NODE 1 — Create Vapi Assistant
-POST https://api.vapi.ai/assistant
-Authorization: Bearer {VAPI_API_KEY}
-Body: {assistant_config_json}
+The calling process runs these directly (no n8n orchestrator), then pings Hermes.
 
-// NODE 2 — Store assistant_id in Sheets row
-// (use Google Sheets "Update Row" node)
+```bash
+# CALL 1 — Create Vapi assistant
+ASSISTANT_ID=$(curl -s -X POST https://api.vapi.ai/assistant \
+  -H "Authorization: Bearer $VAPI_API_KEY" \
+  -H "content-type: application/json" \
+  -d "$ASSISTANT_CONFIG_JSON" | jq -r '.id')
 
-// NODE 3 — Queue outbound call
-POST https://api.vapi.ai/call/phone
-Authorization: Bearer {VAPI_API_KEY}  
-Body: {call_payload_json}
+# CALL 2 — Persist assistant_id back to the lead row / brief (Airtable/Sheets API or brief file)
+
+# CALL 3 — Queue the outbound call
+CALL_ID=$(curl -s -X POST https://api.vapi.ai/call/phone \
+  -H "Authorization: Bearer $VAPI_API_KEY" \
+  -H "content-type: application/json" \
+  -d "$CALL_PAYLOAD_JSON" | jq -r '.id')
+
+# Hermes Telegram status ping
+curl -s -X POST "https://api.telegram.org/bot$HERMES_TOKEN/sendMessage" \
+  -d chat_id="$HERMES_CHAT_ID" \
+  -d text="[vapi-orchestrator] queued call ${CALL_ID} for ${BUSINESS_NAME} (${LEAD_ID})"
 ```
 
 ---
 
-## WEBHOOK HANDLER (n8n receives Vapi outcomes)
+## OUTCOME HANDLER (direct endpoint receives Vapi outcomes)
 
-When Vapi POSTs to your `serverUrl` after each call:
+Stand up a lightweight endpoint at `serverUrl` (the SA process's own handler — not n8n).
+When Vapi POSTs to it after each call:
 
 ```javascript
-// n8n Webhook node receives:
+// The outcome endpoint receives:
 {
   "type": "end-of-call-report",
   "call": { "id": "...", "duration": 180 },
@@ -212,7 +221,7 @@ When Vapi POSTs to your `serverUrl` after each call:
 One-time setup in Vapi dashboard:
 1. Connect your Twilio account to Vapi
 2. Buy a local Dallas area code number (+1 972 or +1 214) — looks local to Mesquite targets
-3. Note the `phoneNumberId` — hardcode into your n8n node
+3. Note the `phoneNumberId` — store it in the process env / pipeline config
 
 **Cost:** ~$1.15/month for a Twilio number through Vapi
 
@@ -231,4 +240,5 @@ One-time setup in Vapi dashboard:
 - **Upstream:** outreach-copywriter (reads vapi_script block)
 - **Upstream:** lead-to-brief (reads business.phone, business.name, deploy.preview_subdomain)
 - **Downstream → Airtable/Sheets CRM:** writes outcome, duration, objections back to lead row
-- **Downstream → n8n follow-up:** triggers email or callback sequence based on outcome
+- **Downstream → follow-up sequence (direct):** the outcome handler triggers the email
+  or callback sequence based on outcome, and pings Hermes — no n8n in the loop

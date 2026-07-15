@@ -22,8 +22,12 @@ Never skip Phase 1 even if you think you know the brand. Always fetch fresh.
 ## PHASE 1 — EXTRACTION
 
 ### Step 1: Fetch the site
-Use web_fetch on the provided URL. If no URL is given, ask for it before proceeding.
-Also fetch: [client URL]/about  (if homepage is sparse)
+Fetch engine: use the `firecrawl-mcp` skill as the canonical fetch layer — it returns
+clean, structured page content (rendered HTML + extracted CSS) far better suited to
+brand-signal extraction than a raw fetch. Prefer `firecrawl_scrape` for a single page
+and `firecrawl_map` when you need to discover subpages (e.g. /about, /brand, /style).
+Fall back to `web_fetch` only if Firecrawl is unavailable. If no URL is given, ask for
+it before proceeding. Also fetch: [client URL]/about  (if homepage is sparse).
 
 Look for:
 - Inline CSS and style blocks → color values, font declarations

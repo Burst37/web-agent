@@ -10,7 +10,7 @@ description: >
   whenever a scraped lead row needs to be converted into a production-ready brief. This is
   what makes the pipeline automated — without it every build requires a manual Claude session.
   Trigger on: any lead row, any mention of "brief", "build this lead", "convert the lead",
-  or when n8n/Make sends a webhook payload from Google Sheets.
+  or when the lead pipeline hands off a flagged Google Sheets row.
 ---
 
 # LEAD-TO-BRIEF SKILL
@@ -27,7 +27,7 @@ Google Maps Scraper
       ↓
 Google Sheets (HIGH priority flagged)
       ↓
-n8n Webhook Trigger
+Direct pipeline trigger (calling process — no n8n)
       ↓
 [LEAD-TO-BRIEF] ← YOU ARE HERE
       ↓
@@ -51,7 +51,7 @@ name, category, address, phone, website, siteStatus, siteScore, siteNotes, sourc
 "Green Valley Landscaping", "Landscaping", "1842 Faithon P Lucas Sr Blvd, Mesquite TX 75150", "(972) 555-0182", "", "none", "0", "no site found", "landscaping Mesquite Texas", "Mesquite"
 ```
 
-**From n8n webhook JSON:**
+**From pipeline trigger JSON:**
 ```json
 {
   "name": "Green Valley Landscaping",
@@ -202,29 +202,40 @@ build_brief:
 
 ---
 
-## API CALL SPEC (for n8n)
+## API CALL SPEC (direct API + Hermes)
 
-```javascript
-// n8n HTTP Request node
+Per SA standing infra: **direct API calls + Hermes Telegram control only — no n8n.**
+The lead row is handed to this skill by the calling process (script/agent), which makes
+the Anthropic call directly and pings Hermes on completion. Data contract unchanged.
+
+```bash
+# 1. Direct API call — convert the lead row to a build brief
+BRIEF=$(curl -s -X POST https://api.anthropic.com/v1/messages \
+  -H "x-api-key: $ANTHROPIC_API_KEY" \
+  -H "anthropic-version: 2023-06-01" \
+  -H "content-type: application/json" \
+  -d @- <<JSON
 {
-  method: "POST",
-  url: "https://api.anthropic.com/v1/messages",
-  headers: {
-    "x-api-key": "{{$env.ANTHROPIC_API_KEY}}",
-    "anthropic-version": "2023-06-01",
-    "content-type": "application/json"
-  },
-  body: {
-    model: "claude-haiku-4-5-20251001",
-    max_tokens: 2000,
-    system: "[PASTE THIS FULL SKILL.md AS SYSTEM PROMPT]",
-    messages: [{
-      role: "user",
-      content: "Convert this lead to a build brief:\n\n{{JSON.stringify($json)}}"
-    }]
-  }
+  "model": "claude-haiku-4-5-20251001",
+  "max_tokens": 2000,
+  "system": "[PASTE THIS FULL SKILL.md AS SYSTEM PROMPT]",
+  "messages": [
+    { "role": "user", "content": "Convert this lead to a build brief:\n\n$LEAD_ROW_JSON" }
+  ]
 }
+JSON
+)
+
+# 2. Persist the YAML brief where downstream skills read it (e.g. briefs/{lead_id}.yaml)
+
+# 3. Hermes Telegram status ping on completion
+curl -s -X POST "https://api.telegram.org/bot$HERMES_TOKEN/sendMessage" \
+  -d chat_id="$HERMES_CHAT_ID" \
+  -d text="[lead-to-brief] done: ${LEAD_ID} → ${BUSINESS_NAME}"
 ```
+
+Secrets (`ANTHROPIC_API_KEY`, `HERMES_TOKEN`, `HERMES_CHAT_ID`) come from the process
+environment — never embed them in the brief or the skill.
 
 **Model:** Haiku 4.5 — fast, cheap (~$0.005/lead), more than capable for structured output
 **Expected output tokens:** 800–1,200
@@ -234,7 +245,8 @@ build_brief:
 
 ## SKILL CONNECTIONS
 
-- **Upstream:** n8n webhook from Google Sheets HIGH-priority flag
+- **Upstream:** direct trigger from the lead pipeline when a Google Sheets row is
+  flagged HIGH priority — the calling process invokes this skill directly (no n8n)
 - **Downstream → cinematic-website-builder:** passes `design` + `seo` + `services` + `copy` blocks
 - **Downstream → outreach-copywriter:** passes `business` + `outreach` + `site_audit` blocks
 - **Downstream → vapi-orchestrator:** passes `business` + `outreach` + `deploy` blocks

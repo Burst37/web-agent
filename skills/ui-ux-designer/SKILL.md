@@ -141,6 +141,26 @@ It should:
 
 ---
 
+## DESIGN RESEARCH SOURCES
+
+Before locking visual direction, pull real reference — do not improvise a look from
+memory. Draw from, in priority order:
+
+1. **`mobbin-operator`** — real shipped production UI from live apps (offline SQLite
+   mirror + FTS5 search). The strongest source: actual product screens and flows, not
+   marketing renders. Use `mobbin-pp-cli deck` / `bench` / `grab` to benchmark
+   onboarding, paywall, and pattern references for the client's vertical.
+2. **Pinterest / Dribbble / Behance / Awwwards** — aspirational/marketing-grade visual
+   direction and award-winning motion. Good for mood and ambition, weaker for real UX.
+3. **`ui-ux-pro-max`** — the underlying style/pattern database (color palettes, font
+   pairings, named UI styles, product-type reasoning). Treat it as the deep reference
+   library that the SA-brand layer below draws on.
+
+Fetch engine for any of the above (or a client/competitor site): use `firecrawl-mcp`
+(`firecrawl_scrape` / `firecrawl_search` / `firecrawl_map`) rather than a raw fetch.
+
+---
+
 ## VISUAL STYLE SYSTEM
 
 ### 01. Liquid Glass

@@ -100,6 +100,14 @@ Always register ScrollTrigger: `gsap.registerPlugin(ScrollTrigger);`
 
 ## THE 30 MODULES
 
+> **Canonical motion source:** `gsap-supercharged` (with prerequisites `gsap-core`,
+> `gsap-scrolltrigger`, `gsap-timeline`) is the single source of truth for advanced
+> GSAP choreography. The modules below are production-tuned, copy-ready inline
+> recipes for this HTML build layer; when an effect needs to go further (SplitText,
+> MorphSVG, Flip, Physics2D, ScrollSmoother, multi-scene pinned storytelling) reach
+> for `gsap-supercharged` rather than re-inventing it here. `design-motion-principles`
+> governs *which* motion to use and *why*.
+
 ---
 
 ### MODULE 01 — TEXT MASK REVEAL
@@ -147,6 +155,7 @@ gsap.to(".mask-text-fill", {
 
 ### MODULE 02 — STICKY STACK NARRATIVE
 **Category:** Scroll-Driven | **Best for:** Product feature walkthroughs, service explanations
+> Canonical pinned/sticky-stack choreography lives in `gsap-supercharged` (§1 Cinematic Scroll Storytelling). Use this inline recipe for a quick build; extend via that skill.
 
 ```html
 <style>
@@ -222,6 +231,7 @@ layers.forEach(({ el, speed }) => {
 
 ### MODULE 04 — HORIZONTAL SCROLL HIJACK
 **Category:** Scroll-Driven | **Best for:** Portfolios, product galleries, timelines
+> Canonical horizontal/pinned-scroll choreography lives in `gsap-supercharged` (§1 Cinematic Scroll Storytelling, §6 Parallax Rig). Use this inline recipe for a quick build; extend via that skill.
 
 ```html
 <style>
