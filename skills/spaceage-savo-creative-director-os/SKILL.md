@@ -1,9 +1,10 @@
 ---
 name: spaceage-savo-creative-director-os
 description: Use when a business, client site, competitor set, social profile, landing page concept, visual reference, Awwwards/Godly/Dribbble/Pinterest inspiration, YouTube web design workflow, or AI agency website project needs strategic creative direction before Figma, Stitch, Framer, Webflow, Claude Code, Codex, Cursor, Antigravity, or any builder model runs.
-version: 1.0.0
+version: 1.1.0
 source_inspiration:
-  - SA-Visual-Intelligence-Engine-v6-PLANNED
+  - SA-Visual-Intelligence-Engine-v6-PLANNED   # merged 2026-07-17: Module 1 tier list, Module 13
+  - Space Age Design Director OS v1.0           # merged 2026-07-17: numeric dials, Flagship Mode
   - Universal Build Handoff Mode
   - SA-obsidian-vault-intelligence
   - website-intelligence
@@ -294,14 +295,49 @@ source_inventory:
       - Google_Business
       - directories
       - SEO_results
-    inspiration:
-      - Awwwards
-      - Godly
-      - Dribbble
+    inspiration_tier_1:   # design galleries — check these first
       - Pinterest
+      - Godly
+      - Awwwards
       - Landbook
-      - YouTube_workflow
-      - screenshots
+      - Dribbble
+      - Site_Inspire
+      - Lapa_Ninja
+      - Mobbin
+      - Cosmos
+      - Layers
+      - Design_Everywhere
+    inspiration_tier_2:   # process/technique sources — how it was built, not just what it looks like
+      - YouTube_design_breakdowns
+      - Framer_tutorials
+      - Figma_tutorials
+      - GSAP_tutorials
+      - creative_director_interviews
+      - agency_case_studies
+      - product_launch_videos
+      - developer_portfolio_walkthroughs
+      - motion_showreels
+    inspiration_tier_3:   # named reference companies — the actual bar for "premium" and "advanced"
+      - Apple
+      - Stripe
+      - Linear
+      - Raycast
+      - Arc_Browser
+      - Vercel
+      - Notion
+      - OpenAI
+      - Airbnb
+      - Shopify
+      - Tesla
+      - SpaceX
+      - Nike
+      - Google
+      - Meta
+      - Adobe
+      - Anthropic
+      - Cursor
+      - Framer
+      - Figma
     implementation:
       - GitHub_repo
       - Framer_template
@@ -314,7 +350,32 @@ source_inventory:
     low: short-form or unverified reference, requires visual/manual confirmation
 ```
 
-Never treat low-confidence sources as fully extracted.
+Never treat low-confidence sources as fully extracted. Tier list sourced from
+`SA-Visual-Intelligence-Engine` — the earlier draft this skill's Module 1 was built from
+(see `source_inspiration` in frontmatter).
+
+### Visual Intelligence Scan Protocol (per source)
+
+For each source, run 7 independent extraction passes rather than a single "what does this
+look like" glance — the goal is *why it works*, not *what it looks like*:
+
+1. **Visual Language** — style family (Brutalism, Minimalism, Swiss, Glassmorphism, Liquid
+   Glass, Claymorphism, Neo-Brutalism, Luxury Editorial, SaaS Premium, Cyberpunk, Corporate
+   Modern, Fashion Editorial, Experimental Interactive, High-End Startup); color/typography/
+   shape/spacing/composition philosophy.
+2. **Layout** — hero structure, grid system, section sequencing, hierarchy, whitespace
+   ratios, breakpoints; determine *why* the layout works, not just what it looks like.
+3. **Motion** — scroll behaviors, entrance animations, parallax, hover/cursor systems, 3D,
+   reveal systems, GSAP patterns, motion/velocity/timing hierarchy.
+4. **Conversion** — trust/authority/social-proof/scarcity systems, offer architecture, CTA
+   architecture, funnel/buyer-journey structure, objection handling, micro-conversions.
+5. **Brand** — positioning, voice, personality, archetype, luxury/trust/authority signals,
+   brand differentiation.
+6. **Interaction** — micro-interactions, hover/click behavior, feedback/state/loading
+   systems, navigation/menu/search, drag/touch, accessibility patterns.
+7. **Emotional** — what emotion is being created (trust, power, luxury, urgency, innovation,
+   safety, prestige, status, exclusivity, confidence, authority), and which visual/motion/
+   typography/color/content choices map to that outcome.
 
 ## MODULE 2 — BRAND DNA ENGINE
 
@@ -352,6 +413,35 @@ brand_dna_scores:
   motion_tolerance:
     measures: How much motion helps attention without harming trust/performance?
 ```
+
+### Numeric Dial Scores (companion to the qualitative scores above)
+
+The qualitative scores above (low/medium/high/critical) are what `brand_profile` and the
+Industry Decision Matrix actually key off. For a sharper gut-check on a specific brief, use
+this 1–10 dial layer instead — same five signals, explicit numbers:
+
+```yaml
+numeric_dials:
+  trust: 1-10          # how much proof is required before the visitor will act
+  motion: 1-10         # animation intensity the brand can carry without hurting trust
+  visual_aggression: 1-10   # how far the visual system can break from safe/expected
+  luxury: 1-10          # exclusivity, restraint, premium material signaling
+  conversion_urgency: 1-10  # how hard/fast the CTA needs to push
+```
+
+Worked examples:
+
+| Industry | Trust | Motion | Luxury |
+|---|---|---|---|
+| Healthcare | 10 | 3 | 4 |
+| Corporate Law | 10 | 2 | 6 |
+| Restaurant | 6 | 8 | 6 |
+| Nightclub/Event | 4 | 10 | 8 |
+| **Space Age AI (own brand)** | 8 | 9 | 9 |
+
+Use these as sanity checks against whatever `visual_route` / `motion_level` this matrix
+already assigned for the industry — if the numeric gut-check and the matrix disagree sharply,
+that's a signal to re-read the brief, not to silently override one or the other.
 
 ### Brand Profile Output
 
@@ -689,7 +779,7 @@ trust_requirement_matrix:
     proof_after_atmosphere: true
   low:
     industries: [music_artist, nightclub, fashion_campaign]
-    proof_can_be_social_or_cultural
+    proof_can_be_social_or_cultural: true
 ```
 
 Trust output:
@@ -816,6 +906,59 @@ Use an effect only if it supports at least one of:
 ```
 
 If it supports none, reject it.
+
+## MODULE 13 — DESIGN GENOME + TREND INTELLIGENCE
+
+Merged from `SA-Visual-Intelligence-Engine`. Two lightweight scoring layers on top of
+everything above — use when a build needs an explicit quality/trend read, not on every
+routine Standard-path lookup.
+
+### Design Genome Scoring (0–100 each)
+
+```yaml
+design_genome:
+  visual_sophistication: 0-100
+  motion_sophistication: 0-100
+  conversion_sophistication: 0-100
+  interaction_sophistication: 0-100
+  innovation_score: 0-100
+  premium_feel: 0-100
+  trend_relevance: 0-100
+  future_readiness: 0-100
+```
+
+Use for competitor teardown (Module 3) or a self-QA pass on a finished build — not required
+for every lead in the mass-production path.
+
+### Trend Lifecycle Tracking
+
+Track where a pattern sits in its lifecycle before leaning on it:
+`emerging` → `growing` → `established` → `saturated` → `dead`. A `saturated` or `dead`
+pattern (yesterday's Awwwards darling, now on every template site) actively works against
+the "not generic" quality gate below — treat lifecycle stage as an input to whether an
+effect is still worth using, not just whether it's technically well-executed.
+
+Patterns to track: glassmorphism, liquid glass, spatial interfaces, immersive storytelling,
+3D product displays, depth layers, parallax systems, AI/generative/voice/conversational
+interfaces, mixed reality/spatial UI, WebGL/Three.js/Spline/Rive systems, cinematic/
+interactive storytelling, AI personalization, cursor intelligence, kinetic typography.
+
+### Space Age Enhancement Mandate
+
+Every extracted pattern gets pushed, not copied: +30% sophistication, +30% conversion
+intelligence, +30% interaction quality, +30% motion quality, +30% premium perception versus
+the source it was extracted from. This is directional, not a literal formula — it's the
+"never ship a copy, always ship an evolution" rule stated as a number so it's checkable.
+
+### Industry Adaptation Layer
+
+A pattern extracted from one industry must never transfer directly to another — it has to
+be re-derived for the target industry's trust/motion/luxury profile. Example: an Apple-style
+hero section, applied to a home-healthcare build, must become *healthcare-grade premium
+trust architecture* — not a recolored Apple clone. This is the same principle Module 12's
+Effect Selection Formula already enforces (attention/comprehension/emotion/trust/conversion
+or reject); this module names the specific failure mode to watch for when the source
+material comes from a very different industry than the target.
 
 ## INDUSTRY DECISION MATRIX
 
@@ -1253,6 +1396,45 @@ mass_production_routing:
 This keeps the routing decision a lookup (like the moodboard/aesthetic routing above), not
 a live per-lead judgment call — Hermes can dispatch unattended once `motion_strategy` is
 set in Module 8.
+
+### Space Age Flagship Mode (Mr. Black's own site only)
+
+Merged from `Space Age Design Director OS v1.0`. This is the one exception to every
+mass-production rule above — it applies **only** when the client is Space Age AI Solutions
+itself (`spaceage-ai-solutions.com`, internal tools/dashboards), never a lead-gen client.
+This is also where `VL_01_dark_glass` (the ice-blue/chrome-cyan brand accent, `#8CB8CC`)
+actually belongs — see `design-taste-frontend`'s VL-01 scoping note.
+
+```yaml
+space_age_flagship_mode:
+  scope: spaceage-ai-solutions.com and internal tools ONLY — never a lead-gen client build
+  numeric_dials: { trust: 8, motion: 9, luxury: 9 }   # from the Module 2 worked examples
+  max_feature_budget: 15
+  required:
+    - fullscreen_video_hero
+    - GSAP_ScrollTrigger
+    - kinetic_typography
+    - bento_architecture
+    - voice_agent
+    - advanced_SEO
+  recommended:
+    - parallax
+    - text_scramble
+    - pinned_storytelling
+    - magnetic_interactions
+    - liquid_glass
+  optional:
+    - spline_3D_environment
+  forbidden:
+    - random_trend_stacking
+    - multiple_competing_effects
+    - trend_usage_without_purpose
+  goal: "Look like the agency that built the future. Not an agency that installed every plugin."
+```
+
+This isn't routed through the Mass-Production Cost Routing table above — it's Premium-tier
+by definition, builder choice follows the Premium rules (Claude Code / architecture-grade
+model), not the DeepSeek V4/MiniMax M3 cost tier.
 
 ## QUALITY GATES
 
