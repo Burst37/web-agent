@@ -905,7 +905,167 @@ industry_matrix:
     hero: full_screen_atmosphere_video
     recommended: [kinetic_navigation, horizontal_media_showcase, RSVP_or_ticket_CTA, lineup_reveal]
     avoid: [corporate_layout, quiet_visual_system, trust-first_pacing]
+  landscaping:
+    priority: trust_plus_transformation
+    visual_route: cinematic_editorial   # steer: lead-to-brief's GOLD_CINEMATIC (aerial manicured lawn, golden hour)
+    motion_level: medium
+    hero: aerial_lawn_or_seasonal_project_golden_hour_video
+    recommended: [before_after, service_area_map, review_strip, sticky_mobile_call]
+    avoid: [VL_01_dark_glass, cold_corporate_layout]
+  roofing:
+    priority: authority_first
+    visual_route: industrial_brutalism   # steer: DARK_AUTHORITY (storm-ready home, dramatic sky)
+    motion_level: low_to_medium
+    hero: storm_ready_home_dramatic_sky
+    recommended: [inspection_CTA, warranty_badges, review_strip, before_after]
+    avoid: [VL_01_dark_glass, playful_motion]
+  cleaning:
+    priority: trust_first
+    visual_route: premium_minimalism   # steer: CLEAN_BRIGHT (pristine space, high contrast)
+    motion_level: low
+    hero: pristine_space_high_contrast
+    recommended: [service_clarity_cards, review_strip, booking_CTA]
+    avoid: [VL_01_dark_glass, industrial_brutalism, cluttered_layout]
+  HVAC:
+    priority: trust_first
+    visual_route: premium_minimalism   # steer: BLUE_TECH (comfort home, cool tones) — cool-blue accent
+    motion_level: low                  # variant, deliberately distinct from the SA brand's own #8CB8CC
+    hero: technician_or_service_trust_fullscreen
+    recommended: [service_clarity_cards, review_strip, emergency_call_CTA, financing_or_pricing_clarity]
+    avoid: [aggressive_motion, decorative_glass, vague_service_list, VL_01_dark_glass]
+  plumbing:
+    priority: urgency_plus_trust
+    visual_route: industrial_brutalism   # steer: INDUSTRIAL (tools, pipes, clean resolution)
+    motion_level: low
+    hero: tools_pipes_clean_resolution
+    recommended: [call_now_CTA, emergency_badge, review_strip]
+    avoid: [VL_01_dark_glass, cinematic_maximalism]
+  electrical:
+    priority: authority_plus_precision
+    visual_route: industrial_brutalism   # steer: DARK_ELECTRIC (illuminated home, precision) — glow-accent lighting
+    motion_level: low                    # treatment, not the SA brand's own glass/glow token
+    hero: illuminated_home_precision
+    recommended: [certification_badges, quote_CTA, review_strip]
+    avoid: [VL_01_dark_glass, playful_motion]
+  painting:
+    priority: transformation_first
+    visual_route: cinematic_editorial   # steer: WARM_EDITORIAL (before/after reveal)
+    motion_level: medium
+    hero: before_after_reveal
+    recommended: [before_after, estimate_CTA, portfolio_gallery]
+    avoid: [VL_01_dark_glass, cold_corporate_layout]
+  concrete:
+    priority: durability_first
+    visual_route: industrial_brutalism   # steer: DARK_CONCRETE (finished driveway, clean lines)
+    motion_level: low
+    hero: finished_driveway_clean_lines
+    recommended: [quote_CTA, before_after, review_strip]
+    avoid: [VL_01_dark_glass, decorative_glass]
+  tree_service:
+    priority: skill_plus_safety
+    visual_route: cinematic_editorial   # steer: FOREST_DARK (tree canopy, dramatic removal) — earthy/forest palette
+    motion_level: medium
+    hero: tree_canopy_dramatic_removal
+    recommended: [before_after, estimate_CTA, safety_credentials]
+    avoid: [VL_01_dark_glass, cold_corporate_layout]
+  pest_control:
+    priority: trust_plus_speed
+    visual_route: premium_minimalism   # steer: CLEAN_DARK (protected home, clean space)
+    motion_level: low
+    hero: protected_home_clean_space
+    recommended: [booking_CTA, review_strip, service_clarity_cards]
+    avoid: [VL_01_dark_glass, industrial_brutalism]
+  med_spa:
+    priority: desire_plus_trust
+    visual_route: liquid_glass_iridescent
+    motion_level: medium
+    hero: treatment_or_result_video
+    recommended: [before_after, treatment_menu_expansion, booking_CTA, review_strip]
+    avoid: [industrial_brutalism, cold_corporate_layout, clinical_sterility, VL_01_dark_glass]
+  hair_salon:
+    priority: desire_plus_trust
+    visual_route: liquid_glass_iridescent
+    motion_level: medium
+    hero: stylist_or_transformation_showcase
+    recommended: [before_after, booking_CTA, stylist_portfolio, review_strip]
+    avoid: [industrial_brutalism, cold_corporate_layout, VL_01_dark_glass]
+  barbershop:
+    priority: craft_plus_character
+    visual_route: industrial_brutalism
+    motion_level: low_to_medium
+    hero: chair_or_cut_close_up
+    recommended: [booking_CTA, portfolio_gallery, review_strip]
+    avoid: [soft_pastel_wellness_look, VL_01_dark_glass]
+  auto_repair:
+    priority: trust_first
+    visual_route: industrial_brutalism
+    motion_level: low
+    hero: shop_or_technician_trust
+    recommended: [quote_CTA, service_clarity_cards, review_strip, certification_badges]
+    avoid: [VL_01_dark_glass, cinematic_maximalism]
+  independent_retail:
+    priority: desire_plus_discovery
+    visual_route: cinematic_editorial
+    motion_level: medium
+    hero: product_or_lifestyle_shot
+    recommended: [shop_now_CTA, product_theater, social_proof]
+    avoid: [VL_01_dark_glass, generic_ecommerce_template]
+    note: apparel-heavy retailers may fit ecommerce_fashion's editorial_luxury_or_cinematic_commercial better — check asset quality before defaulting here
+  daycare_preschool:
+    priority: trust_critical
+    visual_route: warm_trust
+    motion_level: low
+    hero: children_or_classroom_warm_imagery
+    recommended: [tour_scheduling_CTA, staff_credentials, safety_badges, testimonial_reveals]
+    avoid: [VL_01_dark_glass, industrial_brutalism, aggressive_motion]
+  appliance_repair:
+    priority: trust_first
+    visual_route: premium_minimalism
+    motion_level: low
+    hero: technician_or_service_trust
+    recommended: [schedule_repair_CTA, service_clarity_cards, review_strip]
+    avoid: [VL_01_dark_glass, aggressive_motion]
+  moving_storage:
+    priority: reliability_first
+    visual_route: industrial_brutalism
+    motion_level: low_to_medium
+    hero: truck_or_moving_day_action
+    recommended: [free_quote_CTA, service_area_map, review_strip]
+    avoid: [VL_01_dark_glass, decorative_glass]
+  handyman:
+    priority: trust_first
+    visual_route: industrial_brutalism
+    motion_level: low
+    hero: tools_or_small_fix_before_after
+    recommended: [book_CTA, service_clarity_cards, review_strip]
+    avoid: [VL_01_dark_glass, cinematic_maximalism]
+  pet_grooming_boarding:
+    priority: desire_plus_trust
+    visual_route: warm_trust
+    motion_level: low_to_medium
+    hero: happy_groomed_pet_imagery
+    recommended: [book_grooming_CTA, reserve_boarding_CTA, review_strip, facility_tour]
+    avoid: [VL_01_dark_glass, industrial_brutalism, clinical_sterility]
+  event_planning:
+    priority: experience_first
+    visual_route: cinematic_editorial
+    motion_level: medium_to_high
+    hero: event_highlight_reel
+    recommended: [consultation_CTA, portfolio_gallery, testimonial_reveals]
+    avoid: [VL_01_dark_glass, corporate_layout]
 ```
+
+### Lead-Gen Pipeline Note (Google Maps → Firecrawl audit → build)
+
+The 21 industries above (through `event_planning`) are the actual mass-production verticals
+the Standard-path lead-gen pipeline targets — pull the top ~25 businesses per area from
+Google Maps, Firecrawl-scrape each site, and only build for the ones with an inadequate or
+missing website. `visual_route` comments trace back to `lead-to-brief`'s original archetype
+names (GOLD_CINEMATIC, BLUE_TECH, etc.) where one existed, so nothing invented here is
+disconnected from what was already working in production — see `lead-to-brief`'s Category
+Intelligence table, which now references this matrix instead of carrying its own routing.
+None of these route to `VL_01_dark_glass` — that route is Space Age's own brand identity
+(see `design-taste-frontend`), not a default for lead-gen clients.
 
 ## FIGMA / STITCH BLUEPRINT ENGINE
 

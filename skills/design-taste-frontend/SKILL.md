@@ -1,15 +1,28 @@
 ---
 name: design-taste-frontend
 description: >
-  Space Age frontend design taste OS. Controls visual DNA, aesthetic routing, and anti-slop enforcement
-  for all web builds. Enforces the VL-01 Dark Glassmorphism system, banned fonts, and the three design
-  dials (VARIANCE / MOTION / DENSITY). Load before any UI build, design review, or frontend styling task.
+  Space Age frontend design taste OS. Owns two things: (1) Space Age's OWN brand system
+  (VL-01 Dark Glassmorphism — for spaceage-ai-solutions.com itself, internal tools, or a
+  client SAVO explicitly routes to the AI-agency material route) and (2) anti-slop
+  enforcement (banned fonts, the three design dials: VARIANCE / MOTION / DENSITY) applied
+  to every build regardless of industry. VL-01 is NOT the default look for mass-production
+  lead-gen clients (landscapers, HVAC, med spas, etc.) — those get their own
+  industry-appropriate direction from spaceage-savo-creative-director-os's Industry
+  Decision Matrix. Load before any UI build, design review, or frontend styling task.
 ---
 
 # Design Taste Frontend OS
 
-## VL-01 Dark Glassmorphism — Default Visual System
+## VL-01 Dark Glassmorphism — Space Age's Own Brand System (not a mass-production default)
 
+> **Scope:** these tokens are Space Age AI Solutions' own brand identity. Use them for
+> spaceage-ai-solutions.com, internal tools/dashboards, or a client SAVO explicitly routes
+> to the `VL_01_dark_glass` material route (AI-agency-type businesses). The mass-production
+> lead-gen pipeline (Google Maps → top-25 landscapers/HVAC/med spas per area → Firecrawl
+> audit of who has a bad or no website → build) does NOT use this palette by default —
+> each of those clients gets their own industry-appropriate route from SAVO's Industry
+> Decision Matrix. Don't let this section read as "the default for everything."
+>
 > Accent tokens below are measured directly from the official SA logo
 > (SpaceAgeAiSolutionsLogo.png, confirmed 2026-07-17) — ice-blue/chrome-cyan, not the
 > indigo/violet previously guessed here. This resolves the token conflict flagged in
