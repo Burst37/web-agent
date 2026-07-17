@@ -10,13 +10,18 @@ description: >
 
 ## VL-01 Dark Glassmorphism — Default Visual System
 
+> Accent tokens below are measured directly from the official SA logo
+> (SpaceAgeAiSolutionsLogo.png, confirmed 2026-07-17) — ice-blue/chrome-cyan, not the
+> indigo/violet previously guessed here. This resolves the token conflict flagged in
+> `spaceage-savo-creative-director-os`.
+
 ```css
 --bg-primary: #050508;
 --bg-secondary: #0a0a0f;
 --glass-surface: rgba(255,255,255,0.04);
 --glass-border: rgba(255,255,255,0.08);
---accent-primary: #6366f1;
---accent-secondary: #8b5cf6;
+--accent-primary: #8CB8CC;
+--accent-secondary: #B4CCD8;
 --text-primary: #f8fafc;
 --text-muted: #94a3b8;
 

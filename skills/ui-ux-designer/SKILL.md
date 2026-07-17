@@ -488,7 +488,7 @@ Prioritize: Thumb-friendly interactions / Sticky CTA / Performance / Readability
 ### COLORS (VL-01 defaults)
 ```
 Background: #050508 / #08080C / #0D0D14
-Primary:    #2979FF (Electric blue default)
+Primary:    #8CB8CC (Ice-blue / chrome-cyan — measured from the official SA logo, confirmed 2026-07-17)
 Alternates: Emerald / Violet / Cyan (per industry — see sa-design-md)
 Accent:     Soft chrome / Frost white / Neon glow
 ```
@@ -551,7 +551,7 @@ This skill outputs a **Design Brief** — a structured spec consumed by Google S
 ```yaml
 design_brief:
   style_system: "VL-01 Dark Glassmorphism | Liquid Glass | Editorial | Bento"
-  primary_color: "#2979FF"  # or industry override from sa-design-md
+  primary_color: "#8CB8CC"  # or industry override from sa-design-md
   surface_base: "#050508"
   font_heading: "Orbitron 900"
   font_body: "DM Sans"

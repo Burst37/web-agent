@@ -24,7 +24,7 @@ creative_direction:
   story: problem → automation system → booked appointments → client growth
   layout: dashboard expansion + pinned process + proof bento
   motion: GSAP ScrollTrigger for process, Motion for cards/buttons, reduced-motion fallback
-  material: off-black #050508, glass panels, orange/lime accents, data labels
+  material: off-black #050508, glass panels, ice-blue/chrome-cyan accents (#8CB8CC), data labels
 trust_strategy:
   required: case studies, screenshots, process transparency, client-use examples
 conversion_strategy:

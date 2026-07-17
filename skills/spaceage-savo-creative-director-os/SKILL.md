@@ -617,11 +617,11 @@ material_routes:
     surfaces: clean white, warm paper, soft shadows, restrained contrast
   VL_01_dark_glass:
     use_for: Space Age, AI agency, dashboards, premium automation, futuristic portfolios
-    surfaces: off-black #050508, glass panels, orange/lime accents, data labels
-    # KNOWN CONFLICT: accent color is not yet reconciled across skills. This route says
-    # orange/lime; ui-ux-designer's retired style said #2979FF (blue); design-taste-frontend's
-    # CSS defaults say #6366f1/#8b5cf6 (indigo/violet). Confirm the real SA brand accent
-    # before shipping a build that depends on this token — don't pick one silently.
+    surfaces: off-black #050508, glass panels, ice-blue/chrome-cyan accents (#8CB8CC), data labels
+    # Accent confirmed 2026-07-17 by measuring the official SA logo (SpaceAgeAiSolutionsLogo.png).
+    # Resolves the prior 3-way conflict (this route said orange/lime; ui-ux-designer's now-retired
+    # style said #2979FF blue; design-taste-frontend's CSS defaults said #6366f1/#8b5cf6
+    # indigo/violet) — none were correct. design-taste-frontend and ui-ux-designer updated to match.
   liquid_glass_iridescent:
     use_for: eyewear, luxury tech, beauty, future fashion, WYSIWYG-like brands
     surfaces: frosted refraction, iridescent gradients, restrained shimmer
