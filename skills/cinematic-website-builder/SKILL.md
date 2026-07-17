@@ -86,11 +86,12 @@ Answer these before writing a single line:
 **Never use more than 6-8 modules per page. Restraint is cinematic. Pile-on is noise.**
 
 ### Moodboard Quick Reference (canonical source: `ui-ux-designer` / `ui-ux-pro-max`):
-> This is a lookup shortcut only. The authoritative moodboard, color, and typography
-> definitions live in `ui-ux-designer` (SA-brand layer) backed by `ui-ux-pro-max` (deep
-> palette/pairing DB). Known gap: only A–N are documented today; `design-taste-frontend`
-> routes to FF/HH which aren't defined yet — if a build needs a moodboard beyond N, flag it
-> and pull the definition, don't improvise it silently.
+> This is a lookup shortcut only. A moodboard isn't a fixed preset catalog — it's a
+> per-project style direction distilled from real reference sites/images pulled for that
+> client (via `ui-ux-designer`'s DESIGN RESEARCH SOURCES). The letters below are historical
+> labels for past projects, not slots in a system that needs completing. When a new project
+> needs a direction beyond N, don't treat it as a blocker: gather fresh references for that
+> client, land on a direction, and give it the next letter — same as A–N were each created.
 
 | Letter | Aesthetic | Primary Use |
 |--------|-----------|-------------|
