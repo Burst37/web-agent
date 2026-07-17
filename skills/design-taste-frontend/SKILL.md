@@ -25,19 +25,14 @@ font-body: "DM Sans", "Inter";
 font-mono: "JetBrains Mono";
 ```
 
-## Aesthetic Routing Table
+## Aesthetic Routing (canonical source: `spaceage-savo-creative-director-os`)
 
-| Client Type | Aesthetic Route | Motion Level | Density |
-|---|---|---|---|
-| AI Agency | Dark Glassmorphism + Holographic | Cinematic | Low |
-| Home Healthcare | Editorial Luxury + Soft Trust | Subtle | Medium |
-| Nightclub / Event | Neo-Brutalism + Kinetic Type | High | High |
-| Restaurant / Bar | Skeuomorphic Warmth + Editorial | Medium | Medium |
-| Ecommerce / Fashion | Minimal Luxury + Bento | Medium | Low |
-| Music Artist | Dark + Holographic Iridescence | Cinematic | Low |
-| Fitness / Gym | Industrial Brutalism + Bold Type | High | High |
-| Credit Repair | Trust-First + Conversion Editorial | Low | Medium |
-| SaaS | Spatial UI + Glassmorphism | Medium | Low |
+> Industry → visual route / motion level routing now lives in SAVO's INDUSTRY DECISION
+> MATRIX and MODULE 9 (Material Routes) — that skill also runs the full Brand DNA /
+> Attention / Trust / Conversion reasoning behind each route, not just a flat lookup. This
+> skill no longer carries its own copy of the routing table. What's unique to *this* skill —
+> and stays here — is the anti-slop **Banned Fonts** list, the **Three Dials**, and the
+> Pre-Flight checklist below.
 
 ## The Three Dials
 
@@ -126,6 +121,10 @@ Default Space Age baseline: VARIANCE=7, MOTION=8, DENSITY=4
 - [ ] Mobile CTA is thumb-reachable
 
 ## Handoff Routing
+
+Creative direction (industry → visual route, material, motion) is decided upstream by
+**`spaceage-savo-creative-director-os`** — this skill runs *after* that decision as the
+anti-slop/ban-list gate, not before it.
 
 After design taste verification, route to:
 - **Figma work** → SpaceAge_Figma_Design_Director_OS_v3

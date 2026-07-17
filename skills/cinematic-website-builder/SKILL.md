@@ -8,16 +8,17 @@ description: >
   CDN, no build step); Premium builds add real design tokens + physics motion + 3D via
   sa-figma-framer-spline. This skill is STAGE 3 (BUILD) of the SA master website pipeline — the
   orchestration hub that references the single-source-of-truth skills rather than carrying its
-  own copies: motion from design-motion-principles / gsap-supercharged, moodboards+type+color
-  from ui-ux-designer / ui-ux-pro-max, anti-slop from design-taste-frontend, SEO from
-  sa-local-seo-geo. If the design direction (moodboard, color, font, sections) is unclear,
-  trigger ui-ux-designer first.
+  own copies: motion from design-motion-principles / gsap-supercharged, creative direction from
+  spaceage-savo-creative-director-os, typography/color tokens from ui-ux-designer / ui-ux-pro-max,
+  anti-slop from design-taste-frontend, SEO from sa-local-seo-geo. If the design direction
+  (material route, motion, story, section structure) is unclear, trigger
+  spaceage-savo-creative-director-os first.
 ---
 
 # CINEMATIC WEBSITE BUILDER SKILL
 ## Space Age AI Solutions — Production Web Experience Layer
 
-This skill is **Stage 3 (BUILD)** of the SA master website pipeline. It takes a locked design direction and produces the real, animated, production-grade single-file HTML. Never skip to this skill without knowing the moodboard, color system, font stack, and section structure — if those are unclear, load `ui-ux-designer` first.
+This skill is **Stage 3 (BUILD)** of the SA master website pipeline. It takes a locked design direction and produces the real, animated, production-grade single-file HTML. Never skip to this skill without a locked creative direction (material route, motion, story, section structure) from `spaceage-savo-creative-director-os` and typography/color tokens from `ui-ux-designer` — if those are unclear, load `spaceage-savo-creative-director-os` first.
 
 ---
 
@@ -25,7 +26,7 @@ This skill is **Stage 3 (BUILD)** of the SA master website pipeline. It takes a 
 
 ```
 STAGE 1 BRIEF (lead-to-brief)
-   → STAGE 2 DIRECTION (ui-ux-designer)
+   → STAGE 2 DIRECTION (spaceage-savo-creative-director-os + ui-ux-designer)
       → [STAGE 2.5 Google Stitch — Premium path only]
          → STAGE 3 BUILD  ← YOU ARE HERE
             → STAGE 4 QA GATE (blocking)
@@ -34,24 +35,26 @@ STAGE 1 BRIEF (lead-to-brief)
 ```
 
 ### STAGE 3 build load order (pull on demand, don't restate)
-1. **`ui-ux-designer`** (+ `ui-ux-pro-max`) — locked moodboard, color/font tokens, section structure.
-2. **`design-motion-principles`** (+ `gsap-supercharged`, `gsap-core/scrolltrigger/timeline`) — motion, per module.
-3. **`design-taste-frontend`** — anti-slop ban lists + three-dial check.
-4. **`sa-local-seo-geo`** — SEO/GEO injection into the built HTML.
-5. **Visual assets** — Higgsfield-generated media (presigned URLs → re-hosted at QA, Stage 4).
-6. **Premium only:** `sa-figma-framer-spline` — real Figma design tokens, Framer-Motion physics, and Spline/WebGL 3D where CSS can't fake the material (liquid glass, true depth).
+1. **`spaceage-savo-creative-director-os`** — locked creative direction: material route, motion intensity, attention/story/trust/conversion strategy, section structure.
+2. **`ui-ux-designer`** (+ `ui-ux-pro-max`) — typography/color tokens for the locked direction, plus the reference-image research that fed it.
+3. **`design-motion-principles`** (+ `gsap-supercharged`, `gsap-core/scrolltrigger/timeline`) — motion, per module.
+4. **`design-taste-frontend`** — anti-slop ban lists + three-dial check.
+5. **`sa-local-seo-geo`** — SEO/GEO injection into the built HTML.
+6. **Visual assets** — Higgsfield-generated media (presigned URLs → re-hosted at QA, Stage 4).
+7. **Premium only:** `sa-figma-framer-spline` — real Figma design tokens, Framer-Motion physics, and Spline/WebGL 3D where CSS can't fake the material (liquid glass, true depth).
 
 ## SINGLE SOURCE OF TRUTH (reference it, never restate it)
 
 | Domain | Owned by | This skill |
 |---|---|---|
-| Moodboards, typography pairing, color systems | `ui-ux-designer` (+ `ui-ux-pro-max` DB) | references, applies tokens |
+| Creative direction (industry → material route, motion, attention/story/trust/conversion) | `spaceage-savo-creative-director-os` | references, doesn't decide |
+| Typography pairing, color tokens | `ui-ux-designer` (+ `ui-ux-pro-max` DB) | references, applies tokens |
 | GSAP motion skeletons (sticky stack, horizontal pan, etc.) | `design-motion-principles` / `gsap-supercharged` | modules point there, no 2nd copy |
 | Anti-slop ban lists, three-dial system | `design-taste-frontend` | loads for the QA check only |
 | SEO 6-layer / GEO injection | `sa-local-seo-geo` | calls it, doesn't hand-write schema |
 
 ### When to call other skills:
-- **Design direction unclear / "I don't know what I want"** → load `ui-ux-designer` first.
+- **Design direction unclear / "I don't know what I want"** → load `spaceage-savo-creative-director-os` first, then `ui-ux-designer` for the resulting tokens.
 - **Premium client wants to SEE layout options** → `google-stitch` (Stage 2.5) after UI/UX; skipped on the Standard mass-production path.
 - **Premium build needs real 3D / liquid glass / design tokens** → `sa-figma-framer-spline`.
 - **Design + layout locked** → build directly here.
@@ -85,13 +88,14 @@ Answer these before writing a single line:
 
 **Never use more than 6-8 modules per page. Restraint is cinematic. Pile-on is noise.**
 
-### Moodboard Quick Reference (canonical source: `ui-ux-designer` / `ui-ux-pro-max`):
+### Moodboard Quick Reference (canonical source: `spaceage-savo-creative-director-os`):
 > This is a lookup shortcut only. A moodboard isn't a fixed preset catalog — it's a
 > per-project style direction distilled from real reference sites/images pulled for that
-> client (via `ui-ux-designer`'s DESIGN RESEARCH SOURCES). The letters below are historical
+> client (via `ui-ux-designer`'s DESIGN RESEARCH SOURCES), then reasoned into a material
+> route by SAVO's Industry Decision Matrix / Module 9. The letters below are historical
 > labels for past projects, not slots in a system that needs completing. When a new project
 > needs a direction beyond N, don't treat it as a blocker: gather fresh references for that
-> client, land on a direction, and give it the next letter — same as A–N were each created.
+> client, run SAVO, and give the result the next letter — same as A–N were each created.
 
 | Letter | Aesthetic | Primary Use |
 |--------|-----------|-------------|
@@ -1341,7 +1345,7 @@ Fail any box → back to Stage 3, do not deploy. On pass → hand off to `sa-dep
 
 **Master pipeline load order (Standard path):**
 1. `lead-to-brief` → Stage 1 brief
-2. `ui-ux-designer` (+ `ui-ux-pro-max`) → Stage 2 direction (moodboard, tokens)
+2. `spaceage-savo-creative-director-os` (+ `ui-ux-designer`/`ui-ux-pro-max` for tokens) → Stage 2 direction
 3. *(Premium only)* `google-stitch` → Stage 2.5 layout review
 4. `cinematic-website-builder` → Stage 3 build ← THIS SKILL
    (pulls `design-motion-principles`/`gsap-supercharged`, `design-taste-frontend`,

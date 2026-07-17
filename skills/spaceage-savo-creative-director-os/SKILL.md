@@ -603,6 +603,13 @@ motion_strategy:
 
 Choose surface language based on brand perception.
 
+> This is now the single canonical material/style system — it absorbs the two "dark
+> premium" entries (`Glassmorphism VL-01 Default` and `Dark Mode Luxury UI`) and the other
+> five named styles previously duplicated in `ui-ux-designer`. That skill now references
+> this table instead of carrying its own copy. `Bento Grid Systems` was a layout pattern
+> mislabeled as a material style — it's covered by `dashboard_expansion` / `cinematic_bento`
+> in MODULE 7 instead.
+
 ```yaml
 material_routes:
   premium_minimalism:
@@ -611,6 +618,10 @@ material_routes:
   VL_01_dark_glass:
     use_for: Space Age, AI agency, dashboards, premium automation, futuristic portfolios
     surfaces: off-black #050508, glass panels, orange/lime accents, data labels
+    # KNOWN CONFLICT: accent color is not yet reconciled across skills. This route says
+    # orange/lime; ui-ux-designer's retired style said #2979FF (blue); design-taste-frontend's
+    # CSS defaults say #6366f1/#8b5cf6 (indigo/violet). Confirm the real SA brand accent
+    # before shipping a build that depends on this token — don't pick one silently.
   liquid_glass_iridescent:
     use_for: eyewear, luxury tech, beauty, future fashion, WYSIWYG-like brands
     surfaces: frosted refraction, iridescent gradients, restrained shimmer
@@ -618,7 +629,7 @@ material_routes:
     use_for: music, fashion, nightclub, restaurant, visual brands
     surfaces: image/video dominant, oversized type, asymmetric composition
   industrial_brutalism:
-    use_for: tactical, devtools, record exec grit, street tech
+    use_for: tactical, devtools, record exec grit, street tech, fitness/gym
     surfaces: hard grid, mono labels, sharp edges, limited accent
   warm_trust:
     use_for: elder care, healthcare, wellness, nonprofit
@@ -866,6 +877,34 @@ industry_matrix:
     hero: mission_video_with_clear_donate_or_join_CTA
     recommended: [impact_stats, story_arc, volunteer_donor_paths, trust_badges]
     avoid: [style_over_mission, vague_donation_CTA]
+  fitness_gym:
+    priority: energy_plus_transformation
+    visual_route: industrial_brutalism
+    motion_level: high
+    hero: high_energy_action_video
+    recommended: [before_after, bold_kinetic_type, class_schedule_CTA, transformation_proof]
+    avoid: [soft_pastel_wellness_look, quiet_corporate_layout]
+  credit_repair:
+    priority: trust_first
+    visual_route: premium_minimalism_or_warm_trust
+    motion_level: low
+    hero: calm_conversion_editorial
+    recommended: [proof_dashboard, testimonial_reveals, risk_reversal_copy, sticky_mobile_call]
+    avoid: [aggressive_motion, hype_driven_claims, cluttered_offer_stack]
+  SaaS:
+    priority: innovation_plus_clarity
+    visual_route: VL_01_dark_glass
+    motion_level: medium
+    hero: dashboard_or_product_demo
+    recommended: [dashboard_expansion, feature_walkthrough, proof_dashboard, pricing_clarity]
+    avoid: [overly_cinematic_hero, generic_SaaS_blobs, unclear_pricing_path]
+  nightclub_event:
+    priority: maximum_attention
+    visual_route: cinematic_editorial
+    motion_level: high
+    hero: full_screen_atmosphere_video
+    recommended: [kinetic_navigation, horizontal_media_showcase, RSVP_or_ticket_CTA, lineup_reveal]
+    avoid: [corporate_layout, quiet_visual_system, trust-first_pacing]
 ```
 
 ## FIGMA / STITCH BLUEPRINT ENGINE
