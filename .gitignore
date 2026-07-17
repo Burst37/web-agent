@@ -1,5 +1,6 @@
 node_modules/
 dist/
+agent-core/package-lock.json
 coverage/
 __pycache__/
 *.pyc
