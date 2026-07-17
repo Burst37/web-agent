@@ -2,6 +2,17 @@
 name: spaceage-savo-creative-director-os
 description: Use when a business, client site, competitor set, social profile, landing page concept, visual reference, Awwwards/Godly/Dribbble/Pinterest inspiration, YouTube web design workflow, or AI agency website project needs strategic creative direction before Figma, Stitch, Framer, Webflow, Claude Code, Codex, Cursor, Antigravity, or any builder model runs.
 version: 1.0.0
+source_inspiration:
+  - SA-Visual-Intelligence-Engine-v6-PLANNED
+  - Universal Build Handoff Mode
+  - SA-obsidian-vault-intelligence
+  - website-intelligence
+  - SpaceAge Skills Operating Systems v2
+  - SpaceAge Master Skills Operating Systems v1
+  - Design Motion Principles
+  - Design Taste Frontend
+  - Superpowers methodology
+  - Caveman Optimized Skill
 owner: Space Age AI Solutions
 operator: Mr. Black
 classification: Tier-0 AI Creative Director Operating System
@@ -33,6 +44,8 @@ Then select the visual system, section architecture, motion logic, proof sequenc
 
 ## LOCKED VISUAL FOUNDATIONS
 
+These are default foundations for every SAVO project unless the user explicitly overrides them:
+
 ```yaml
 locked_foundations:
   - jumbo_typography
@@ -43,6 +56,8 @@ locked_foundations:
   - cinematic_composition
   - memorable_first_impression
 ```
+
+These foundations must adapt to the industry. Healthcare may use calm fullscreen video and restrained jumbo typography. A music artist may use aggressive full-screen video and kinetic oversized typography.
 
 ## ADAPTIVE TOOLBOX
 
@@ -78,31 +93,67 @@ adaptive_effects:
     - tactile_product_materials
 ```
 
-## SAVO MASTER WORKFLOW
+## WHEN TO USE
 
-```text
-1. Business Intake
-2. Source Inventory
-3. Existing Website Crawl
-4. Social Media Scan
-5. Competitor Analysis
-6. Brand DNA Scoring
-7. Visitor Psychology Read
-8. Attention Strategy
-9. Story Strategy
-10. Trust Strategy
-11. Conversion Strategy
-12. Layout Strategy
-13. Motion Strategy
-14. Material / Visual Identity Strategy
-15. Figma / Stitch Blueprint
-16. Universal Build Handoff
-17. Builder-Specific Wrapper
-18. QA + Acceptance Tests
-19. Obsidian Memory Update
+Use SAVO when the user needs:
+
+- business-to-website creative direction
+- client site analysis before redesign
+- competitor-informed creative strategy
+- social media and Brand DNA extraction
+- landing page teardown logic
+- CRO-aware visual direction
+- high-end hero section strategy
+- Figma or Google Stitch blueprint
+- Webflow/Framer/Next.js/React build handoff
+- Awwwards/Godly/Dribbble/Pinterest inspiration extraction
+- GSAP/ScrollTrigger motion strategy
+- premium but conversion-safe landing page architecture
+- AI agency portfolio-level website direction
+- a complete pre-code decision system
+
+## WHEN NOT TO USE
+
+Do not deploy full SAVO when:
+
+- the user asks for a tiny copy edit
+- the user only needs a bug fix
+- the user has a locked final Figma design and only wants code
+- the task is backend-only with no UX/visual impact
+- speed is more important than strategy
+- the user explicitly says not to analyze or plan
+
+Use smaller specialist skills instead.
+
+## REQUIRED LOAD ORDER
+
+```yaml
+load_order:
+  1_master_orchestrator:
+    use_for: route the task and prevent random skill loading
+  2_skill_factory:
+    use_for: uploaded repos, frameworks, skills, markdown, prompt systems
+  3_superpowers_planning:
+    use_for: structure the decision process before artifact creation
+  4_website_intelligence:
+    use_for: crawl existing site, competitors, social proof, SEO, market patterns
+  5_savo_creative_director:
+    use_for: core attention/story/trust/conversion decisions
+  6_design_taste:
+    use_for: anti-slop aesthetic routing and premium visual standards
+  7_motion_principles:
+    use_for: purposeful motion, frequency gate, reduced-motion rules
+  8_universal_build_handoff:
+    use_for: translate strategy into builder-ready components and tests
+  9_obsidian_vault:
+    use_for: save project memory, decisions, pattern genomes, client briefs
+  10_caveman:
+    use_for: compressed operator updates, not underbuilt artifacts
 ```
 
 ## INPUT CONTRACT
+
+Normalize every project into this contract:
 
 ```yaml
 savo_input_contract:
@@ -161,7 +212,70 @@ savo_input_contract:
     - Obsidian_Project_Note
 ```
 
+If inputs are incomplete, continue with best-effort assumptions and label them. Ask only one question if the missing input blocks the entire project.
+
+## SUPERPOWERS PLANNING PASS
+
+Before generating the final artifact, perform this internal pass:
+
+```yaml
+superpowers_planning_pass:
+  observe:
+    - What sources did the user provide?
+    - Are they client sources, competitor sources, visual references, workflow tutorials, or brand assets?
+    - Which downstream builder is likely?
+    - What is the business model and conversion goal?
+  orient:
+    - What problem must the website solve?
+    - What does the visitor need to believe?
+    - What is the trust requirement?
+    - What is the acceptable visual risk?
+    - What is the mobile path?
+  decide:
+    - Which engines fire?
+    - Which engines stay dormant?
+    - Which effects are rejected?
+    - Which proof assets are required?
+    - Which CTA path is primary?
+  act:
+    - Generate only the required handoff artifacts.
+    - Preserve model-agnostic structure.
+    - Convert design language into components, states, tokens, and tests.
+  verify:
+    - Run anti-slop gate.
+    - Run trust gate.
+    - Run CRO gate.
+    - Run accessibility and reduced-motion gates.
+    - Run builder feasibility gate.
+```
+
+## SAVO MASTER WORKFLOW
+
+```text
+1. Business Intake
+2. Source Inventory
+3. Existing Website Crawl
+4. Social Media Scan
+5. Competitor Analysis
+6. Brand DNA Scoring
+7. Visitor Psychology Read
+8. Attention Strategy
+9. Story Strategy
+10. Trust Strategy
+11. Conversion Strategy
+12. Layout Strategy
+13. Motion Strategy
+14. Material / Visual Identity Strategy
+15. Figma / Stitch Blueprint
+16. Universal Build Handoff
+17. Builder-Specific Wrapper
+18. QA + Acceptance Tests
+19. Obsidian Memory Update
+```
+
 ## MODULE 1 — SOURCE INVENTORY ENGINE
+
+Classify every input before extraction.
 
 ```yaml
 source_inventory:
@@ -200,12 +314,22 @@ source_inventory:
     low: short-form or unverified reference, requires visual/manual confirmation
 ```
 
+Never treat low-confidence sources as fully extracted.
+
 ## MODULE 2 — BRAND DNA ENGINE
+
+Score the brand before design.
+
+### Brand DNA Scores
+
+Use 0–10 scoring. Then convert to strategic route.
 
 ```yaml
 brand_dna_scores:
   clarity_score:
     measures: Can a visitor understand what the business does in 5 seconds?
+    high_signals: clear offer, plain headline, obvious CTA
+    low_signals: vague copy, jargon, hidden offer
   authority_score:
     measures: Does the brand need to feel established, credentialed, serious?
     high_industries: law, healthcare, finance, B2B, consulting
@@ -229,7 +353,31 @@ brand_dna_scores:
     measures: How much motion helps attention without harming trust/performance?
 ```
 
+### Brand Profile Output
+
+```yaml
+brand_profile:
+  industry:
+  business_model:
+  audience:
+  offer:
+  conversion_goal:
+  archetype:
+  tone:
+  trust_requirement: low | medium | high | critical
+  innovation_requirement: low | medium | high
+  luxury_requirement: low | medium | high
+  emotional_intensity: low | medium | high
+  visual_risk_tolerance: low | medium | high | extreme
+  motion_tolerance: low | medium | high | cinematic
+  recommended_creative_route:
+  rejected_routes:
+  reasoning:
+```
+
 ## MODULE 3 — MARKET + COMPETITOR INTELLIGENCE ENGINE
+
+Use website intelligence and public-facing sources when available.
 
 ```yaml
 competitor_analysis:
@@ -263,7 +411,11 @@ competitor_analysis:
     - design_do_not_copy_list
 ```
 
+Do not design from taste alone when competitor evidence exists.
+
 ## MODULE 4 — VISITOR PSYCHOLOGY ENGINE
+
+Identify what the visitor must feel and believe.
 
 ```yaml
 visitor_psychology:
@@ -273,7 +425,11 @@ visitor_psychology:
   friction_question: What might stop me from converting?
   urgency_question: Why act now instead of later?
   identity_question: Does this brand feel like it understands me?
+```
 
+Output:
+
+```yaml
 belief_sequence:
   1_attention_belief:
   2_relevance_belief:
@@ -283,6 +439,8 @@ belief_sequence:
 ```
 
 ## MODULE 5 — ATTENTION ENGINE
+
+Purpose: stop the scroll without breaking trust.
 
 ```yaml
 attention_patterns:
@@ -302,7 +460,22 @@ attention_patterns:
     avoid_when: conversion must be immediate and simple
 ```
 
+Attention output:
+
+```yaml
+attention_strategy:
+  hero_type:
+  first_3_seconds:
+  headline_behavior:
+  visual_asset:
+  CTA_visibility:
+  motion_level:
+  fallback:
+```
+
 ## MODULE 6 — STORY ENGINE
+
+Purpose: sequence meaning.
 
 ```yaml
 story_routes:
@@ -320,14 +493,29 @@ story_routes:
     use_for: restaurant, nightclub, hotel, events, music artist
 ```
 
+Story output:
+
+```yaml
+story_strategy:
+  narrative_arc:
+  section_sequence:
+  emotional_beats:
+  proof_beats:
+  CTA_beats:
+```
+
 ## MODULE 7 — LAYOUT INTELLIGENCE ENGINE
+
+Choose layout patterns that maintain engagement and comprehension.
 
 ```yaml
 layout_patterns:
   grid_to_feature:
     use_when: many services/features need one expanded focus at a time
+    good_for: SaaS, AI agency, portfolios, service menus
   card_to_fullscreen:
     use_when: each offer/case study deserves cinematic focus
+    good_for: music, fashion, case studies, luxury services
   dashboard_expansion:
     use_when: the business sells intelligence, automation, analytics, AI, SaaS
   horizontal_showcase:
@@ -341,7 +529,22 @@ layout_patterns:
     use_when: brand has multiple proof points or capabilities requiring visual organization
 ```
 
+Layout output:
+
+```yaml
+layout_strategy:
+  primary_layout_gene:
+  secondary_layout_gene:
+  section_map:
+  mobile_reflow:
+  failure_conditions:
+```
+
 ## MODULE 8 — MOTION INTELLIGENCE ENGINE
+
+Motion must guide attention, not decorate.
+
+### Frequency Gate
 
 ```yaml
 frequency_gate:
@@ -353,7 +556,11 @@ frequency_gate:
     allowed: instant_or_near_instant
   keyboard_interaction:
     allowed: no_decorative_motion
+```
 
+### Motion Selection Rules
+
+```yaml
 motion_patterns:
   GSAP_ScrollTrigger:
     use_for: section choreography, pinned narratives, scrubbed sequences, horizontal showcases
@@ -377,7 +584,24 @@ motion_patterns:
     requires: clear state model and accessible focus handling
 ```
 
+Motion output:
+
+```yaml
+motion_strategy:
+  intensity: low | medium | high | cinematic
+  primary_motion_gene:
+  secondary_motion_gene:
+  scroll_logic:
+  timing:
+  easing:
+  reduced_motion:
+  mobile_fallback:
+  performance_notes:
+```
+
 ## MODULE 9 — MATERIAL INTELLIGENCE ENGINE
+
+Choose surface language based on brand perception.
 
 ```yaml
 material_routes:
@@ -388,7 +612,7 @@ material_routes:
     use_for: Space Age, AI agency, dashboards, premium automation, futuristic portfolios
     surfaces: off-black #050508, glass panels, orange/lime accents, data labels
   liquid_glass_iridescent:
-    use_for: eyewear, luxury tech, beauty, future fashion
+    use_for: eyewear, luxury tech, beauty, future fashion, WYSIWYG-like brands
     surfaces: frosted refraction, iridescent gradients, restrained shimmer
   cinematic_editorial:
     use_for: music, fashion, nightclub, restaurant, visual brands
@@ -401,7 +625,21 @@ material_routes:
     surfaces: soft light, warm neutrals, human photography, reduced shine
 ```
 
+Material output:
+
+```yaml
+material_strategy:
+  route:
+  color_tokens:
+  typography_tokens:
+  surface_tokens:
+  image_style:
+  avoid:
+```
+
 ## MODULE 10 — TRUST ENGINE
+
+Purpose: create belief before asking for action.
 
 ```yaml
 trust_assets:
@@ -421,7 +659,11 @@ trust_assets:
     use_when: local service/restaurant/healthcare has Google reviews
   proof_dashboard:
     use_when: AI, analytics, automation, SaaS, paid media, lead gen
+```
 
+### Trust Requirement Matrix
+
+```yaml
 trust_requirement_matrix:
   critical:
     industries: [healthcare, elder_care, law, finance, credit_repair]
@@ -439,7 +681,23 @@ trust_requirement_matrix:
     proof_can_be_social_or_cultural
 ```
 
+Trust output:
+
+```yaml
+trust_strategy:
+  proof_required_before_cta:
+  proof_sections:
+  authority_markers:
+  testimonial_strategy:
+  case_study_strategy:
+  objection_handling:
+  risk_reversal:
+  missing_assets:
+```
+
 ## MODULE 11 — CONVERSION INTELLIGENCE ENGINE
+
+Purpose: turn attention and trust into action.
 
 ```yaml
 conversion_system:
@@ -466,7 +724,11 @@ conversion_system:
     - visible_contact
     - FAQs_near_cta
     - trust_badges_near_form
+```
 
+### CRO QA
+
+```yaml
 conversion_QA:
   must_have:
     - clear_primary_cta
@@ -483,7 +745,23 @@ conversion_QA:
     - final_section_is_only_decoration
 ```
 
+Conversion output:
+
+```yaml
+conversion_strategy:
+  primary_goal:
+  CTA_hierarchy:
+  offer_stack:
+  lead_capture_method:
+  funnel_path:
+  mobile_conversion_path:
+  follow_up_system:
+  analytics_events:
+```
+
 ## MODULE 12 — CREATIVE DIRECTION SELECTOR
+
+This is SAVO's central decision kernel.
 
 ```yaml
 creative_direction_selector:
@@ -509,12 +787,14 @@ creative_direction_selector:
     - builder_path
 ```
 
-**Strategy Formula:**
+### Strategy Formula
+
 ```text
 Brand DNA + Market Gap + Visitor Belief Sequence + Conversion Goal = Creative Direction
 ```
 
-**Effect Selection Formula:**
+### Effect Selection Formula
+
 ```text
 Use an effect only if it supports at least one of:
 1. attention
@@ -522,9 +802,9 @@ Use an effect only if it supports at least one of:
 3. emotional investment
 4. trust
 5. conversion
+```
 
 If it supports none, reject it.
-```
 
 ## INDUSTRY DECISION MATRIX
 
@@ -542,7 +822,15 @@ industry_matrix:
     visual_route: premium_minimalism_or_editorial_authority
     motion_level: low
     hero: commanding_typography_with_credibility
+    recommended: [case_result_blocks, attorney_authority, consultation_CTA, subtle_scroll_reveals]
     avoid: [playful_motion, experimental_nav, decorative_glass]
+  personal_injury:
+    priority: storytelling_first
+    visual_route: authority_plus_empathy
+    motion_level: medium
+    hero: problem_to_action
+    recommended: [case_story_sequence, results_proof, call_now_mobile, FAQ_objection_handling]
+    avoid: [cold_corporate_generic, over-animated_proof]
   restaurant:
     priority: experience_first
     visual_route: cinematic_editorial_food
@@ -570,6 +858,7 @@ industry_matrix:
     motion_level: medium_to_high
     hero: product_or_campaign_video
     recommended: [lookbook_scroll, product_theater, social_proof, shop_CTA]
+    avoid: [overly_complex_checkout_path, weak_product_focus]
   nonprofit:
     priority: mission_trust_action
     visual_route: emotional_editorial_or_warm_trust
@@ -579,7 +868,196 @@ industry_matrix:
     avoid: [style_over_mission, vague_donation_CTA]
 ```
 
+## FIGMA / STITCH BLUEPRINT ENGINE
+
+Generate layout direction before code.
+
+```yaml
+figma_stitch_blueprint:
+  project:
+    name:
+    industry:
+    audience:
+    conversion_goal:
+  creative_route:
+    style_family:
+    emotional_target:
+    visual_density:
+    design_variance:
+    motion_intensity:
+  design_system:
+    color_tokens:
+    typography:
+    spacing:
+    material_language:
+    imagery:
+  page_structure:
+    - section: hero
+      purpose: capture_attention_and_clarify_offer
+      layout_direction:
+      visual_direction:
+      headline_rule:
+      CTA_rule:
+      trust_element:
+    - section: proof_or_problem
+      purpose:
+      layout_direction:
+    - section: offer_or_process
+      purpose:
+      layout_direction:
+    - section: transformation_or_case_study
+      purpose:
+      layout_direction:
+    - section: final_CTA
+      purpose:
+      layout_direction:
+  mobile_rules:
+  accessibility_rules:
+  avoid:
+  rejection_rules:
+```
+
+### Stitch Rejection Rules
+
+Reject Stitch/Figma output if:
+
+- it creates a centered hero with three equal cards by default
+- it ignores jumbo typography
+- it ignores fullscreen or video-first hero direction
+- it uses generic AI gradients
+- it uses stock-looking visual placeholders without clear asset direction
+- it has no proof path
+- it has no mobile CTA plan
+- it chooses visual effects not supported by Brand DNA
+
+## UNIVERSAL BUILD HANDOFF ENGINE
+
+Translate strategy into builder-ready instructions.
+
+```yaml
+universal_build_handoff:
+  objective:
+  target_builder:
+  stack:
+  files_to_create_or_modify:
+  design_tokens:
+    colors:
+    typography:
+    spacing:
+    radius:
+    shadows:
+    materials:
+  component_tree:
+    - App
+    - Header
+    - HeroVideoSection
+    - TrustProofStrip
+    - StorySections
+    - OfferSection
+    - CaseStudySection
+    - FAQSection
+    - FinalCTA
+  section_specs:
+    - name:
+      purpose:
+      content:
+      layout:
+      states:
+      responsive_behavior:
+      accessibility:
+  motion_specs:
+    library:
+    triggers:
+    timelines:
+    states:
+    reduced_motion:
+    cleanup:
+  performance_specs:
+    LCP_asset:
+    lazy_loading:
+    video_strategy:
+    image_strategy:
+    bundle_risks:
+  SEO_specs:
+    title:
+    description:
+    schema:
+    OG:
+  analytics_events:
+  acceptance_criteria:
+  verification_commands:
+```
+
+## BUILDER ROUTING
+
+```yaml
+builder_routing:
+  Google_Stitch:
+    use_for: wireframe ideation, mobile flow exploration, quick visual layout direction
+    requires: Design_DNA, Layout_DNA, section hierarchy, anti-default rules
+  Figma:
+    use_for: precise design blueprint, component systems, art direction, design review
+    requires: tokens, components, auto-layout rules, breakpoints
+  Framer:
+    use_for: motion-rich interactive prototypes and fast landing pages
+    requires: animation map, layout constraints, component states
+  Webflow:
+    use_for: no-code marketing sites, CMS pages, GSAP custom code embeds
+    requires: class naming, interaction map, custom code plan
+  Antigravity:
+    use_for: cinematic web generation and full visual prototypes
+    requires: visual DNA, motion DNA, anti-generic constraints
+  Claude_Code:
+    use_for: architecture, multi-file implementation, accessibility review
+    requires: full blueprint, constraints, tests, acceptance criteria
+  Codex:
+    use_for: precise implementation, refactors, tests, GSAP integration
+    requires: exact file plan, component states, verification commands
+  Cursor:
+    use_for: project-wide edits and iterative app implementation
+    requires: file-aware tasks and regression tests
+  DeepSeek_V4:
+    use_for: efficient implementation and logic-heavy UI; mass-production cost-tier default
+    requires: precise specs, no vague design language
+  MiniMax_M3:
+    use_for: cost-efficient implementation; secondary mass-production cost-tier option alongside DeepSeek_V4
+    requires: precise specs, no vague design language
+  Gemini:
+    use_for: multimodal reference interpretation, ecosystem routing, and high-motion/cinematic builds via Antigravity
+    requires: visual references and exact extraction goal
+```
+
+### Mass-Production Cost Routing (Hermes dispatch)
+
+Hermes runs many builds in parallel across different model backends. For the Standard
+(mass-production) path, the builder isn't hand-picked per lead — it's routed automatically
+off the `motion_strategy.intensity` value this skill already computes in Module 8:
+
+```yaml
+mass_production_routing:
+  signal: motion_strategy.intensity   # from MODULE 8 output, already computed pre-build
+  low_or_medium:
+    route_to: DeepSeek_V4
+    fallback: MiniMax_M3               # cost-tier peer, not a quality downgrade
+    rationale: most Standard-path leads (trust-first services, SaaS, B2B) land here;
+      cost efficiency matters more than animation range at this motion level
+  high_or_cinematic:
+    route_to: Antigravity_or_Gemini
+    rationale: nightclub/music/fashion-tier builds need the animation-capable path;
+      running these through the cheap tier produces visibly worse motion work
+  claude_code:
+    role: architecture, multi-file refactors, accessibility review, and Premium-path
+      builds — not the mass-production default. Reserve for where its cost is justified
+      by complexity, not for routine Standard-path volume.
+```
+
+This keeps the routing decision a lookup (like the moodboard/aesthetic routing above), not
+a live per-lead judgment call — Hermes can dispatch unattended once `motion_strategy` is
+set in Module 8.
+
 ## QUALITY GATES
+
+Run these before calling a SAVO output complete.
 
 ```yaml
 quality_gates:
@@ -590,11 +1068,20 @@ quality_gates:
       - audience_identified
       - trust_requirement_identified
       - creative_route_justified
+  brand_DNA_gate:
+    pass_if:
+      - scores_present
+      - route_matches_industry
+      - rejected_routes_explained
   attention_gate:
     pass_if:
       - hero_has_clear_offer
       - first_screen_memorable
       - CTA_visible_without_scroll
+  story_gate:
+    pass_if:
+      - section_sequence_has_logic
+      - narrative_beats_support_conversion
   trust_gate:
     pass_if:
       - required_proof_appears_early_enough
@@ -611,6 +1098,7 @@ quality_gates:
       - each_motion_has_purpose
       - reduced_motion_defined
       - mobile_motion_simplified
+      - keyboard_interactions_not_over_animated
   accessibility_gate:
     pass_if:
       - WCAG_AA_contrast
@@ -621,6 +1109,7 @@ quality_gates:
     pass_if:
       - LCP_asset_strategy_defined
       - videos_lazy_or_optimized
+      - image_sizes_defined
       - scroll_effects_have_fallbacks
   builder_gate:
     pass_if:
@@ -635,7 +1124,7 @@ quality_gates:
 Reject the output if:
 
 - it lists effects without strategic reasons
-- it says "use GSAP" but does not define ScrollTrigger logic, cleanup, or fallback
+- it says “use GSAP” but does not define ScrollTrigger logic, cleanup, or fallback
 - it jumps directly from inspiration to code
 - it copies a reference instead of extracting the technique
 - it applies nightclub motion to healthcare
@@ -643,13 +1132,15 @@ Reject the output if:
 - it ignores trust assets
 - it has no mobile CTA path
 - it invents fake testimonials or fake metrics
-- it says "premium" but defaults to generic centered hero + three cards
+- it says “premium” but defaults to generic centered hero + three cards
 - it relies on AI-purple gradients or generic blobs
 - it ignores accessibility, reduced motion, or performance
 - it creates a handoff too abstract for a builder model
 - it does not include QA gates
 
 ## OUTPUT CONTRACT
+
+Every complete SAVO run returns:
 
 ```yaml
 savo_output:
@@ -677,6 +1168,79 @@ savo_output:
 
 Never end with only commentary.
 
+## SPACE AGE COMMERCIAL EXTENSIONS
+
+SAVO should create business value for Space Age AI Solutions.
+
+```yaml
+commercial_outputs:
+  client_audit:
+    - current_site_weaknesses
+    - competitor_gap
+    - missed_lead_opportunities
+    - recommended_offer
+  sales_angle:
+    - why_they_need_this
+    - what_it_will_improve
+    - proof_assets_needed
+  automation_bridge:
+    - GoHighLevel_pipeline
+    - Vapi_agent_CTA
+    - booking_flow
+    - SMS_email_followup
+  media_bridge:
+    - hero_video_prompt_needed
+    - product_or_service_image_prompts
+    - social_ad_variants
+```
+
+## OBSIDIAN MEMORY UPDATE RULE
+
+At the end of every major SAVO project, produce an Obsidian-ready project note.
+
+```yaml
+obsidian_memory_update:
+  path: Space Age Knowledge/wiki/projects/{{project_name}}.md
+  frontmatter:
+    title:
+    type: project
+    status: active
+    client:
+    industry:
+    created:
+    tags: [savo, creative-direction, space-age]
+  sections:
+    - Summary
+    - Brand_DNA
+    - Creative_Route
+    - Pattern_Genomes
+    - Trust_Strategy
+    - Conversion_Strategy
+    - Builder_Handoff
+    - QA_Decisions
+    - Related_Notes
+```
+
+## CAVEMAN OPERATOR MODE
+
+Use compressed updates in chat when working long:
+
+```yaml
+operator_updates:
+  style: concise_professional
+  include:
+    - decision_made
+    - what_is_being_built
+    - key_risk_found
+    - next_artifact
+  avoid:
+    - filler
+    - repeated explanations
+    - tool-by-tool narration
+```
+
+The artifact itself may be detailed. Do not under-build skill files, SOPs, templates, or handoff documents.
+
 ## FINAL DIRECTIVE
 
 SAVO is not a trend list.
@@ -684,3 +1248,4 @@ SAVO is not a trend list.
 SAVO is a decision engine.
 
 It must decide what the business needs visually, emotionally, structurally, and commercially before design or code begins.
+
