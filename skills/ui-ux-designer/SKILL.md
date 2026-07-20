@@ -161,128 +161,26 @@ Fetch engine for any of the above (or a client/competitor site): use `firecrawl-
 
 ---
 
-## VISUAL STYLE SYSTEM
+## VISUAL STYLE SYSTEM (canonical source: `spaceage-savo-creative-director-os`)
 
-### 01. Liquid Glass
-Use:
-- Refractive translucent surfaces
-- Dynamic blur
-- Optical distortion
-- Layered transparency
-- Floating glass cards
-- Ambient glow
-- Soft edge lighting
-- Subtle refraction
-- Floating navigation
-- Frosted interface panels
+> The 7 named styles that used to live here are retired in favor of SAVO's MODULE 9
+> (Material Routes) and INDUSTRY DECISION MATRIX — those now own the "what should this
+> look like" decision, backed by SAVO's full Brand DNA / Attention / Trust reasoning
+> instead of a standalone style pick. Crosswalk, for anyone who remembers the old names:
 
-Visual inspiration:
-- Apple Vision Pro
-- iOS spatial UI
-- Luxury AI platforms
-- Future operating systems
+| Retired style here | SAVO material route |
+|---|---|
+| 01 Liquid Glass | `liquid_glass_iridescent` |
+| 02 Glassmorphism (VL-01 Default) | `VL_01_dark_glass` |
+| 03 Dark Mode Luxury UI | `VL_01_dark_glass` (same route — this and #02 were duplicates) |
+| 04 Cinematic Interface Design | `cinematic_editorial` |
+| 05 Soft Spatial UI | *(no direct SAVO route yet — closest is `premium_minimalism`; flag if a build genuinely needs this)* |
+| 06 Editorial Web Design | `premium_minimalism` / `warm_trust` |
+| 07 Bento Grid Systems | not a material route — it's a layout pattern, see SAVO MODULE 7 (`dashboard_expansion` / `cinematic_bento`) |
 
----
-
-### 02. Glassmorphism (VL-01 Default)
-Use:
-- Blur overlays
-- Transparent cards
-- Gradient lighting
-- Thin borders
-- Soft shadow depth
-- Floating UI panels
-- Glow effects
-- Layered cards
-
-Avoid:
-- Over-cluttering
-- Excessive opacity
-- Weak contrast
-
----
-
-### 03. Dark Mode Luxury UI
-Use:
-- Deep blacks
-- Graphite surfaces
-- Soft gradients
-- Chrome highlights
-- Metallic accents
-- Neon edge lighting
-- Ambient atmosphere
-- Cinematic contrast
-
-Preferred palette:
-- Black / Charcoal / Graphite / Deep navy
-- Violet glow / Electric blue / Emerald accents
-- White typography
-
-VL-01 base: `#050508` surface, `#2979FF` primary
-
----
-
-### 04. Cinematic Interface Design
-Every major section should feel directed like a film scene.
-
-Use:
-- Atmospheric depth
-- Cinematic composition
-- Layered foreground/background
-- Large typography
-- Strong focal hierarchy
-- Volumetric lighting
-- Spatial composition
-- Motion-based reveals
-
-Think:
-- Denis Villeneuve futurism
-- Apple keynote staging
-- Ridley Scott tech minimalism
-- Luxury campaign photography
-
----
-
-### 05. Soft Spatial UI
-Use:
-- Floating layers
-- Depth hierarchy
-- Atmospheric blur
-- Stacked cards
-- Ambient shadows
-- Spatial grouping
-- Floating interface systems
-
-Inspired by:
-- Spatial computing / AR/VR OS / Vision Pro UI / AI-native productivity systems
-
----
-
-### 06. Editorial Web Design
-Use:
-- Jumbo typography
-- Intentional whitespace
-- Asymmetrical composition
-- Magazine-style hierarchy
-- Large image treatment
-- Layered text systems
-- Cinematic framing
-
-Inspired by: Vogue / High fashion campaigns / Luxury editorials / Creative agencies
-
----
-
-### 07. Bento Grid Systems
-Use:
-- Modular card systems
-- Dashboard-inspired layouts
-- Apple-inspired feature grids
-- Content segmentation
-- Modular visual hierarchy
-- Smart spacing
-- Responsive card stacking
-
-Best for: AI services / SaaS / Analytics / Dashboards / Productized services
+Load `spaceage-savo-creative-director-os` for the actual decision logic. This skill's
+remaining job is the research process that feeds it (DESIGN RESEARCH SOURCES above) and
+the typography/color token system below — not picking the visual style itself.
 
 ---
 
@@ -590,7 +488,7 @@ Prioritize: Thumb-friendly interactions / Sticky CTA / Performance / Readability
 ### COLORS (VL-01 defaults)
 ```
 Background: #050508 / #08080C / #0D0D14
-Primary:    #2979FF (Electric blue default)
+Primary:    #8CB8CC (Ice-blue / chrome-cyan — measured from the official SA logo, confirmed 2026-07-17)
 Alternates: Emerald / Violet / Cyan (per industry — see sa-design-md)
 Accent:     Soft chrome / Frost white / Neon glow
 ```
@@ -653,7 +551,7 @@ This skill outputs a **Design Brief** — a structured spec consumed by Google S
 ```yaml
 design_brief:
   style_system: "VL-01 Dark Glassmorphism | Liquid Glass | Editorial | Bento"
-  primary_color: "#2979FF"  # or industry override from sa-design-md
+  primary_color: "#8CB8CC"  # or industry override from sa-design-md
   surface_base: "#050508"
   font_heading: "Orbitron 900"
   font_body: "DM Sans"

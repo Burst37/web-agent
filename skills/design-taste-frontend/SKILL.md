@@ -1,22 +1,40 @@
 ---
 name: design-taste-frontend
 description: >
-  Space Age frontend design taste OS. Controls visual DNA, aesthetic routing, and anti-slop enforcement
-  for all web builds. Enforces the VL-01 Dark Glassmorphism system, banned fonts, and the three design
-  dials (VARIANCE / MOTION / DENSITY). Load before any UI build, design review, or frontend styling task.
+  Space Age frontend design taste OS. Owns two things: (1) Space Age's OWN brand system
+  (VL-01 Dark Glassmorphism — for spaceage-ai-solutions.com itself, internal tools, or a
+  client SAVO explicitly routes to the AI-agency material route) and (2) anti-slop
+  enforcement (banned fonts, the three design dials: VARIANCE / MOTION / DENSITY) applied
+  to every build regardless of industry. VL-01 is NOT the default look for mass-production
+  lead-gen clients (landscapers, HVAC, med spas, etc.) — those get their own
+  industry-appropriate direction from spaceage-savo-creative-director-os's Industry
+  Decision Matrix. Load before any UI build, design review, or frontend styling task.
 ---
 
 # Design Taste Frontend OS
 
-## VL-01 Dark Glassmorphism — Default Visual System
+## VL-01 Dark Glassmorphism — Space Age's Own Brand System (not a mass-production default)
+
+> **Scope:** these tokens are Space Age AI Solutions' own brand identity. Use them for
+> spaceage-ai-solutions.com, internal tools/dashboards, or a client SAVO explicitly routes
+> to the `VL_01_dark_glass` material route (AI-agency-type businesses). The mass-production
+> lead-gen pipeline (Google Maps → top-25 landscapers/HVAC/med spas per area → Firecrawl
+> audit of who has a bad or no website → build) does NOT use this palette by default —
+> each of those clients gets their own industry-appropriate route from SAVO's Industry
+> Decision Matrix. Don't let this section read as "the default for everything."
+>
+> Accent tokens below are measured directly from the official SA logo
+> (SpaceAgeAiSolutionsLogo.png, confirmed 2026-07-17) — ice-blue/chrome-cyan, not the
+> indigo/violet previously guessed here. This resolves the token conflict flagged in
+> `spaceage-savo-creative-director-os`.
 
 ```css
 --bg-primary: #050508;
 --bg-secondary: #0a0a0f;
 --glass-surface: rgba(255,255,255,0.04);
 --glass-border: rgba(255,255,255,0.08);
---accent-primary: #6366f1;
---accent-secondary: #8b5cf6;
+--accent-primary: #8CB8CC;
+--accent-secondary: #B4CCD8;
 --text-primary: #f8fafc;
 --text-muted: #94a3b8;
 
@@ -25,19 +43,14 @@ font-body: "DM Sans", "Inter";
 font-mono: "JetBrains Mono";
 ```
 
-## Aesthetic Routing Table
+## Aesthetic Routing (canonical source: `spaceage-savo-creative-director-os`)
 
-| Client Type | Aesthetic Route | Motion Level | Density |
-|---|---|---|---|
-| AI Agency | Dark Glassmorphism + Holographic | Cinematic | Low |
-| Home Healthcare | Editorial Luxury + Soft Trust | Subtle | Medium |
-| Nightclub / Event | Neo-Brutalism + Kinetic Type | High | High |
-| Restaurant / Bar | Skeuomorphic Warmth + Editorial | Medium | Medium |
-| Ecommerce / Fashion | Minimal Luxury + Bento | Medium | Low |
-| Music Artist | Dark + Holographic Iridescence | Cinematic | Low |
-| Fitness / Gym | Industrial Brutalism + Bold Type | High | High |
-| Credit Repair | Trust-First + Conversion Editorial | Low | Medium |
-| SaaS | Spatial UI + Glassmorphism | Medium | Low |
+> Industry → visual route / motion level routing now lives in SAVO's INDUSTRY DECISION
+> MATRIX and MODULE 9 (Material Routes) — that skill also runs the full Brand DNA /
+> Attention / Trust / Conversion reasoning behind each route, not just a flat lookup. This
+> skill no longer carries its own copy of the routing table. What's unique to *this* skill —
+> and stays here — is the anti-slop **Banned Fonts** list, the **Three Dials**, and the
+> Pre-Flight checklist below.
 
 ## The Three Dials
 
@@ -126,6 +139,10 @@ Default Space Age baseline: VARIANCE=7, MOTION=8, DENSITY=4
 - [ ] Mobile CTA is thumb-reachable
 
 ## Handoff Routing
+
+Creative direction (industry → visual route, material, motion) is decided upstream by
+**`spaceage-savo-creative-director-os`** — this skill runs *after* that decision as the
+anti-slop/ban-list gate, not before it.
 
 After design taste verification, route to:
 - **Figma work** → SpaceAge_Figma_Design_Director_OS_v3
