@@ -115,22 +115,21 @@ with LangChain's `tool()` at the orchestrator boundary — that's what `adapter.
 a new tool, define it in AI SDK shape and let the adapter handle the LangChain conversion; don't
 hand-write a parallel LangChain tool.
 
-### Skills: two sources, one discovery mechanism
+### Skills
 
-`discoverSkills()` (`agent-core/src/skills/discovery.ts`) scans **two** directories by default:
+Framework skills live in `agent-core/src/skills/definitions/` — built-in, framework-owned
+playbooks (deep-research, e-commerce, financial-research, competitor-analysis, pricing-tracker,
+structured-extraction). Each is a `SKILL.md` (+ optional `sites/*.md` site playbooks matched by
+domain). When adding a new built-in skill, put it under
+`agent-core/src/skills/definitions/<name>/SKILL.md` (and list it in `agent-core/package.json`'s
+`files` array so it ships in the published package).
 
-1. `agent-core/src/skills/definitions/` — built-in, framework-owned skills (deep-research,
-   e-commerce, financial-research, competitor-analysis, pricing-tracker, structured-extraction).
-   Each is a `SKILL.md` (+ optional `sites/*.md` site playbooks matched by domain).
-2. `skills/` at the **repo root** — resolved relatively from `agent-core/src/skills/discovery.ts`
-   as `../../../skills`. This is intentional, not stray content: the comment in `discovery.ts`
-   explains it's the location for pipeline-specific skills that live alongside `agent-core` rather
-   than inside it. When `agent-core` is published/vendored standalone (no sibling `skills/` dir),
-   this path is simply skipped.
-
-When adding a new built-in skill, put it under `agent-core/src/skills/definitions/<name>/SKILL.md`
-(and it must be listed in `agent-core/package.json`'s `files` array to ship in the published
-package). Repo-specific/pipeline skills go in the root `skills/` directory instead.
+Note: `discoverSkills()` (`agent-core/src/skills/discovery.ts`) also scans the repo-root `skills/`
+directory (`REPO_SKILLS_DIR`, resolved as `../../../skills` from that file). That directory is the
+repo owner's personal Claude Code skill library — unrelated to the Firecrawl agent framework's own
+purpose — not a documented part of the framework's architecture. Don't treat it as a place to add
+framework skills, and don't assume its contents apply to this codebase; when `agent-core` is used
+standalone without that sibling directory, the scan is simply skipped.
 
 ### `agent-core` is vendored into each template, not symlinked
 
