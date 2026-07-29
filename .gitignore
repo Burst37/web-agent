@@ -17,4 +17,3 @@ tmp/
 .DS_Store
 .playwright-mcp/
 .internal/cli/dist/
-graphify-out/cache/

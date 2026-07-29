@@ -20,4 +20,3 @@ dist/** linguist-generated
 *.lock linguist-generated
 pnpm-lock.yaml linguist-generated
 package-lock.json linguist-generated
-graphify-out/graph.json merge=graphify
