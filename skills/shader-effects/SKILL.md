@@ -59,6 +59,8 @@ No effect gets an implementation that isn't in this table.
 | Interactive gradient | 1 | Pointer → CSS custom properties (§1B) |
 | Mesh gradient | 1 | 3–4 layered radial-gradients, static or slow drift (§1A) |
 | Grain / noise overlay | 1 | SVG `feTurbulence` or repeating noise PNG at low opacity (§1C) |
+| Hover glow (card interior) | 1 | Cursor-follow radial blob, shared rAF-throttled listener (§1D) |
+| Moving border glow | 1 | `@property --border-angle` conic-gradient orbit (§1E) |
 | Liquid distortion | 2 | fbm-driven UV displacement (§2B) |
 | Noise distortion | 2 | Same harness, fbm field (§2A/§2B) |
 | Atmospheric motion | 2 | fbm band drift (§2A) |
@@ -152,6 +154,89 @@ is correct (matches the QA gate's "no cursor-dependent effects on mobile").
 
 Opacity ceiling **0.05**. Never animate grain — animated grain is an instant
 AI-slop flag and destroys video compression on any screen recording.
+
+### §1D Hover glow (cursor-follow blob, card interior)
+
+For bento cells and feature cards. Pointer-only — never touch.
+
+```css
+.card { position: relative; overflow: hidden; isolation: isolate; }
+.card .hover-glow {
+  position: absolute; width: 250px; height: 80%;
+  left: calc(50% - 125px); top: 10%;
+  border-radius: 50%; filter: blur(40px); z-index: -1;
+  background: radial-gradient(circle, var(--accent-1) 0%, transparent 70%);
+  opacity: 0; transition: opacity 300ms ease;
+  will-change: transform;
+}
+.card:hover .hover-glow { opacity: 0.5; }
+```
+
+```js
+// One shared rAF-throttled listener for ALL cards — never one listener per card,
+// and never getBoundingClientRect() inside the mousemove handler (layout thrash).
+// Cache each card's rect once on enter/resize, not on every pointer event.
+const cards = document.querySelectorAll('.card');
+const rects = new WeakMap();
+const glows = new WeakMap();
+cards.forEach((card) => {
+  const glow = card.querySelector('.hover-glow');
+  glows.set(card, glow);
+  card.addEventListener('pointerenter', () => rects.set(card, card.getBoundingClientRect()));
+});
+let queued = false, lastEvent = null;
+document.addEventListener('pointermove', (e) => {
+  lastEvent = e;
+  if (queued) return;
+  queued = true;
+  requestAnimationFrame(() => {
+    queued = false;
+    cards.forEach((card) => {
+      const r = rects.get(card);
+      if (!r || lastEvent.clientX < r.left || lastEvent.clientX > r.right ||
+          lastEvent.clientY < r.top || lastEvent.clientY > r.bottom) return;
+      const glow = glows.get(card);
+      glow.style.transform = `translate(${lastEvent.clientX - r.left - 125}px, ${lastEvent.clientY - r.top - r.height / 2}px)`;
+    });
+  });
+}, { passive: true });
+```
+
+### §1E Moving border glow (conic-gradient orbit)
+
+```css
+@property --border-angle {
+  syntax: '<angle>'; inherits: false; initial-value: 0deg;
+}
+.card {
+  --border-speed: 3s;
+  position: relative; overflow: hidden;
+}
+.card::before {
+  content: ''; position: absolute; inset: 0; padding: 2px;
+  border-radius: inherit; pointer-events: none; z-index: 5;
+  opacity: 0.75; transition: opacity 250ms ease;
+  background: conic-gradient(from var(--border-angle),
+    transparent 0deg, transparent 275deg,
+    color-mix(in srgb, var(--accent-1) 40%, transparent) 300deg,
+    var(--accent-1) 325deg,
+    color-mix(in srgb, var(--accent-1) 70%, white) 340deg,
+    transparent 360deg);
+  animation: border-orbit var(--border-speed) linear infinite;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+.card:hover::before { opacity: 1; }
+@keyframes border-orbit { to { --border-angle: 360deg; } }
+@media (prefers-reduced-motion: reduce) {
+  .card::before { animation: none; opacity: 0.4; }
+}
+```
+
+- `--border-angle` animating via `@property` is GPU-composited — no JS timer.
+- Swap `var(--accent-1)` for the build's real accent token; never hardcode a color here.
+- Reserve for 1–2 hero elements per page — every card with an orbiting border
+  reads as busy, not premium.
 
 ---
 

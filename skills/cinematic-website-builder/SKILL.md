@@ -1224,7 +1224,21 @@ PASS CRITERIA:
   ✅ Fonts loaded (not system fallback)
   ✅ No layout breaks on mobile
   ✅ Custom cursor hidden on touch devices
+  ✅ LCP element (usually the hero image/headline) has no animation-driven
+     delay — reveal it with pure CSS on load, never gate it behind a JS
+     timeline. A hero that fades in via GSAP after a 400ms stagger is a
+     Core Web Vitals regression, not a design choice.
+  ✅ No layout shift as animated elements enter — reserve their box (fixed
+     height/aspect-ratio) before the entrance animation runs; never let a
+     fade-in or stagger reflow content around it (CLS)
 ```
+
+**Jank measurement, not eyeballing.** For any build using pinned scenes,
+scroll-scrub, or Module 21 (Scroll Scrub), the screenshot-based checks above
+don't catch frame drops. Load the **motion-verification** skill and run its
+jank test — it measures real per-frame deltas (p95/max, never average) and
+fails the build if `max ≥ 50ms`. A build that "looks smooth" in a screenshot
+can still be dropping frames; only the measured harness proves it isn't.
 
 ---
 
