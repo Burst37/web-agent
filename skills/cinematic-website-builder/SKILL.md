@@ -1,11 +1,11 @@
 ---
 name: cinematic-website-builder
 description: >
-  Build cinematic, production-grade websites using 30 scroll, cursor, click, and ambient effect
+  Build cinematic, production-grade websites using 31 scroll, cursor, click, and ambient effect
   modules. Use when the user asks to build a landing page, website, hero section, portfolio,
   product page, or any web experience that should feel premium, dynamic, or visually
-  extraordinary. All output is single-file HTML — no frameworks, no build step. GSAP +
-  ScrollTrigger via CDN only. This skill is the PRODUCTION LAYER of a three-skill pipeline —
+  extraordinary. Output is one self-contained HTML file (no frameworks, no build step) plus an
+  `/assets/` folder whenever the build uses real images or video. GSAP + ScrollTrigger via CDN only. This skill is the PRODUCTION LAYER of a three-skill pipeline —
   it receives a Handoff Package from UI/UX Designer and/or a Build Brief from Google Stitch.
   If the user hasn't gone through those skills yet and the design direction is unclear, trigger
   ui-ux-designer first.
@@ -101,8 +101,17 @@ Answer these before writing a single line:
 ```html
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=FONT_A&family=FONT_B&display=swap" rel="stylesheet">
+
+<!-- Fonts: Fontsource via jsDelivr. NEVER Google Fonts — design-taste-frontend bans it. -->
+<!-- Use WEIGHT-SPECIFIC files. index.css ships weight 400 ONLY — linking it and then
+     writing font-weight:900 silently falls back to a synthesized fake bold. -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/orbitron@5/900.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/dm-sans@5/400.css">
 ```
+
+Pattern: `https://cdn.jsdelivr.net/npm/@fontsource/{font-slug}@5/{weight}.css` — slug is
+lowercase-hyphenated (`dm-sans`, not `DM Sans`). Load one `<link>` per weight actually
+used; every weight in the design brief needs its own line.
 
 Always register ScrollTrigger: `gsap.registerPlugin(ScrollTrigger);`
 
@@ -119,7 +128,7 @@ spacing.
 
 ---
 
-## THE 30 MODULES
+## THE 31 MODULES
 
 ---
 
@@ -604,23 +613,49 @@ for (let i = 0; i < 36; i++) {
   tile.textContent = '●';
   grid.appendChild(tile);
 }
+// ONE layout read per frame, not 36 per pointer event. The original read every tile's
+// rect inside mousemove (~36 layout queries per event); measured max frame delta 20ms on
+// desktop — survivable, since GSAP only writes transforms so no read/write thrash cycle
+// forms, but it's the first thing to fall over on a weak device or a busier page.
+//
+// Tile offsets relative to the grid are static, so cache those and read only the grid's
+// own rect each frame. That also avoids needing a scroll listener to invalidate the
+// cache — design-motion-principles bans those, and this way none is required.
+const tiles = Array.from(grid.querySelectorAll('.repel-tile'));
+let offsets = [];
+const measure = () => {
+  offsets = tiles.map(t => ({
+    ox: t.offsetLeft + t.offsetWidth / 2,
+    oy: t.offsetTop + t.offsetHeight / 2,
+  }));
+};
+measure();
+addEventListener('resize', measure, { passive: true });
+
+let lastX = 0, lastY = 0, queued = false;
 grid.addEventListener('mousemove', e => {
-  grid.querySelectorAll('.repel-tile').forEach(tile => {
-    const r = tile.getBoundingClientRect();
-    const cx = r.left + r.width/2, cy = r.top + r.height/2;
-    const dx = e.clientX - cx, dy = e.clientY - cy;
-    const dist = Math.hypot(dx, dy);
+  lastX = e.clientX; lastY = e.clientY;
+  if (queued) return;              // coalesce: at most one update per frame
+  queued = true;
+  requestAnimationFrame(() => {
+    queued = false;
+    const g = grid.getBoundingClientRect();   // the ONE layout read per frame
     const maxDist = 120;
-    if (dist < maxDist) {
-      const force = (1 - dist/maxDist) * 30;
-      gsap.to(tile, { x: -dx/dist*force, y: -dy/dist*force, duration: 0.4, ease: "power2.out" });
-    } else {
-      gsap.to(tile, { x: 0, y: 0, duration: 0.6, ease: "elastic.out(1,0.5)" });
-    }
+    tiles.forEach((tile, i) => {
+      const cx = g.left + offsets[i].ox, cy = g.top + offsets[i].oy;
+      const dx = lastX - cx, dy = lastY - cy;
+      const dist = Math.hypot(dx, dy) || 1;
+      if (dist < maxDist) {
+        const force = (1 - dist / maxDist) * 30;
+        gsap.to(tile, { x: -dx / dist * force, y: -dy / dist * force, duration: 0.4, ease: "power2.out" });
+      } else if (gsap.getProperty(tile, 'x') !== 0) {
+        gsap.to(tile, { x: 0, y: 0, duration: 0.6, ease: "elastic.out(1,0.5)" });
+      }
+    });
   });
-});
+}, { passive: true });
 grid.addEventListener('mouseleave', () => {
-  gsap.to('.repel-tile', { x: 0, y: 0, duration: 0.8, ease: "elastic.out(1,0.5)", stagger: 0.02 });
+  gsap.to(tiles, { x: 0, y: 0, duration: 0.8, ease: "elastic.out(1,0.5)", stagger: 0.02 });
 });
 </script>
 ```
@@ -705,12 +740,24 @@ window.addEventListener('mouseup', () => {
 
 ### MODULE 18 — VIEW TRANSITION MORPHING
 **Category:** Click & Tap | **Best for:** Product detail reveals, page-like state changes
+**⚠ Progressive enhancement only — NOT at parity with the other modules.**
+`document.startViewTransition` is Chromium-only; Safari/iOS gets no transition at all,
+just an instant show/hide. Since local-business traffic skews heavily mobile-Safari,
+never count this module as "the one unforgettable moment" — the majority of visitors
+won't see it. Use it as a bonus on top of an effect that works everywhere, and give
+the fallback a real CSS transition (below) rather than a bare display flip.
 
 ```html
 <style>
 .morph-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
 .morph-card { view-transition-name: card; aspect-ratio: 3/2; border-radius: 12px; background: #1a1a1a; cursor: pointer; }
-.morph-expanded { position: fixed; inset: 0; z-index: 100; border-radius: 0; view-transition-name: card; display: none; background: #111; }
+.morph-expanded { position: fixed; inset: 0; z-index: 100; border-radius: 0; view-transition-name: card; background: #111;
+  /* Fallback path (Safari/iOS): opacity+transform transition instead of an instant flip.
+     Uses visibility, not display:none — display can't be transitioned. */
+  visibility: hidden; opacity: 0; transform: scale(0.98);
+  transition: opacity 280ms cubic-bezier(0.16,1,0.3,1), transform 280ms cubic-bezier(0.16,1,0.3,1), visibility 280ms; }
+.morph-expanded.open { visibility: visible; opacity: 1; transform: scale(1); }
+@media (prefers-reduced-motion: reduce) { .morph-expanded { transition-duration: 1ms; } }
 </style>
 
 <div class="morph-grid">
@@ -720,14 +767,20 @@ window.addEventListener('mouseup', () => {
 <div class="morph-expanded" id="expanded" onclick="collapseCard()"><button>Close</button></div>
 
 <script>
+const expanded = document.getElementById('expanded');
+const openIt  = () => expanded.classList.add('open');
+const closeIt = () => expanded.classList.remove('open');
+
 function expandCard(card) {
-  if (!document.startViewTransition) { document.getElementById('expanded').style.display = 'flex'; return; }
-  document.startViewTransition(() => { document.getElementById('expanded').style.display = 'flex'; });
+  if (!document.startViewTransition) return openIt();   // CSS transition carries it
+  document.startViewTransition(openIt);
 }
 function collapseCard() {
-  if (!document.startViewTransition) { document.getElementById('expanded').style.display = 'none'; return; }
-  document.startViewTransition(() => { document.getElementById('expanded').style.display = 'none'; });
+  if (!document.startViewTransition) return closeIt();
+  document.startViewTransition(closeIt);
 }
+// Escape must close it — a fixed full-screen overlay with no keyboard exit is a trap.
+document.addEventListener('keydown', e => { if (e.key === 'Escape') collapseCard(); });
 </script>
 ```
 
@@ -803,6 +856,9 @@ document.querySelectorAll('.odometer').forEach(el => {
 
 ### MODULE 21 — 3D COVERFLOW CAROUSEL
 **Category:** Click & Tap | **Best for:** Testimonials, featured products, portfolio pieces
+**Inputs:** click, touch swipe, and keyboard. Keyboard-only was the original
+implementation — that left this module completely inert on mobile, which fails the
+QUALITY CHECK's own "works on mobile" requirement. All three are now wired.
 
 ```html
 <style>
@@ -835,10 +891,31 @@ function update() {
     else if (d === 1) { el.classList.add('next1'); el.style.transform = 'rotateY(-30deg) translateX(30px) scale(0.9)'; }
   });
 }
+function go(n) { current = Math.max(0, Math.min(items.length - 1, n)); update(); }
+
+// Keyboard
 document.addEventListener('keydown', e => {
-  if (e.key === 'ArrowLeft' && current > 0) { current--; update(); }
-  if (e.key === 'ArrowRight' && current < items.length-1) { current++; update(); }
+  if (e.key === 'ArrowLeft')  { e.preventDefault(); go(current - 1); }
+  if (e.key === 'ArrowRight') { e.preventDefault(); go(current + 1); }
 });
+
+// Click — tapping a side card brings it to front
+items.forEach((el, i) => {
+  el.style.cursor = 'pointer';
+  el.setAttribute('tabindex', '0');
+  el.addEventListener('click', () => go(i));
+});
+
+// Touch swipe — without this the module is dead on mobile
+const track = document.getElementById('cfTrack');
+let touchStartX = 0;
+track.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+track.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 40) go(current + (dx < 0 ? 1 : -1));
+}, { passive: true });
+
+update();
 </script>
 ```
 
@@ -944,8 +1021,14 @@ class TextScramble {
     });
   }
 }
-const scrambler = new TextScramble(document.getElementById('scrambleEl'));
-scrambler.setText(document.getElementById('scrambleEl').dataset.text);
+// Reduced-motion: show the final text immediately. This is a raw rAF loop, so the
+// GSAP-focused guard in OUTPUT STANDARDS does not cover it — guard it here.
+const scrambleEl = document.getElementById('scrambleEl');
+if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  scrambleEl.innerText = scrambleEl.dataset.text;
+} else {
+  new TextScramble(scrambleEl).setText(scrambleEl.dataset.text);
+}
 </script>
 ```
 
@@ -973,22 +1056,39 @@ scrambler.setText(document.getElementById('scrambleEl').dataset.text);
 </div>
 
 <script>
-let x = 0, speed = 1.5, targetSpeed = 1.5, lastScrollY = 0;
+// Velocity comes from ScrollTrigger.getVelocity(), NOT a scroll listener.
+// design-motion-principles bans window.addEventListener('scroll', ...) outright.
+let x = 0, speed = 1.5, targetSpeed = 1.5, running = true;
 const track = document.getElementById('marqueeTrack');
 const trackWidth = track.scrollWidth / 2;
-window.addEventListener('scroll', () => {
-  const delta = Math.abs(window.scrollY - lastScrollY);
-  targetSpeed = 1.5 + delta * 0.3;
-  lastScrollY = window.scrollY;
+
+ScrollTrigger.create({
+  trigger: '.marquee-wrap',
+  start: 'top bottom',
+  end: 'bottom top',
+  onUpdate: (self) => {
+    targetSpeed = 1.5 + Math.min(Math.abs(self.getVelocity()) / 200, 12);
+  },
+  onToggle: (self) => { running = self.isActive; }   // stop work when offscreen
 });
-(function animate() {
-  speed += (targetSpeed - speed) * 0.1;
-  targetSpeed = Math.max(1.5, targetSpeed * 0.95);
-  x -= speed;
-  if (Math.abs(x) >= trackWidth) x = 0;
-  track.style.transform = `translateX(${x}px)`;
-  requestAnimationFrame(animate);
-})();
+
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (!reduced) {
+  (function animate() {
+    if (running) {
+      speed += (targetSpeed - speed) * 0.1;
+      targetSpeed = Math.max(1.5, targetSpeed * 0.95);
+      x -= speed;
+      if (Math.abs(x) >= trackWidth) x = 0;
+      track.style.transform = `translateX(${x}px)`;
+    }
+    requestAnimationFrame(animate);
+  })();
+}
+// Pause on hidden tab — required for every infinite loop.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) running = false;
+});
 </script>
 ```
 
@@ -1001,6 +1101,8 @@ window.addEventListener('scroll', () => {
 <style>
 .mesh-bg { position: absolute; inset: 0; overflow: hidden; background: #050505; filter: blur(60px) saturate(1.5); }
 .mesh-blob { position: absolute; border-radius: 50%; mix-blend-mode: screen; animation: blobDrift var(--dur, 12s) ease-in-out infinite alternate; }
+/* CSS-keyframe module — the GSAP guard in OUTPUT STANDARDS does not reach it. */
+@media (prefers-reduced-motion: reduce) { .mesh-blob { animation: none; } }
 @keyframes blobDrift {
   0% { transform: translate(0, 0) scale(1); }
   33% { transform: translate(var(--tx1, 30px), var(--ty1, -40px)) scale(1.15); }
@@ -1037,6 +1139,7 @@ blobs.forEach(b => {
 .circle-text-wrap { display: inline-block; position: relative; width: 180px; height: 180px; }
 .circle-text-svg { animation: rotateSlow 12s linear infinite; }
 @keyframes rotateSlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .circle-text-svg { animation: none; } }
 .circle-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 1.5rem; }
 </style>
 
@@ -1079,6 +1182,11 @@ blobs.forEach(b => {
   95% { opacity: 1; transform: translate(-3px, 2px); }
   96% { opacity: 0; }
 }
+/* Glitch is exactly the kind of effect reduced-motion exists to suppress —
+   rapid stutter/flash is a vestibular and photosensitivity trigger. */
+@media (prefers-reduced-motion: reduce) {
+  .glitch-text::before, .glitch-text::after { animation: none; opacity: 0; }
+}
 </style>
 
 <div class="glitch-wrap">
@@ -1097,6 +1205,7 @@ blobs.forEach(b => {
 .typewriter-text { font-size: clamp(1.2rem, 3vw, 2rem); font-weight: 600; }
 .typewriter-cursor { width: 2px; height: 1.2em; background: #FF6B00; animation: blink 0.7s step-end infinite; }
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .typewriter-cursor { animation: none; } }
 </style>
 
 <div class="typewriter-wrap">
@@ -1108,6 +1217,13 @@ blobs.forEach(b => {
 const phrases = ['Loyalty Programs Automated', 'AI Solutions That Work', 'Your Bot Works While You Sleep', '524 Signups and Counting'];
 let phraseIdx = 0, charIdx = 0, deleting = false;
 const el = document.getElementById('typewriterEl');
+// Reduced-motion: render the first phrase statically, never cycle.
+// setTimeout loop — not covered by the GSAP guard in OUTPUT STANDARDS.
+if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  el.textContent = phrases[0];
+} else {
+  type();
+}
 function type() {
   const phrase = phrases[phraseIdx];
   if (!deleting) {
@@ -1120,7 +1236,6 @@ function type() {
     setTimeout(type, deleting ? 30 : 80);
   }
 }
-type();
 </script>
 ```
 
@@ -1130,7 +1245,7 @@ type();
 **Category:** Ambient & Auto | **Best for:** Display headlines, section dividers
 
 ```html
-<svg width="100%" viewBox="0 0 1200 200">
+<svg width="100%" viewBox="0 0 1200 200" id="strokeTextSvg">
   <defs>
     <linearGradient id="strokeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" stop-color="#FF6B00"><animate attributeName="offset" values="0;1;0" dur="3s" repeatCount="indefinite"/></stop>
@@ -1140,7 +1255,182 @@ type();
   </defs>
   <text x="50%" y="75%" text-anchor="middle" font-size="160" font-weight="900" font-family="sans-serif" fill="none" stroke="url(#strokeGrad)" stroke-width="2">SPACE AGE AI</text>
 </svg>
+
+<script>
+// SMIL <animate> respects neither the GSAP guard nor a CSS animation:none rule.
+// pauseAnimations() is the only way to honour reduced-motion here.
+if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  document.getElementById('strokeTextSvg').pauseAnimations();
+}
+</script>
 ```
+
+---
+
+### MODULE 31 — SCROLL SCRUB (CANVAS FRAME SEQUENCE)
+**Category:** Scroll-Driven | **Best for:** Hero "one continuous shot" openings, product reveals
+**Requires:** a source video → extracted JPEG frames in `/assets/frames/`
+**Mandatory:** load `motion-verification` and pass its jank test before shipping this module.
+
+> This module previously existed only as dangling references (the asset matrix and the
+> FFmpeg step both pointed at a "Scroll Scrub" module that was never actually written).
+> Built here so those references resolve.
+
+**Never scrub `<video currentTime>`** — seek latency stutters. The only jank-free path is
+pre-extracted frames blitted to a canvas.
+
+Frame extraction (run before building — see ASSET PIPELINE INTEGRATION):
+```bash
+ffmpeg -i hero.mp4 -vf "fps=30,scale=1280:-1" -q:v 4 assets/frames/f_%04d.jpg
+# ~300 frames at 1280px wide is the budget. Dark/grainy footage nearly doubles
+# JPEG bytes — resist going wider.
+```
+
+```html
+<style>
+.scrub-driver { height: 500vh; position: relative; }           /* ~170vh per beat */
+.scrub-stage  { position: sticky; top: 0; height: 100vh; overflow: hidden; }
+.scrub-canvas { width: 100%; height: 100%; display: block; object-fit: cover; }
+</style>
+
+<div class="scrub-driver" id="scrubDriver">
+  <div class="scrub-stage"><canvas class="scrub-canvas" id="scrubCanvas"></canvas></div>
+</div>
+
+<script>
+(() => {
+  const FRAME_COUNT = 300;
+  const src = i => `assets/frames/f_${String(i + 1).padStart(4, '0')}.jpg`;
+  const driver = document.getElementById('scrubDriver');
+  const canvas = document.getElementById('scrubCanvas');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const images = new Array(FRAME_COUNT);
+  const bitmaps = new Map(), decoding = new Set();
+  const B_AHEAD = 18, B_KEEP = 28;
+  let bmpCenter = -999, currentFrame = 0, displayed = -1;
+
+  function resize() {
+    const dpr = Math.min(devicePixelRatio || 1, 1.5);   // 2.0 doubles blit cost for no gain
+    canvas.width  = Math.floor(canvas.clientWidth  * dpr);
+    canvas.height = Math.floor(canvas.clientHeight * dpr);
+  }
+  addEventListener('resize', () => { resize(); drawFrame(Math.round(currentFrame), true); }, { passive: true });
+
+  function nearestLoaded(i) {
+    for (let d = 0; d < FRAME_COUNT; d++) {
+      if (images[i - d]?.complete) return i - d;
+      if (images[i + d]?.complete) return i + d;
+    }
+    return -1;
+  }
+
+  function drawFrame(i, force) {
+    if (i === displayed && !force) return;
+    const bmp = bitmaps.get(i);
+    const srcImg = bmp || images[nearestLoaded(i)];
+    if (!srcImg) return;
+    // cover-fit
+    const cw = canvas.width, ch = canvas.height;
+    const iw = srcImg.width, ih = srcImg.height;
+    const s = Math.max(cw / iw, ch / ih);
+    ctx.drawImage(srcImg, (cw - iw * s) / 2, (ch - ih * s) / 2, iw * s, ih * s);
+    displayed = i;
+  }
+
+  // THE ANTI-JANK CORE: decode off-thread around the playhead so every draw is a pure
+  // GPU blit. drawImage(HTMLImageElement) forces a SYNCHRONOUS JPEG decode on the main
+  // thread at first paint and again after cache eviction — those spikes are the
+  // "glitchy frame-by-frame" feel.
+  function ensureBitmaps(center) {
+    if (Math.abs(center - bmpCenter) < 3) return;
+    bmpCenter = center;
+    const lo = Math.max(0, center - B_AHEAD), hi = Math.min(FRAME_COUNT - 1, center + B_AHEAD);
+    for (let i = lo; i <= hi; i++) {
+      if (bitmaps.has(i) || decoding.has(i) || !images[i]?.complete) continue;
+      decoding.add(i);
+      createImageBitmap(images[i]).then(b => {
+        decoding.delete(i);
+        if (Math.abs(i - bmpCenter) > B_KEEP) { b.close(); return; }
+        bitmaps.set(i, b);
+        if (i === displayed) drawFrame(i, true);      // repaint if shown frame upgraded
+      }).catch(() => decoding.delete(i));
+    }
+    for (const k of Array.from(bitmaps.keys())) {
+      if (k < center - B_KEEP || k > center + B_KEEP) { bitmaps.get(k).close(); bitmaps.delete(k); }
+    }
+  }
+
+  // Concurrency-capped loader (~10 in flight)
+  let next = 0, inFlight = 0;
+  function pump() {
+    while (inFlight < 10 && next < FRAME_COUNT) {
+      const i = next++;
+      const img = new Image();
+      images[i] = img;
+      inFlight++;
+      img.onload = img.onerror = () => { inFlight--; if (i === 0) { resize(); drawFrame(0, true); } pump(); };
+      img.src = src(i);
+    }
+  }
+  resize(); pump();
+
+  function progress() {
+    const r = driver.getBoundingClientRect();
+    return Math.max(0, Math.min(1, -r.top / (r.height - innerHeight)));
+  }
+
+  if (reduced) {
+    // Static first frame — no scrub loop at all.
+    const once = () => drawFrame(0, true);
+    setTimeout(once, 300);
+  } else {
+    (function tick() {
+      const target = progress() * (FRAME_COUNT - 1);
+      currentFrame += (target - currentFrame) * 0.14;   // lerp = the butter; direct feels mechanical
+      const idx = Math.round(currentFrame);
+      ensureBitmaps(idx);
+      drawFrame(idx);
+      requestAnimationFrame(tick);
+    })();
+  }
+
+  // Dev contract for motion-verification
+  window.__ready = true;
+})();
+</script>
+```
+
+**Ordering law:** this is a `position: sticky` stage, but if you combine it with any
+`pin: true` ScrollTrigger elsewhere on the page, create the pinned triggers FIRST —
+see design-motion-principles → Forbidden Patterns.
+
+**Testing gotcha:** frames loaded over `file://` taint the canvas, so `getImageData`
+throws `SecurityError` and any pixel-level QA silently fails. Always test this module
+over a local server (`npx serve . -p 3000`), never by opening the HTML file directly.
+
+**Verified behaviour** (headless Chromium, 60-frame fixture): scroll position maps to
+the correct frame (0 at top, ~30 at midpoint, 59 at end) and the ImageBitmap window
+peaks at ~47 entries then evicts — memory stays bounded rather than growing to the
+full frame count, which is the property that makes this safe at 300 frames.
+
+---
+
+## MODULE CONFLICT TABLE (CHECK BEFORE COMBINING)
+
+The 6-8 module cap is about restraint. This table is about modules that actively
+break each other. Check it before finalizing a module set.
+
+| Conflict | Why | Resolution |
+| :---- | :---- | :---- |
+| **10 (Cursor Reactive) + 12 (Before-After)** | Module 10 sets `* { cursor: none }`; Module 12 sets `cursor: ew-resize`. The element rule wins on specificity, so the OS cursor reappears inside the compare zone while Module 10's custom ring keeps trailing on top — two cursors visible at once. | Inside Module 12's zone add `cursor: none` and drive an `ew-resize` affordance visually (the divider handle), or drop Module 10 on that page. |
+| **10 (Cursor Reactive) + 17 (Drag-to-Pan)** | Same collision via `cursor: grab` / `grabbing`. | Same fix — keep `cursor: none` and change the custom ring's appearance on drag instead. |
+| **10 (Cursor Reactive) + 23 (macOS Dock)** | Both bind `mousemove` and write transforms on shared targets; the dock's magnify fights Module 10's magnetic pull on the same elements. | Exclude `.dock-item` from Module 10's magnetic selector. |
+| **04 (Horizontal Hijack) + any snap/pin module** | Both pin. Nested/adjacent pins compute against each other's pin-spacers — the ordering law applies and mis-positioning is silent. | Create all pinned triggers first; never nest two pinned scroll regions. |
+| **09 (Scroll Color Shift) + 26 (Mesh Gradient)** | Module 9 animates `body` background; Module 26 paints a full-bleed background layer over it. The color shift becomes invisible. | Pick one background system per page. |
+| **Any two `cursor: none` modules** | Two custom cursor elements both tracking the pointer. | One cursor system per page, period. |
+| **31 (Scroll Scrub) + 21 (Coverflow) on mobile** | Scrub holds a sticky full-viewport canvas; Coverflow's touch swipe competes with vertical scroll inside it. | Don't place Coverflow inside or immediately adjacent to the scrub stage on touch devices. |
 
 ---
 
@@ -1179,12 +1469,29 @@ Every output HTML file must include:
 1. `<!DOCTYPE html>` with `lang="en"`
 2. Mobile-responsive viewport meta tag
 3. CSS custom properties (variables) at `:root` for all brand colors
-4. All fonts from Google Fonts CDN
+4. All fonts from **Fontsource via jsDelivr**, weight-specific files
+   (`@fontsource/{slug}@5/{weight}.css`). **Never Google Fonts** — `design-taste-frontend`
+   bans it, and `index.css` ships weight 400 only, so linking it while styling
+   `font-weight: 900` silently renders a synthesized fake bold.
 5. GSAP + ScrollTrigger from cdnjs CDN
 6. `gsap.registerPlugin(ScrollTrigger)` before any animation
 7. Smooth scroll: `html { scroll-behavior: smooth; }`
-8. Respects `prefers-reduced-motion`: wrap GSAP calls in `if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches)`
+8. Respects `prefers-reduced-motion` **across all four animation mechanisms** — a
+   GSAP-only guard is not sufficient, and roughly a third of the modules don't use GSAP:
+   - **GSAP/JS:** wrap in `if (!matchMedia('(prefers-reduced-motion: reduce)').matches)`
+   - **CSS `@keyframes`** (Modules 26, 27, 28, 29): add
+     `@media (prefers-reduced-motion: reduce) { animation: none; }`
+   - **Raw `rAF` / `setTimeout` loops** (Modules 24, 25, 29, 31): check `matchMedia`
+     before starting the loop and render the resting state instead
+   - **SVG SMIL `<animate>`** (Module 30): neither guard reaches it — call
+     `svgEl.pauseAnimations()`
 9. No external dependencies beyond CDNs
+10. Every infinite loop (`rAF`, marquee, shader, particle field) pauses on
+    `visibilitychange` and when scrolled offscreen — a loop burning CPU on a hidden
+    tab is a battery bug
+11. **Delivery is one HTML file + an `/assets/` folder** when the build uses real
+    images or video. Real media is never inlined as base64 — it blows the fast-load
+    gate. When deploying, the assets folder ships with the HTML.
 
 ## QUALITY CHECK BEFORE DELIVERING
 
@@ -1200,7 +1507,20 @@ Every output HTML file must include:
 
 ## PLAYWRIGHT QA INTEGRATION — AUTOMATED DELIVERY PROTOCOL
 
-Load `playwright-browser-automation` skill and run this protocol before every client handoff.
+> **Availability check first.** `playwright-browser-automation` is **not present in this
+> skills directory** — nor are `asset-automation` or `animated-website-pipeline`,
+> referenced further below. Treat all three as intended-but-unbuilt. Until they exist:
+> - **QA:** run the device matrix below directly with Playwright (`npx playwright`),
+>   and use the **motion-verification** skill (which does exist) for the jank test and
+>   the `?jump=` screenshot harness.
+> - **Assets:** generate via the Higgsfield MCP tools directly, following the
+>   ASSET PIPELINE INTEGRATION ordering rules below — the ordering is the load-bearing
+>   part, not the skill wrapper.
+>
+> Do not report a QA step as "run" because a skill name was invoked. If the skill isn't
+> there, do the work with the tool directly or say the step was skipped.
+
+Run this protocol before every client handoff.
 
 ### Pre-Flight: Start Dev Server
 ```bash
@@ -1211,8 +1531,6 @@ python -m http.server 3000
 
 ### QA Run — Automated
 ```
-LOAD: playwright-browser-automation skill
-
 DEVICE MATRIX — run all three:
   Desktop  → browser_resize({ width: 1440, height: 900 })
   Tablet   → browser_resize({ device: "iPad Pro 11" })
@@ -1243,9 +1561,9 @@ PASS CRITERIA:
      fade-in or stagger reflow content around it (CLS)
 ```
 
-**Jank measurement, not eyeballing.** For any build using pinned scenes,
-scroll-scrub, or Module 21 (Scroll Scrub), the screenshot-based checks above
-don't catch frame drops. Load the **motion-verification** skill and run its
+**Jank measurement, not eyeballing.** For any build using pinned scenes (Modules 02,
+04, 05), **Module 31 (Scroll Scrub)**, or the section-snap pattern, the screenshot-based
+checks above don't catch frame drops. Load the **motion-verification** skill and run its
 jank test — it measures real per-frame deltas (p95/max, never average) and
 fails the build if `max ≥ 50ms`. A build that "looks smooth" in a screenshot
 can still be dropping frames; only the measured harness proves it isn't.
@@ -1262,7 +1580,8 @@ CORRECT ORDER:
   1. Lock design direction (UI/UX Designer + Google Stitch)
   2. Write assets-to-generate.md based on confirmed section list
   3. Run asset-automation skill → generate all assets via Higgsfield
-  4. Run FFmpeg frame extraction if hero uses scroll-scrub (animated-website-pipeline skill)
+  4. Run FFmpeg frame extraction if hero uses scroll-scrub — command is in Module 31,
+     output goes to assets/frames/ (no separate skill needed)
   5. Drop assets into /public/assets/ or reference folder
   6. THEN build the HTML referencing real asset paths
   7. Run Playwright QA
@@ -1274,15 +1593,23 @@ WRONG ORDER (causes rework):
 ```
 
 ### Module × Asset Type Matrix
+Module names below now match the actual module list. The previous version of this table
+listed "12 Video Reveal" and "21 Scroll Scrub" — neither matched Module 12 (a
+before/after image compare slider) or Module 21 (a coverflow carousel), and no
+"Scroll Scrub" module existed at all. It exists now as Module 31.
+
 | Module | Asset Type Needed | Generation Model |
 |---|---|---|
-| 03 Parallax | High-res hero image | NanoBanana 2 |
+| 03 Parallax | High-res hero image + mid/fg layers | NanoBanana 2 × 3 |
 | 07 Curtain Reveal | Full-bleed image | NanoBanana 2 |
 | 08 Split Screen | Two contrasting images | NanoBanana 2 × 2 |
-| 12 Video Reveal | Short ambient video loop | Seedance 2.0 |
-| 21 Scroll Scrub | Hero video (for frame extraction) | Seedance 2.0 / Kling 3.0 |
+| 11 Accordion Slider | 4 tall crops (portrait aspect) | NanoBanana 2 × 4 |
+| 12 Cursor Image Reveal / Before-After | Two aligned images, same framing | NanoBanana 2 × 2 |
+| 13 Hover Image Trail | 5 small thumbnails | NanoBanana 2 × 5 |
 | 16 Spotlight Cards | Product/feature images | NanoBanana 2 |
+| 21 3D Coverflow Carousel | 5 card/product images | NanoBanana 2 × 5 |
 | 25 Marquee | Brand logos or thumbnails | NanoBanana 2 |
+| 31 Scroll Scrub | Hero video (for frame extraction) | Seedance 2.0 / Kling 3.0 |
 
 ---
 
@@ -1313,14 +1640,13 @@ WRONG ORDER (causes rework):
 
 **Skill load order, Standard path (default — scraped lead-gen volume):**
 1. `ui-ux-designer` → design direction (`build_path: standard`)
-2. `asset-automation` → assets generated (parallel)
+2. Asset generation (Higgsfield MCP directly — `asset-automation` not built yet)
 3. `cinematic-website-builder` → HTML production ← THIS SKILL
-4. `playwright-browser-automation` → QA + delivery validation
+4. QA: Playwright device matrix + `motion-verification` jank test
 
 **Skill load order, Premium path (named client, or explicitly requested layout review):**
 1. `ui-ux-designer` → design direction (`build_path: premium`)
 2. `google-stitch` → layout confirmed (human-reviewed)
-3. `asset-automation` → assets generated (parallel)
-4. `animated-website-pipeline` → if using Next.js + scroll scrub
-5. `cinematic-website-builder` → HTML production ← THIS SKILL
-6. `playwright-browser-automation` → QA + delivery validation
+3. Asset generation (Higgsfield MCP directly — `asset-automation` not built yet)
+4. `cinematic-website-builder` → HTML production ← THIS SKILL
+5. QA: Playwright device matrix + `motion-verification` jank test
