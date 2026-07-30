@@ -96,6 +96,17 @@ Answer these before writing a single line:
 
 Always register ScrollTrigger: `gsap.registerPlugin(ScrollTrigger);`
 
+**No other library gets added to this list.** If a build needs an atmospheric or
+shader background, load the **shader-effects** skill — it provides CSS (Tier 1)
+and inline raw-WebGL (Tier 2) implementations that add zero dependencies. Pulling
+Three.js is Tier 3: approval-gated, Premium path only, and it fails the QA gate's
+fast-load requirement by default.
+
+Bento grid layouts have a numeric spec (exact gap, radius, padding, and the
+column-span table per content count) in **design-taste-frontend** →
+*Layout Architecture → Bento Grid Rules*. Use those values; do not improvise
+spacing.
+
 ---
 
 ## THE 30 MODULES

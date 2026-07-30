@@ -362,6 +362,12 @@ Should feel: Cinematic / Smooth / Expensive / Interactive / Immersive
 ### SHADER EFFECTS
 Use: Liquid distortion / Aurora backgrounds / Glow fields / Interactive gradients / Dynamic reflections / Noise distortion / Atmospheric motion
 
+> **Implementation is not decided here.** This list names *which* effect a build
+> gets. The canonical implementation for each named effect — cost tier, working
+> code, performance budget — lives in the **shader-effects** skill. Load it
+> before building any of the above. Do not hand-roll a shader; do not pull
+> Three.js for a background (Tier 3, approval-gated, never on the Standard path).
+
 ---
 
 ### PARTICLE SYSTEMS
