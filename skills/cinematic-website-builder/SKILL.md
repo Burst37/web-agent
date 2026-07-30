@@ -18,24 +18,34 @@ This skill is the **final stage** of the three-skill website pipeline. It takes 
 
 ---
 
-## THE THREE-SKILL PIPELINE (READ THIS FIRST)
+## THE PIPELINE (READ THIS FIRST)
+
+Google Stitch is **conditional**, not a fixed middle stage. Most builds — any
+scraped-lead / Standard-path build — skip it entirely:
 
 ```
-╔══════════════════╗     ╔══════════════════╗     ╔══════════════════════════╗
-║  UI/UX DESIGNER  ║ ─► ║  GOOGLE STITCH   ║ ─► ║  CINEMATIC WEBSITE       ║
-║                  ║     ║                  ║     ║  BUILDER  ← YOU ARE HERE ║
-║  • Brand audit   ║     ║  • Rapid layout  ║     ║                          ║
-║  • Moodboard A–N ║     ║    ideation      ║     ║  • 30 effect modules     ║
-║  • Design system  ║     ║  • Screen protos ║     ║  • GSAP animations       ║
-║  • User flow map  ║     ║  • Variation set ║     ║  • Single-file HTML      ║
-║  • Handoff pkg   ║     ║  • Build brief   ║     ║  • Production delivery   ║
-╚══════════════════╝     ╚══════════════════╝     ╚══════════════════════════╝
+╔══════════════════╗                              ╔══════════════════════════╗
+║  UI/UX DESIGNER  ║ ────────────────────────────► ║  CINEMATIC WEBSITE       ║
+║                  ║   (Standard path — default)   ║  BUILDER  ← YOU ARE HERE ║
+║  • Brand audit   ║                                ║                          ║
+║  • Moodboard A–N ║   ╔══════════════════╗         ║  • 30 effect modules     ║
+║  • Design system ║ ─►║  GOOGLE STITCH   ║────────►║  • GSAP animations       ║
+║  • User flow map ║   ║  (Premium path   ║         ║  • Single-file HTML      ║
+║  • Handoff pkg   ║   ║   only)          ║         ║  • Production delivery   ║
+╚══════════════════╝   ╚══════════════════╝         ╚══════════════════════════╝
 ```
+
+Stitch has no API — it's a human pasting a prompt into stitch.withgoogle.com and
+reviewing 3-5 variations, ~5-10 minutes per site. That's the right tradeoff for a
+named Premium client and the wrong one at lead-gen volume, where the Standard
+path's moodboard lookup + this skill's own Composition Rules already function as
+the layout decision without a human reviewing a mockup first.
 
 ### When to call other skills:
 - **User says "I don't know what I want"** → Load `ui-ux-designer` first
-- **User wants to SEE layout options** → Load `google-stitch` after UI/UX
-- **Design + layout is locked** → Build directly in this skill
+- **Design + layout is locked, Standard path** → Build directly in this skill
+- **Named Premium client, or user explicitly wants to SEE layout options first**
+  → `ui-ux-designer` sets `build_path: premium` → Load `google-stitch` before this skill
 
 ### If arriving with a Handoff Package, read these fields:
 ```yaml
@@ -1279,30 +1289,37 @@ WRONG ORDER (causes rework):
 ## FULL PIPELINE MAP
 
 ```
-╔══════════════════╗     ╔══════════════════╗     ╔══════════════════════════╗
-║  UI/UX DESIGNER  ║ ─► ║  GOOGLE STITCH   ║ ─► ║  CINEMATIC WEBSITE       ║
-║                  ║     ║                  ║     ║  BUILDER                ║
-╚══════════════════╝     ╚══════════════════╝     ╚══════════════════════════╝
-                                                              │
-              ╔══════════════════════╗                       │
-              ║  ASSET AUTOMATION    ║ ──────────────────►║
-              ║  + Higgsfield MCP    ║                       │
-              ╚══════════════════════╝                       ▼
-                                                ╔══════════════════════════╗
-                                                ║  PLAYWRIGHT QA           ║
-                                                ║  • 3-device matrix       ║
-                                                ║  • Console/network check ║
-                                                ║  • Interaction testing   ║
-                                                ║  • QA report generated   ║
-                                                ╚══════════════════════════╝
-                                                              │
-                                                              ▼
-                                                    CLIENT DELIVERY ✅
+╔══════════════════╗                              ╔══════════════════════════╗
+║  UI/UX DESIGNER  ║ ───────────────────────────► ║  CINEMATIC WEBSITE       ║
+║                  ║   Standard path (default)     ║  BUILDER                ║
+╚══════════════════╝                              ╚══════════════════════════╝
+        │                                                    │
+        │ build_path: premium only              ╔══════════════════════╗
+        ▼                                        ║  ASSET AUTOMATION    ║
+╔══════════════════╗                             ║  + Higgsfield MCP    ║ ──┐
+║  GOOGLE STITCH   ║ ────────────────────────────┘  ╚══════════════════════╝  │
+╚══════════════════╝                                                          ▼
+                                                                ╔══════════════════════════╗
+                                                                ║  PLAYWRIGHT QA           ║
+                                                                ║  • 3-device matrix       ║
+                                                                ║  • Console/network check ║
+                                                                ║  • Interaction testing   ║
+                                                                ║  • QA report generated   ║
+                                                                ╚══════════════════════════╝
+                                                                              │
+                                                                              ▼
+                                                                    CLIENT DELIVERY ✅
 ```
 
-**Skill load order for a full website project:**
-1. `ui-ux-designer` → design direction
-2. `google-stitch` → layout confirmed
+**Skill load order, Standard path (default — scraped lead-gen volume):**
+1. `ui-ux-designer` → design direction (`build_path: standard`)
+2. `asset-automation` → assets generated (parallel)
+3. `cinematic-website-builder` → HTML production ← THIS SKILL
+4. `playwright-browser-automation` → QA + delivery validation
+
+**Skill load order, Premium path (named client, or explicitly requested layout review):**
+1. `ui-ux-designer` → design direction (`build_path: premium`)
+2. `google-stitch` → layout confirmed (human-reviewed)
 3. `asset-automation` → assets generated (parallel)
 4. `animated-website-pipeline` → if using Next.js + scroll scrub
 5. `cinematic-website-builder` → HTML production ← THIS SKILL

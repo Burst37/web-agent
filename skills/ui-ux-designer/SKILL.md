@@ -6,16 +6,20 @@ description: >
   Senior Design Director skill for Space Age AI Solutions. Fires before any site build.
   Produces a full cinematic design brief — visual style direction, section structure,
   motion system, typography, color tokens, UX flow, and AI visual direction — that feeds
-  directly into Google Stitch 2.0 for prototyping, then cinematic-website-builder for
-  production HTML. Triggers on: "design the site", "UI/UX", "landing page design",
-  "design direction", "visual direction", "design system", "layout", "wireframe",
-  "design brief", "what should the site look like", or any request to design before
-  building. Always runs BEFORE Google Stitch 2.0 and cinematic-website-builder.
+  directly into cinematic-website-builder for production HTML. On the Premium build path
+  only, the brief additionally routes through Google Stitch 2.0 for human-reviewed layout
+  prototyping first; the Standard/mass-production path skips Stitch and goes straight to
+  Build, per the master pipeline's Stage 2.5 fork (Stitch requires a human at a browser —
+  it has no API and cannot run unattended at lead-gen volume). Triggers on: "design the
+  site", "UI/UX", "landing page design", "design direction", "visual direction", "design
+  system", "layout", "wireframe", "design brief", "what should the site look like", or any
+  request to design before building. Always runs BEFORE cinematic-website-builder (and
+  before Google Stitch 2.0 when Stitch is in play).
 allowed-tools: Read, WebSearch
 ---
 
 # UI/UX DESIGNER — Senior Design Director
-**Version:** 1.0.0 | **Priority:** Runs before Google Stitch 2.0 and cinematic-website-builder
+**Version:** 1.0.0 | **Priority:** Runs before cinematic-website-builder (and before Google Stitch 2.0 on the Premium path)
 
 ---
 
@@ -28,9 +32,14 @@ sa-design-md (formalize DESIGN.md token file)
         ↓
   ui-ux-designer  ←── YOU ARE HERE
         ↓
-  Google Stitch 2.0 (UI prototype)
-        ↓
-  cinematic-website-builder (production HTML)
+        ├── STANDARD PATH (scraped lead, mass production)
+        │   → straight to cinematic-website-builder — the moodboard lookup + this
+        │     skill's own Composition Rules ARE the layout decision; no separate
+        │     wireframe-review step, nothing here needs a human at a browser.
+        │
+        └── PREMIUM PATH (named client, custom scope, or explicitly requested)
+            → Google Stitch 2.0 (human reviews 3-5 layout variations)
+            → cinematic-website-builder
         ↓
   local-business-seo (schema, NAP, llms.txt)
         ↓
@@ -41,8 +50,11 @@ sa-design-md (formalize DESIGN.md token file)
   Vercel Deploy
 ```
 
-**Rule:** Never hand off to Google Stitch 2.0 or cinematic-website-builder without a
-completed design brief from this skill. The brief IS the spec both downstream tools consume.
+**Rule:** Never hand off to cinematic-website-builder without a completed design brief
+from this skill — the brief IS the spec cinematic-website-builder consumes. On the
+Premium path, also never hand off to Google Stitch 2.0 without one, for the same reason.
+**Default to Standard (no Stitch) unless the build is explicitly Premium** — don't route
+a scraped lead-gen build through a manual review step it doesn't need.
 
 ---
 
@@ -56,7 +68,8 @@ Load this skill IMMEDIATELY when any of the following occur:
 - User says "wireframe", "layout", "section structure", "design system"
 - Any site build request where no design brief exists yet
 - User says "make it look premium", "cinematic design", "luxury UI"
-- Upstream of any Google Stitch 2.0 or cinematic-website-builder invocation
+- Upstream of any cinematic-website-builder invocation (and any Google Stitch 2.0
+  invocation, on the Premium path only)
 
 ---
 
@@ -649,10 +662,15 @@ Should feel: Futuristic / Intelligent / Enterprise-grade / Cinematic / Premium
 
 ## DESIGN OUTPUT FORMAT
 
-This skill outputs a **Design Brief** — a structured spec consumed by Google Stitch 2.0.
+This skill outputs a **Design Brief** — a structured spec consumed by
+cinematic-website-builder directly (Standard path) or by Google Stitch 2.0 first
+(Premium path). Set `build_path` explicitly; it decides `next_step`. Default to
+`standard` unless the build is a named client or Mr. Black explicitly requests a
+layout review before build.
 
 ```yaml
 design_brief:
+  build_path: "standard"  # standard | premium — decides next_step below
   style_system: "VL-01 Dark Glassmorphism | Liquid Glass | Editorial | Bento"
   primary_color: "#2979FF"  # or industry override from sa-design-md
   surface_base: "#050508"
@@ -678,7 +696,7 @@ design_brief:
     - sa_explode_to_menu
   mobile_first: true
   animation_philosophy: "cinematic / purposeful / GPU-friendly"
-  next_step: "Google Stitch 2.0 prototype"
+  next_step: "cinematic-website-builder"  # or "Google Stitch 2.0 prototype" when build_path: premium
 ```
 
 ---
@@ -758,18 +776,18 @@ dependencies:
   - brand-extractor (upstream — optional)
   - sa-design-md (upstream — DESIGN.md token file)
 downstream:
-  - Google Stitch 2.0 (prototype)
-  - cinematic-website-builder (production HTML)
+  - Google Stitch 2.0 (prototype — Premium path only, build_path: premium)
+  - cinematic-website-builder (production HTML — always; directly on Standard path)
   - SA-higgsfield-operator (hero image + video)
 outputs:
-  - Design Brief (structured YAML spec)
+  - Design Brief (structured YAML spec, includes build_path)
   - Section structure
   - Visual style direction
   - Motion system spec
   - Typography spec
   - AI visual direction
 fires_before:
-  - google-stitch
   - cinematic-website-builder
+  - google-stitch (Premium path only)
 never_skip: true
 ```
