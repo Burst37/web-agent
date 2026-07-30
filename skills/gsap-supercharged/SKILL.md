@@ -331,6 +331,87 @@ const smoother = ScrollSmoother.create({
 // <div data-lag="0.3">  — lag behind scroll by 300ms
 ```
 
+## 14. Section Snap Scroll (Observer-based)
+
+Full-viewport section snapping (cinematic landing pages, portfolio reveals). Use
+GSAP's `Observer` plugin, not raw `wheel` listeners — `Observer` normalizes
+wheel/touch/pointer into one gesture model and handles the debounce for you.
+
+> Adapted from a hand-rolled `wheel`-event version found in research (SA pattern
+> library, "Cosmic Snap on Scroll") that lacked touch, keyboard, and
+> reduced-motion support. `Observer` replaces roughly 40 lines of manual event
+> plumbing and fixes all three gaps at once.
+
+```javascript
+gsap.registerPlugin(Observer);
+
+const sections = gsap.utils.toArray('.snap-section');
+let current = 0;
+let animating = false;
+
+function goTo(index) {
+  if (index < 0 || index >= sections.length || animating) return;
+  animating = true;
+  current = index;
+  gsap.to(window, {
+    scrollTo: { y: sections[index], autoKill: false },
+    duration: 1,
+    ease: 'power2.inOut',
+    onComplete: () => { animating = false; },
+  });
+}
+
+// Desktop only — mobile scrolls natively (section locking on touch
+// fights the OS's own momentum scroll and reads as broken, not premium).
+const isDesktop = matchMedia('(hover: hover) and (pointer: fine)').matches;
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+if (isDesktop && !reduced) {
+  Observer.create({
+    type: 'wheel,touch',
+    wheelSpeed: -1,
+    onDown: () => goTo(current - 1),
+    onUp: () => goTo(current + 1),
+    tolerance: 10,
+    preventDefault: true,
+  });
+}
+
+// Keyboard nav — required regardless of pointer type
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowDown' || e.key === 'PageDown') { e.preventDefault(); goTo(current + 1); }
+  if (e.key === 'ArrowUp' || e.key === 'PageUp')     { e.preventDefault(); goTo(current - 1); }
+});
+
+// Keep `current` correct on native scroll (mobile, or if a user middle-scrolls)
+ScrollTrigger.create({
+  trigger: sections[0],
+  start: 'top top',
+  end: () => document.body.scrollHeight,
+  onUpdate: () => {
+    const mid = innerHeight / 2;
+    sections.forEach((s, i) => {
+      const r = s.getBoundingClientRect();
+      if (r.top <= mid && r.bottom >= mid) current = i;
+    });
+  },
+});
+```
+
+- Section locking is **desktop-only** (`hover:hover` + `pointer:fine`) — mobile
+  always gets native scroll.
+- Keyboard nav is unconditional — screen-reader and keyboard users get it even
+  when section-lock is off.
+- `prefers-reduced-motion` disables the whole snap behavior, not just the easing.
+- Never use this pattern with a Ken Burns background (`scale()` on an `infinite
+  alternate` keyframe) running underneath — animating `transform: scale` on a
+  large background layer during a pinned/snapped section fights the compositor
+  with the snap tween. If a slow zoom is wanted on the visible section only,
+  drive it from the same GSAP timeline instead of a separate CSS `@keyframes`
+  loop, so it's one composited animation, not two competing ones.
+
+---
+
 ## Performance Checklist for Complex Animations
 
 - ✅ Animate `transform` and `opacity` only (GPU-composited); never `width`, `height`, `top`, `left`

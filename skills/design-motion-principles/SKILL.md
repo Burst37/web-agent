@@ -381,6 +381,7 @@ skeleton code here; this skill owns motion *principles* and audit criteria only.
 ## FORBIDDEN PATTERNS
 
 - **`window.addEventListener("scroll", ...)`** — BANNED. Use `useScroll()`, ScrollTrigger, IntersectionObserver, or CSS `animation-timeline`.  
+- **Creating ambient/background ScrollTriggers before pinned scenes** — BANNED. ScrollTriggers refresh in *creation order*. A background trigger created before a pinned scene computes its start/end positions before that scene's pin-spacer exists, so it silently fires thousands of pixels early — no error, no warning, just wrong. **Always create every `pin: true` ScrollTrigger first, ambient/decorative ones after.**  
 - **`useState` for mouse position or scroll progress** — BANNED. Use `useMotionValue` + `useTransform`.  
 - **`requestAnimationFrame` loops touching React state** — BANNED.  
 - **GSAP without `ctx.revert()` cleanup** — BANNED. Always return cleanup.  
