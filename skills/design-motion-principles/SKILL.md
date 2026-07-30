@@ -134,6 +134,92 @@ Applied to all Space Age dashboards, portals, and admin UIs.
 
 .glass-card:hover::before { transform: translateX(100%); }
 
+**Liquid Glass — interactive panel (mouse-tracked tilt + caustic highlight).**
+Extends the glass panel above with pointer-driven depth. Reuses this file's own
+glass tokens (`blur(40px)`, `rgba(255,255,255,0.04)` fill, `rgba(255,255,255,0.08)`
+border) and the canonical `16px` radius from `design-taste-frontend`'s bento spec
+— do not introduce a second radius/blur value for the same VL-01 surface.
+
+```tsx
+import { motion, useMotionValue, useTransform, useSpring } from "motion/react"
+
+const springConfig = { stiffness: 300, damping: 30, mass: 0.8 }
+
+export function GlassPanel({ children }: { children: React.ReactNode }) {
+  const mouseX = useMotionValue(0)
+  const mouseY = useMotionValue(0)
+
+  // Tilt range: -6deg to +6deg — beyond this reads as a gimmick, not depth.
+  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [6, -6]), springConfig)
+  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-6, 6]), springConfig)
+  const highlightX = useSpring(useTransform(mouseX, [-0.5, 0.5], [-10, 10]), springConfig)
+  const highlightY = useSpring(useTransform(mouseY, [-0.5, 0.5], [-10, 10]), springConfig)
+
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = e.currentTarget.getBoundingClientRect()
+    mouseX.set((e.clientX - rect.left) / rect.width - 0.5)
+    mouseY.set((e.clientY - rect.top) / rect.height - 0.5)
+  }
+  function handleMouseLeave() { mouseX.set(0); mouseY.set(0) }
+
+  return (
+    <motion.div
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{ rotateX, rotateY, transformStyle: "preserve-3d", transformPerspective: 800 }}
+    >
+      <div style={{
+        backdropFilter: "blur(40px) saturate(180%)",
+        WebkitBackdropFilter: "blur(40px) saturate(180%)",
+        background: "rgba(255,255,255,0.04)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: "16px",
+        position: "relative", overflow: "hidden",
+      }}>
+        {/* Caustic highlight — moves with the pointer, GPU-composited (transform only) */}
+        <motion.div style={{
+          position: "absolute", inset: 0, pointerEvents: "none",
+          background: "radial-gradient(ellipse 60% 50% at 50% 0%, rgba(255,255,255,0.18) 0%, transparent 70%)",
+          x: highlightX, y: highlightY,
+        }} />
+        {children}
+      </div>
+    </motion.div>
+  )
+}
+```
+
+Transparent-text-cutout variant (background shows through the letterforms):
+
+```tsx
+export function GlassText({ text, fontSize = 96 }: { text: string; fontSize?: number }) {
+  return (
+    <div style={{
+      fontSize, fontWeight: 700,
+      background: "linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.5))",
+      WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+      filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.3))",
+    }}>{text}</div>
+  )
+}
+```
+
+DO: use `useSpring` for all hover physics on glass — never a CSS `transition` for the
+tilt, it reads mechanical. Test on dark backgrounds first — glass reads poorly on
+white without separate tuning. Keep the caustic highlight to `transform` only (as
+above) so it stays GPU-composited.
+
+DO NOT: use `filter: blur()` on the glass element itself (blurs the content, not the
+background — use `backdrop-filter`). Skip the caustic highlight layer — without it the
+panel looks flat and plasticky. Stack glass-on-glass without a real blur increase.
+
+**Escalation to real WebGL refraction (Spline):** the above is a CSS/Framer
+approximation — correct for cards, navbars, and panels. For one full-bleed hero
+glass object where true light-bending refraction is the whole point, that's the
+same Tier 3 justification as `shader-effects`' escalation rule (approval-gated,
+Premium path only, never mobile — GPU-heavy). Don't reach for Spline for routine
+glass surfaces; the CSS approximation above covers those correctly and cheaply.
+
 ### Extension B: Cinematic Scroll Choreography
 
 For `cinematic-website-builder` integration. Maps directly to Modules 1–30.
