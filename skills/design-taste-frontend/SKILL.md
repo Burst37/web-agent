@@ -407,9 +407,82 @@ Centered hero avoided when `DESIGN_VARIANCE > 4`. Force:
 
 ### Bento Grid Rules
 
+**Taste rules (non-negotiable):**
+
 - EXACTLY as many cells as content items — no empty cells  
 - At least 2–3 cells need real visual variation (image, gradient, pattern)  
 - No 6 white-on-white text cards in a row
+
+**Numeric spec (canonical — do not restate elsewhere, reference this section).**
+This is a spec, not a suggestion. A bento grid built without these exact values
+is a Pre-Flight Fail. Values are token-consistent with the VL-01 glass panel
+(`border-radius: 16px`, `--border-subtle`, `--border-medium`, `--ease-out-expo`).
+
+```css
+:root {
+  --bento-cols: 6;              /* desktop grid is ALWAYS 6-col: divides by 2 and 3 */
+  --bento-gap: 16px;            /* <1024px */
+  --bento-gap-lg: 24px;         /* ≥1024px */
+  --bento-radius: 16px;         /* matches VL-01 glass panel — never 8px, never 24px */
+  --bento-pad: 24px;            /* <1024px */
+  --bento-pad-lg: 32px;         /* ≥1024px — upper bound, never exceed 40px */
+  --bento-row-min: 260px;       /* minimum cell height, desktop */
+  --bento-row-feature: 320px;   /* feature (span-4) cell height */
+  --bento-row-min-mobile: 160px;
+}
+
+.bento {
+  display: grid;
+  grid-template-columns: repeat(var(--bento-cols), 1fr);
+  gap: var(--bento-gap);
+  grid-auto-rows: minmax(var(--bento-row-min), auto);
+}
+@media (min-width: 1024px) { .bento { gap: var(--bento-gap-lg); } }
+@media (max-width: 1023px) { .bento { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 767px)  { .bento { grid-template-columns: 1fr;
+                                      grid-auto-rows: minmax(var(--bento-row-min-mobile), auto); } }
+
+.bento-cell {
+  padding: var(--bento-pad);
+  border-radius: var(--bento-radius);
+  border: 1px solid var(--border-subtle);
+  transition: transform 200ms var(--ease-out-expo),
+              border-color 200ms var(--ease-out-expo);
+}
+@media (min-width: 1024px) { .bento-cell { padding: var(--bento-pad-lg); } }
+
+/* Hover: lift only. NEVER scale — it resamples text and reads cheap. */
+.bento-cell:hover { transform: translateY(-4px); border-color: var(--border-medium); }
+```
+
+**Column span patterns by content count (desktop, 6-col).** Pick the row for your
+item count. Do not improvise a different split — these are the only approved
+arrangements, and each guarantees a full final row (no orphan cell):
+
+| Items | Row 1 spans | Row 2 spans | Row 3 spans |
+| :---- | :---- | :---- | :---- |
+| 2 | 3 + 3 | — | — |
+| 3 | 2 + 2 + 2 | — | — |
+| 4 | 4 + 2 | 3 + 3 | — |
+| 5 | 4 + 2 | 2 + 2 + 2 | — |
+| 6 | 2 + 2 + 2 | 2 + 2 + 2 | — |
+| 7 | 4 + 2 | 2 + 2 + 2 | 3 + 3 |
+
+- **Hard cap: 7 cells.** 8+ content items = split into two sections, not one
+  mega-grid. Same restraint logic as the 6–8 module cap per page.
+- Tablet (2-col) and mobile (1-col) ignore spans entirely — cells stack in DOM
+  order. Order your DOM so the feature cell is first.
+
+**Which cells carry the visual variation (deterministic, satisfies the 2–3 rule):**
+
+- The **span-4 feature cell is always media** — image, gradient, or shader
+  surface. Never a text-only card.
+- **At least one** additional cell gets a gradient or pattern fill.
+- Remaining cells may be text-only.
+- Mobile: the feature cell holds `aspect-ratio: 4 / 3`; text cells are auto-height.
+
+**Pre-Flight additions:** cell count ≤ 7? spans match the table for that count?
+feature cell carries media? radius exactly 16px? hover is translateY only?
 
 ### Layout Repetition Bans
 
@@ -561,6 +634,7 @@ When brief reads as an established system, install and use the **official packag
 - [ ] No duplicate CTA intent?  
 - [ ] Logo wall uses SVG logos, lives UNDER hero?  
 - [ ] Bento cells = content item count, ≥2–3 cells with visual variation?  
+- [ ] Bento numeric spec met — ≤7 cells, spans match the count table, 16px radius, feature cell carries media, hover is `translateY` only?  
 - [ ] No div-based fake screenshots?  
 - [ ] No hand-rolled decorative SVGs?  
 - [ ] Real images used (gen-tool → picsum-seed → labeled placeholder)?  
