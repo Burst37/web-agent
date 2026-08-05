@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SpaceAge Apple-Immersive Web Design — pattern lab</title>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/lab.css">
+<style>
+  .hero { min-height: 88vh; display: grid; align-content: center; padding-top: clamp(160px, 18vh, 220px); }
+  .hero h1 { font-size: var(--step-3); line-height: .86; letter-spacing: var(--track-display); margin: 0; max-width: 14ch; }
+  .index-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-top: 34px; }
+  .index-card { display: block; padding: 24px; border-radius: var(--radius-m); border: 1px solid var(--line);
+    background: var(--surface); box-shadow: var(--shadow-1); }
+  .index-card b { display: block; font-size: var(--step-0); margin-bottom: 8px; }
+  .index-card span { color: var(--muted); font-size: var(--step--1); line-height: 1.5; display: block; }
+  .index-card em { display: block; margin-top: 12px; font-family: var(--font-mono); font-size: 11px;
+    color: var(--accent); font-style: normal; }
+</style>
+</head>
+<body>
+<div class="progress-rail" aria-hidden="true"><i></i></div>
+<nav class="labnav glass scroll-edge" aria-label="Lab sections">
+  <strong>SpaceAge</strong>
+  <a href="index.html" aria-current="page">Overview</a><a href="scroll.html">Scroll</a>
+  <a href="type.html">Type</a><a href="material.html">Material</a><a href="carousel.html">Carousel</a>
+  <a href="transitions.html">Transitions</a><a href="smooth.html">Smooth</a>
+</nav>
+
+<main>
+  <section class="shell hero">
+    <div class="kicker">Pattern lab · v2.0.0</div>
+    <h1 class="display trim-both">Every pattern here runs.</h1>
+    <p class="lead">This lab is the executable half of the skill. Each page implements the techniques the
+      <code>SKILL.md</code> prescribes, and <code>scripts/verify.mjs</code> asserts their behaviour in a real
+      browser — pinned offsets, interpolated values, inertia after release, accessible names, fallback tiers.
+      Nothing here is illustrative.</p>
+
+    <div class="index-grid">
+      <a class="index-card action" href="scroll.html"><b>Scroll systems</b>
+        <span>View-timeline reveals, scroll-state chrome, pinned scrub, horizontal runs with
+        containerAnimation, sticky stacks, frame-accurate media scrub, velocity accents.</span>
+        <em>scroll.html</em></a>
+      <a class="index-card action" href="type.html"><b>Kinetic typography</b>
+        <span>SplitText masked lines, word and character tiers, scroll-driven variable axes, animated
+        gradient text, text-box-trim, velocity-reactive marquee.</span>
+        <em>type.html</em></a>
+      <a class="index-card action" href="material.html"><b>Material &amp; depth</b>
+        <span>Liquid Glass-inspired chrome with refraction, adaptive weight, depth anatomy, popover with
+        anchor positioning, interpolate-size accordions.</span>
+        <em>material.html</em></a>
+      <a class="index-card action" href="carousel.html"><b>Carousels &amp; gestures</b>
+        <span>Embla with a geometry-driven treatment, full keyboard parity, and a Draggable + Inertia
+        strip that genuinely keeps moving after release.</span>
+        <em>carousel.html</em></a>
+      <a class="index-card action" href="transitions.html"><b>Transitions</b>
+        <span>GSAP Flip shared elements, same-document view transitions, and a real cross-document
+        transition proven by the destination's pagereveal event.</span>
+        <em>transitions.html</em></a>
+      <a class="index-card action" href="smooth.html"><b>Smooth scroll</b>
+        <span>The correct Lenis + ScrollTrigger wiring, one clock, lag smoothing off — and the reasons not
+        to install it at all.</span>
+        <em>smooth.html</em></a>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <div class="kicker">Platform support, measured live</div>
+      <h2>Detected in this browser.</h2>
+      <p>The stack router in <code>SKILL.md</code> routes to native features first. This is what the engine
+        you are reading in actually supports — the lab checks rather than assumes.</p>
+      <div class="matrix" data-matrix></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <div class="kicker">Running it</div>
+      <h2>Three commands.</h2>
+      <div class="grid-cards">
+        <div class="card"><h3>npm run setup</h3><p>Fetches GSAP, Embla and Lenis from npm into
+          <code>lab/vendor/</code> so every page runs offline.</p></div>
+        <div class="card"><h3>npm run verify</h3><p>Drives all pages in headless Chromium and asserts
+          behaviour, accessibility fallbacks and frame pacing. Writes
+          <code>proof/verification.json</code>.</p></div>
+        <div class="card"><h3>npm run capture</h3><p>Writes desktop, mobile and reduced-motion screenshots
+          to <code>proof/</code>.</p></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer"><div class="shell">
+  SpaceAge Apple-Immersive Web Design · derived from Emil Kowalski's MIT-licensed <code>apple-design</code> skill.
+  Apple-inspired methodology; not an Apple product and not affiliated with Apple.
+</div></footer>
+
+<script type="module">
+import { ready, support } from './js/boot.js';
+
+const s = support();
+document.querySelector('[data-matrix]').innerHTML = Object.entries(s)
+  .map(([k, v]) => `<div><b>${k}</b><span class="${v ? 'yes' : 'no'}">${v ? 'yes' : 'no'}</span></div>`)
+  .join('');
+
+await ready({ support: s });
+</script>
+</body>
+</html>

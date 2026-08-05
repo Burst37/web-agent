@@ -1,0 +1,242 @@
+/* lab.css — chrome for the lab pages only. Not part of the shippable system.
+   The shippable system is tokens.css plus the patterns inside each page. */
+
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
+body {
+  margin: 0;
+  overflow-x: clip;
+  background: radial-gradient(circle at 12% -6%, color-mix(in oklab, var(--brand) 26%, transparent), transparent 34rem),
+    radial-gradient(circle at 88% 12%, color-mix(in oklab, var(--hot) 20%, transparent), transparent 30rem),
+    var(--bg);
+  background-attachment: fixed;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button {
+  font: inherit;
+  color: inherit;
+}
+img {
+  max-width: 100%;
+}
+
+.shell {
+  width: min(1240px, calc(100% - 44px));
+  margin-inline: auto;
+}
+.section {
+  padding: clamp(80px, 11vw, 170px) 0;
+  position: relative;
+}
+/* The nav is fixed, so the first block on a page has to clear it explicitly —
+   otherwise a heading slides underneath the chrome at exactly the moment a
+   reader arrives. */
+.section--lead {
+  padding-top: clamp(160px, 18vh, 220px);
+}
+/* Display headings set their own tight leading, so the paragraph that follows
+   needs the gap the heading no longer provides. */
+h1 + .lead,
+h2 + .lead,
+.display + .lead {
+  margin-top: 22px;
+}
+.lead {
+  max-width: 46ch;
+}
+.kicker {
+  font-size: var(--step--1);
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+h1,
+h2,
+h3 {
+  margin: 0 0 0.4em;
+  letter-spacing: var(--track-heading);
+  text-wrap: balance;
+}
+h2 {
+  font-size: var(--step-2);
+  line-height: 1.02;
+}
+h3 {
+  font-size: var(--step-1);
+  line-height: 1.1;
+}
+p {
+  margin: 0 0 1em;
+  color: var(--muted);
+  line-height: 1.6;
+  max-width: 62ch;
+  text-wrap: pretty;
+}
+code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  background: rgb(255 255 255 / 0.07);
+  padding: 0.15em 0.45em;
+  border-radius: 6px;
+}
+
+/* Floating glass nav — also the scroll-edge + scroll-state demo host. */
+.labnav {
+  position: fixed;
+  top: 14px;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 60;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 7px 8px 7px 16px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  max-width: calc(100% - 24px);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.labnav a {
+  padding: 8px 12px;
+  border-radius: var(--radius-pill);
+  color: var(--muted);
+  white-space: nowrap;
+}
+.labnav a[aria-current='page'] {
+  background: rgb(255 255 255 / 0.1);
+  color: var(--ink);
+}
+.labnav a:hover {
+  color: var(--ink);
+}
+.labnav strong {
+  margin-right: 8px;
+  letter-spacing: -0.03em;
+}
+
+/* Scroll progress rail, driven by a CSS scroll timeline (no JS). */
+.progress-rail {
+  position: fixed;
+  inset: 0 0 auto;
+  height: 2px;
+  z-index: 70;
+  background: transparent;
+}
+.progress-rail i {
+  display: block;
+  height: 100%;
+  transform-origin: 0 50%;
+  transform: scaleX(0);
+  background: linear-gradient(90deg, var(--accent), var(--brand), var(--hot));
+}
+@supports (animation-timeline: scroll()) {
+  .progress-rail i {
+    animation: rail-grow linear both;
+    animation-timeline: scroll(root block);
+  }
+  @keyframes rail-grow {
+    to {
+      transform: scaleX(1);
+    }
+  }
+}
+
+.note {
+  border-left: 2px solid color-mix(in oklab, var(--accent) 60%, transparent);
+  padding: 2px 0 2px 16px;
+  font-size: var(--step--1);
+  color: var(--muted);
+  max-width: 68ch;
+  margin: 18px 0 0;
+}
+
+.grid-cards {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  margin-top: 36px;
+}
+.card {
+  padding: 24px;
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-1);
+}
+.card h3 {
+  font-size: var(--step-0);
+  margin-bottom: 8px;
+}
+.card p {
+  font-size: var(--step--1);
+  margin: 0;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(135deg, white, oklch(88% 0.08 220));
+  color: #071018;
+  font-weight: 700;
+  border: 0;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 white, 0 10px 30px rgb(0 0 0 / 0.25);
+}
+.ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line);
+  background: rgb(255 255 255 / 0.04);
+  cursor: pointer;
+}
+
+.footer {
+  padding: 60px 0 90px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: var(--step--1);
+}
+
+/* Support matrix, printed live by boot.support(). */
+.matrix {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin-top: 28px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.matrix div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--line);
+  background: rgb(255 255 255 / 0.03);
+}
+.matrix b {
+  font-weight: 600;
+}
+.matrix .yes {
+  color: oklch(84% 0.17 145);
+}
+.matrix .no {
+  color: oklch(72% 0.17 30);
+}
