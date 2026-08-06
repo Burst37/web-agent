@@ -76,23 +76,34 @@ Answer these before writing a single line:
 
 **Never use more than 6-8 modules per page. Restraint is cinematic. Pile-on is noise.**
 
-### Moodboard Quick Reference (from UI/UX Designer skill):
+### Moodboard Quick Reference — NON-AUTHORITATIVE
+
+**Canonical source: `ui-ux-designer` → Moodboard Registry.** This is a convenience copy
+for reading a Handoff Package at a glance; if it ever disagrees with the registry, the
+registry wins. Do not add, rename, or re-letter entries here.
+
 | Letter | Aesthetic | Primary Use |
 |--------|-----------|-------------|
 | A | Space Age Dark Data-Viz | LoyaltyBot, dashboards |
-| B | Hardware Console | Developer tools |
+| B | Hardware Console | Developer tools ⚠ |
 | C | 3D Clay | Consumer apps |
 | D | Liquid Glass | Music, luxury |
-| E | Exploded Diagram | Tech hardware |
-| F | Urban Street/Hip-Hop | Record Exec, music |
-| G | Forest/Organic | Terra Root, wellness |
-| H | Fashion Editorial | Portfolio, luxury brands |
+| E | Exploded Diagram | Tech hardware ⚠ |
+| F | Urban Street/Hip-Hop | Record Exec, music ⚠ |
+| G | Forest/Organic | Terra Root, wellness ⚠ |
+| H | Fashion Editorial | Portfolio, luxury brands, DTC |
 | I | Brutalist | Art, anti-establishment |
-| J | Cinematic Film | Film projects, portfolios |
-| K | Neon Cyberpunk | Gaming, nightlife |
-| L | Silicon Valley Clean | SaaS, B2B |
+| J | Cinematic Film | Film, portfolios, agency work |
+| K | Neon Cyberpunk | Gaming, nightlife ⚠ |
+| L | Silicon Valley Clean | SaaS, B2B, minimal editorial |
 | M | Maximalist Luxury | Space Age Credit |
-| N | Retro Futurist | Space Age AI brand |
+| N | Retro Futurist | Space Age AI brand ⚠ |
+
+⚠ = named but **no full aesthetic spec exists yet**. Building against one of these means
+improvising palette/type/texture from the name alone — flag it, don't do it silently.
+
+`FF` and `HH` are retired letters (folded into `D` and `H`). A brief citing either is
+using a stale mapping.
 
 ---
 

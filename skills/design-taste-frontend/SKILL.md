@@ -1,6 +1,6 @@
 ---
 name: design-taste-frontend
-description: "SA-enhanced anti-slop frontend skill for landing pages, portfolios, redesigns, and Space Age cinematic production sites. Combines the original taste-skill, brutalist-skill, minimalist-skill, and stitch-skill into a unified system. Reads the brief first, infers the design direction, and ships interfaces that do not look templated. Adds Space Age extensions: VL-01 Dark Glassmorphism enforcement, moodboard A-HH aesthetic routing, Liquid Glass approximation spec, cinematic bento architecture, and direct handoff to ui-ux-designer and cinematic-website-builder. Never defaults to: Inter, AI-purple gradient, centered hero, three equal cards, glassmorphism everywhere, or beige+brass+espresso. Trigger on: any landing page, portfolio, hero section, redesign, product page, or request to make it look premium."
+description: "SA-enhanced anti-slop frontend skill for landing pages, portfolios, redesigns, and Space Age cinematic production sites. Combines the original taste-skill, brutalist-skill, minimalist-skill, and stitch-skill into a unified system. Reads the brief first, infers the design direction, and ships interfaces that do not look templated. Adds Space Age extensions: VL-01 Dark Glassmorphism enforcement, moodboard A-N aesthetic routing, Liquid Glass approximation spec, cinematic bento architecture, and direct handoff to ui-ux-designer and cinematic-website-builder. Never defaults to: Inter, AI-purple gradient, centered hero, three equal cards, glassmorphism everywhere, or beige+brass+espresso. Trigger on: any landing page, portfolio, hero section, redesign, product page, or request to make it look premium."
 ---
 
 # Design Taste Frontend — SA-Enhanced Edition
@@ -22,7 +22,7 @@ Before any code or dial-setting, **infer what the user actually wants**.
 3. **Reference signals** — URLs, screenshots, brands named  
 4. **Audience** — B2B procurement, design-conscious consumer, recruiter, Space Age client prospect  
 5. **Brand assets** — logo, color, type already locked. For redesigns, these are starting material.  
-6. **SA Moodboard signal** — if any moodboard letter is mentioned (A, D, FF, HH, etc.) → route to `ui-ux-designer` moodboard system first
+6. **SA Moodboard signal** — if any moodboard letter is mentioned (A–N) → route to `ui-ux-designer` Moodboard Registry first. Letters outside A–N are invalid; `FF`/`HH` are retired (→ `D`/`H`).
 
 ### 0.B Declare Design Read Before Any Code
 
@@ -31,8 +31,8 @@ One line: **"Reading this as: <page kind> for <audience>, with a <vibe>, leaning
 Examples:
 
 - *"Reading this as: Space Age cinematic landing for local business prospects, OLED dark, Moodboard A, leaning toward VL-01 glassmorphism + GSAP."*  
-- *"Reading this as: DTC apparel portfolio for creative directors, cold luxury palette, Moodboard HH, editorial bento architecture."*  
-- *"Reading this as: brutalist editorial site for tech founders, Swiss industrial, Moodboard G, monospace-dominant."*
+- *"Reading this as: DTC apparel portfolio for creative directors, cold luxury palette, Moodboard H, editorial bento architecture."*  
+- *"Reading this as: brutalist editorial site for tech founders, Swiss industrial, Moodboard I, monospace-dominant."*
 
 ### 0.C If Ambiguous, Ask ONE Question
 
@@ -57,18 +57,28 @@ Never default to:
 
 Map brief signals to aesthetic system:
 
+Letters below are the **canonical A–N set defined in `ui-ux-designer` → Moodboard
+Registry**. This skill routes to letters; it never defines them.
+
 | Signal | Aesthetic Family | SA Moodboard |
 | :---- | :---- | :---- |
-| "dark", "OLED", "Space Age", "cinematic", "premium" | VL-01 Dark Glassmorphism | A, D |
-| "iridescent", "holographic", "rainbow", "soap glass" | Liquid Glass / Iridescent Editorial | D, FF |
-| "brutalist", "mechanical", "Swiss", "terminal" | Industrial Brutalism | G |
-| "minimalist", "editorial", "clean", "document" | Premium Utilitarian Minimalism | B, C |
-| "e-commerce", "DTC", "product", "luxury retail" | Commercial Hero / Digital Product | HH |
-| "agency", "Awwwards", "experimental", "portfolio" | Agency Kinetic | E, F |
+| "dark", "OLED", "Space Age", "cinematic", "premium" | VL-01 Dark Glassmorphism | A |
+| "iridescent", "holographic", "rainbow", "soap glass" | Liquid Glass / Iridescent Editorial | D |
+| "brutalist", "mechanical", "Swiss", "terminal" | Industrial Brutalism | I |
+| "minimalist", "editorial", "clean", "document" | Premium Utilitarian Minimalism | L |
+| "e-commerce", "DTC", "product", "luxury retail" | Commercial Hero / Digital Product | H |
+| "agency", "Awwwards", "experimental", "portfolio" | Agency Kinetic | J |
 | "glassmorphism", "frosted", "Apple-style" | Liquid Glass Approximation | D |
-| "landing", "SaaS", "marketing" | Modern SaaS Dark or Light | A, B |
+| "landing", "SaaS", "marketing" | Modern SaaS — dark / light | A (dark) · L (light) |
 
 **If a moodboard letter is mentioned** → load `ui-ux-designer` skill for full moodboard spec before building.
+
+> **Remapped 2026-07-30.** This table previously used `G` for Industrial Brutalism while
+> the registry defines `G` as Forest/Organic — opposite aesthetics, so a build routed to
+> G got whichever file loaded first. It also cited `FF` and `HH`, which were never
+> defined anywhere. Brutalism is now `I`, minimalism `L`, agency `J`; `FF`→`D`, `HH`→`H`.
+> Six registry letters (B, E, F, G, K, N) still have no full aesthetic spec — if the
+> brief routes to one of those, flag it instead of improvising.
 
 ---
 
@@ -98,7 +108,7 @@ After design read, set dials. All layout, motion, and density decisions are gate
 
 ## SPACE AGE AESTHETIC SYSTEMS
 
-### VL-01 Dark Glassmorphism (Moodboard A, D)
+### VL-01 Dark Glassmorphism (Moodboard A)
 
 **Mandatory when:** Space Age client site, Space Age dashboard, any `#050508` background request.
 
@@ -157,7 +167,7 @@ After design read, set dials. All layout, motion, and density decisions are gate
 - Data/Labels: `JetBrains Mono` via Fontsource CDN only (`@fontsource/jetbrains-mono`)  
 - **NEVER use Google Fonts CDN or Bunny CDN**
 
-### Liquid Glass / Iridescent (Moodboard D, FF)
+### Liquid Glass / Iridescent (Moodboard D)
 
 WYSIWYG Eyewear brand voice. Rainbow gradient cursive typography locked.
 
@@ -239,7 +249,7 @@ WYSIWYG Eyewear brand voice. Rainbow gradient cursive typography locked.
 
 }
 
-### Industrial Brutalism (Moodboard G)
+### Industrial Brutalism (Moodboard I)
 
 Swiss Industrial Print + Tactical Telemetry.
 
@@ -292,7 +302,7 @@ REV 2.6   UNIT / D-01   SECTOR: 04   ──────────────�
 
 }
 
-### Premium Utilitarian Minimalism (Moodboard B, C)
+### Premium Utilitarian Minimalism (Moodboard L)
 
 Document-style workspace interfaces (Notion-ish, Linear-ish).
 

@@ -174,7 +174,57 @@ It should:
 
 ---
 
+## MOODBOARD REGISTRY — CANONICAL
+
+**This table is the single source of truth for moodboard letters.** Section 0 of the
+master pipeline assigns moodboard ownership to this skill; the registry lives here and
+nowhere else. `cinematic-website-builder` and `design-taste-frontend` reference these
+letters — they must not define their own.
+
+The canonical set is **A–N (14 letters)**. There is no O–Z and no doubled-letter range
+(AA–HH); earlier references to `FF` and `HH` were remapped into this set.
+
+| Letter | Aesthetic | Primary Use | Full spec lives in |
+| :---- | :---- | :---- | :---- |
+| **A** | Space Age Dark Data-Viz | LoyaltyBot, dashboards | §02 below + design-taste-frontend → *VL-01 Dark Glassmorphism* |
+| **B** | Hardware Console | Developer tools | ⚠ no full spec yet |
+| **C** | 3D Clay | Consumer apps | §05 below (partial) |
+| **D** | Liquid Glass | Music, luxury | §01 below + design-taste-frontend → *Liquid Glass / Iridescent* |
+| **E** | Exploded Diagram | Tech hardware | ⚠ no full spec yet |
+| **F** | Urban Street / Hip-Hop | Record Exec, music | ⚠ no full spec yet |
+| **G** | Forest / Organic | Terra Root, wellness | ⚠ no full spec yet |
+| **H** | Fashion Editorial | Portfolio, luxury brands, DTC | §06 below + design-taste-frontend → *Commercial Hero / Digital Product* |
+| **I** | Brutalist | Art, anti-establishment | design-taste-frontend → *Industrial Brutalism* |
+| **J** | Cinematic Film | Film projects, portfolios, agency work | §04 below + design-taste-frontend → *Agency Kinetic* |
+| **K** | Neon Cyberpunk | Gaming, nightlife | ⚠ no full spec yet |
+| **L** | Silicon Valley Clean | SaaS, B2B, minimal editorial | design-taste-frontend → *Premium Utilitarian Minimalism* |
+| **M** | Maximalist Luxury | Space Age Credit | §03 below (partial) |
+| **N** | Retro Futurist | Space Age AI brand | ⚠ no full spec yet |
+
+**Six letters (B, E, F, G, K, N) have a name and a use case but no full aesthetic
+spec.** Routing a build to one of those means improvising the palette, type, and
+texture from the name alone — flag it rather than doing it silently, and treat the
+result as unvalidated until Mr. Black supplies the source definitions.
+
+### Prior conflicts, now resolved
+
+Three files previously used incompatible letterings for the same aesthetics. Resolved
+in favour of this table:
+
+| Letter | Was also claimed as | Resolution |
+| :---- | :---- | :---- |
+| **G** | *Industrial Brutalism* (design-taste-frontend) vs *Forest/Organic* (here) | Brutalism moved to **I** — G stays Forest/Organic. These are opposite aesthetics; a build routed to G was getting either one depending on load order. |
+| **B, C** | *Premium Utilitarian Minimalism* | Moved to **L** (Silicon Valley Clean). B and C keep Hardware Console / 3D Clay. |
+| **E, F** | *Agency Kinetic* | Moved to **J** (Cinematic Film). E and F keep Exploded Diagram / Urban Street. |
+| **FF** | *Liquid Glass / Iridescent* | Folded into **D** — FF was never defined anywhere. |
+| **HH** | *Commercial Hero / Digital Product* | Folded into **H** (Fashion Editorial) — HH was never defined anywhere. |
+
+---
+
 ## VISUAL STYLE SYSTEM
+
+The numbered styles below are the full aesthetic specs. The **Full spec** column in the
+registry above maps each letter to the style that backs it.
 
 ### 01. Liquid Glass
 Use:
