@@ -1,13 +1,13 @@
 ---
-name: gauntlet-loop
+name: crucible-loop
 description: >
   Run any website, landing page, app, or AI agent build through an adversarial
-  multi-judge gauntlet — repeated rounds of build, panel critique, and surgical
+  multi-judge crucible — repeated rounds of build, panel critique, and surgical
   fix — until it clears an Awwwards Site-of-the-Day / godly.website bar instead
   of a "looks fine to me" bar. Orchestrates the existing SA build stack (concept,
   visuals, motion, code, review) rather than replacing it; this skill supplies
-  the loop, the judge panel, and the pass/fail gate. Trigger on "gauntlet",
-  "gauntlet loop", "put this through the gauntlet", "make this Awwwards-level",
+  the loop, the judge panel, and the pass/fail gate. Trigger on "crucible",
+  "crucible loop", "put this through the crucible", "make this Awwwards-level",
   "godly.website tier", "run the panel on this", or any request to push a build
   to a genuinely elite visual/craft bar rather than a "good enough" one.
 metadata:
@@ -15,9 +15,9 @@ metadata:
   origin: Original — composes compound-loop-pro's brainstorm/plan/work/review/compound loop, design-taste-frontend's aesthetic dials, stop-slop-pro's runnable scoring procedure, and the SA cinematic-website-builder pipeline into a single adversarial-judging gate.
 ---
 
-# Gauntlet Loop
+# Crucible Loop
 
-A **gauntlet** is not one review — it's a panel of judges with different, sometimes
+A **crucible** is not one review — it's a panel of judges with different, sometimes
 conflicting standards, run in parallel, who all have veto power. Most builds die not
 because nobody reviewed them but because the one reviewer shared the builder's blind
 spots. This skill fixes that: build, then survive five adversaries who don't.
@@ -27,7 +27,7 @@ the gate** around them. Delegate the actual work to the specialist skill; delega
 nothing on whether it passed.
 
 ```
-intake → concept gauntlet → build → JUDGE PANEL → surgical fix → re-judge → ship
+intake → concept crucible → build → JUDGE PANEL → surgical fix → re-judge → ship
                                         ↑______________________|
                                      (max 3 laps, see §5)
 ```
@@ -42,13 +42,13 @@ State these four things out loud before writing a line of code or a single promp
    or "Mobbin best-in-class tier" (for app UX where Awwwards doesn't apply). Don't
    default to "make it nice" — nice is not a target a judge can fail you against.
 3. **Dials** — pull `design-taste-frontend`'s VARIANCE / MOTION / DENSITY dials and set
-   numbers now, not during review. A gauntlet judged against dials nobody committed to
+   numbers now, not during review. A crucible judged against dials nobody committed to
    is just vibes with extra steps.
 4. **Max laps** — default 3 (see §5). State it now so "still not passing at lap 3" has
    a pre-agreed answer (ship with a documented gap list, or extend by explicit user
    ask) instead of an open-ended grind.
 
-## 1. Concept Gauntlet (before any code)
+## 1. Concept Crucible (before any code)
 
 Borrowed from `compound-loop-pro`'s brainstorm step, tightened for visual work:
 
@@ -77,7 +77,7 @@ While building, hold two rules from `karpathy-guidelines` non-negotiably:
 - **Surgical changes** — every line traces to a concept decision from §1. No
   drive-by refactors, no speculative flexibility "in case."
 - **Simplicity first** — the judge panel in §3 penalizes over-decoration as hard as
-  under-decoration. A gauntlet is not an invitation to add motion until something
+  under-decoration. A crucible is not an invitation to add motion until something
   finally looks impressive.
 
 If the build needs AI-generated imagery or video (hero shots, character plates,
@@ -143,13 +143,13 @@ At lap 3, one of two things is true:
 - **Everything clears** → proceed to §6.
 - **Something still fails** → stop. Report exactly what's still failing, which judge,
   and why the fix didn't land. Do not keep looping past the agreed max (§0.4) without
-  the user explicitly extending it — an open-ended gauntlet is just burning tokens on
+  the user explicitly extending it — an open-ended crucible is just burning tokens on
   diminishing returns, and a stuck failure after two genuine fix attempts is usually a
   concept problem from §1, not a polish problem §4 can solve.
 
 ## 6. Ship & Verify (evidence, not confidence)
 
-Before calling the gauntlet passed, get real evidence — borrowed from
+Before calling the crucible passed, get real evidence — borrowed from
 `website-fusion-engine`'s "build from evidence" rule:
 
 - Launch it with the `run` skill and actually look at it — screenshot the hero,
@@ -182,5 +182,5 @@ Loop structure (brainstorm → build → review-by-committee) adapted from this
 repo's `compound-loop-pro`. Runnable scoring-procedure pattern (score → threshold →
 rewrite flagged only → re-score) adapted from this repo's `stop-slop-pro`.
 Aesthetic dials and anti-slop bans from `design-taste-frontend`. Evidence-over-prose
-build discipline from `website-fusion-engine`. The five-judge panel, the gauntlet
+build discipline from `website-fusion-engine`. The five-judge panel, the crucible
 framing, and the lap-capped loop are original to this skill.
