@@ -1,0 +1,9 @@
+# Generated at build time (embeds a machine-specific absolute notes path).
+# server.py rebuilds this automatically on first run.
+viewer/graph-data.js
+.notes-dir
+
+# Notes you capture by voice at runtime ("remember that …").
+notes/captures/
+
+# Never commit a real key. config.json ships with a placeholder only.
