@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carousels &amp; gestures — SpaceAge Apple-Immersive Web Design</title>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/lab.css">
+<style>
+  .embla { overflow: clip; padding: 20px 0; }
+  .embla__container { display: flex; gap: 22px; padding-inline: max(6vw, calc((100vw - 1240px) / 2)); }
+  .embla__slide {
+    flex: 0 0 min(420px, 76vw); position: relative; aspect-ratio: 4 / 5;
+    border-radius: var(--radius-l); overflow: clip; border: 1px solid var(--line);
+    background: linear-gradient(165deg, var(--surface-raised), var(--surface-sunken));
+    box-shadow: var(--shadow-2);
+    /* Driven per-frame from carousel progress — transform + opacity only. */
+    transform: scale(var(--s, .92));
+    opacity: var(--o, .55);
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 26px; will-change: transform, opacity;
+  }
+  .embla__slide::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(155deg, color-mix(in oklab, var(--brand) 55%, transparent), transparent 60%);
+    opacity: calc(var(--o, .5) * .8);
+  }
+  .embla__slide > * { position: relative; }
+  .embla__slide h3 { font-size: var(--step-1); margin-bottom: 6px; }
+  .embla__slide p { font-size: var(--step--1); margin: 0; }
+  @media (hover: hover) and (pointer: fine) { .embla { cursor: grab; } .embla:active { cursor: grabbing; } }
+
+  .embla__controls { display: flex; align-items: center; gap: 14px; margin-top: 26px; }
+  .embla__btn {
+    width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center;
+    border: 1px solid var(--line); background: rgb(255 255 255 / .05); cursor: pointer;
+  }
+  .embla__btn[disabled] { opacity: .35; cursor: not-allowed; }
+  .embla__progress { flex: 1; height: 2px; background: var(--line); position: relative; overflow: clip; border-radius: 2px; }
+  .embla__progress i { position: absolute; inset: 0; background: var(--accent); transform-origin: 0 50%;
+    transform: scaleX(var(--p, 0)); }
+  .embla__count { font-family: var(--font-mono); font-size: 12px; color: var(--muted); min-width: 66px; text-align: right; }
+
+  /* Physical drag strip — Draggable + InertiaPlugin. */
+  .strip-wrap { overflow: clip; border-block: 1px solid var(--line); padding: 26px 0; margin-top: 20px; }
+  .strip { display: flex; gap: 18px; width: max-content; padding-inline: 6vw; will-change: transform; }
+  .strip__item {
+    width: 220px; height: 280px; border-radius: var(--radius-m); padding: 18px;
+    background: linear-gradient(160deg, color-mix(in oklab, var(--violet) 40%, var(--surface)), var(--surface-sunken));
+    border: 1px solid var(--line); box-shadow: var(--shadow-1);
+    display: flex; align-items: flex-end; font-size: var(--step--1);
+  }
+  .strip__item:nth-child(even) { background: linear-gradient(160deg, color-mix(in oklab, var(--accent) 34%, var(--surface)), var(--surface-sunken)); }
+  .readout { font-family: var(--font-mono); font-size: 12px; color: var(--muted); margin-top: 14px; }
+</style>
+</head>
+<body>
+<div class="progress-rail" aria-hidden="true"><i></i></div>
+<nav class="labnav glass scroll-edge" aria-label="Lab sections">
+  <strong>SpaceAge</strong>
+  <a href="index.html">Overview</a><a href="scroll.html">Scroll</a><a href="type.html">Type</a>
+  <a href="material.html">Material</a><a href="carousel.html" aria-current="page">Carousel</a>
+  <a href="transitions.html">Transitions</a><a href="smooth.html">Smooth</a>
+</nav>
+
+<main>
+  <section class="section section--lead">
+    <div class="shell">
+      <div class="kicker">Momentum carousel</div>
+      <h2>Drag has weight. Keyboard has parity.</h2>
+      <p>Embla owns the physics; the visual treatment is a pure function of carousel progress. One
+        treatment — centre slide scales up and edges recede — not five stacked effects.</p>
+    </div>
+
+    <section class="embla" data-embla aria-roledescription="carousel" aria-label="Immersive design systems">
+      <div class="embla__container" data-embla-container>
+        <article class="embla__slide" role="group" aria-roledescription="slide" aria-label="1 of 6">
+          <h3>Directness</h3><p>Feedback starts on pointer-down, not on release.</p></article>
+        <article class="embla__slide" role="group" aria-roledescription="slide" aria-label="2 of 6">
+          <h3>Velocity</h3><p>Release velocity carries into the landing state.</p></article>
+        <article class="embla__slide" role="group" aria-roledescription="slide" aria-label="3 of 6">
+          <h3>Interruptible</h3><p>A new gesture retargets from the live value.</p></article>
+        <article class="embla__slide" role="group" aria-roledescription="slide" aria-label="4 of 6">
+          <h3>Boundaries</h3><p>Edges resist progressively instead of stopping dead.</p></article>
+        <article class="embla__slide" role="group" aria-roledescription="slide" aria-label="5 of 6">
+          <h3>Continuity</h3><p>The detail view grows from the card you touched.</p></article>
+        <article class="embla__slide" role="group" aria-roledescription="slide" aria-label="6 of 6">
+          <h3>Restraint</h3><p>One progress-driven treatment per carousel.</p></article>
+      </div>
+    </section>
+
+    <div class="shell">
+      <div class="embla__controls">
+        <button class="embla__btn action" data-embla-prev aria-label="Previous slide">&#8592;</button>
+        <button class="embla__btn action" data-embla-next aria-label="Next slide">&#8594;</button>
+        <div class="embla__progress" aria-hidden="true"><i data-embla-bar></i></div>
+        <div class="embla__count" aria-live="polite" data-embla-count>1 / 6</div>
+      </div>
+      <p class="note">Autoplay is off by default. Controls carry explicit labels, the live region announces
+        position, and <code>prefers-reduced-motion</code> collapses the transition duration to zero rather
+        than removing the ability to advance.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <div class="kicker">Free drag + inertia</div>
+      <h2>Throw it and it keeps going.</h2>
+      <p>GSAP Draggable with InertiaPlugin: release velocity is projected into a natural landing point, and
+        the bounds resist progressively instead of clamping.</p>
+      <p class="readout" data-inertia-readout>x 0</p>
+    </div>
+    <div class="strip-wrap">
+      <div class="strip" data-strip>
+        <div class="strip__item">01 · grab offset preserved</div>
+        <div class="strip__item">02 · 1:1 tracking</div>
+        <div class="strip__item">03 · velocity carried</div>
+        <div class="strip__item">04 · edge resistance</div>
+        <div class="strip__item">05 · interruptible</div>
+        <div class="strip__item">06 · snap optional</div>
+        <div class="strip__item">07 · pointer events only</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer"><div class="shell">Carousel lab · drag, inertia, keyboard and reduced-motion paths are all asserted.</div></footer>
+
+<script type="module">
+import { loadDeps, ready, flags } from './js/boot.js';
+
+const { gsap, Draggable, InertiaPlugin, EmblaCarousel } = await loadDeps([
+  'gsap', 'Draggable', 'InertiaPlugin', 'EmblaCarousel',
+]);
+gsap.registerPlugin(Draggable, InertiaPlugin);
+
+const handles = {};
+
+/* ── Embla ────────────────────────────────────────────────────────────────── */
+{
+  const root = document.querySelector('[data-embla]');
+  const prev = document.querySelector('[data-embla-prev]');
+  const next = document.querySelector('[data-embla-next]');
+  const bar = document.querySelector('[data-embla-bar]');
+  const count = document.querySelector('[data-embla-count]');
+
+  const embla = EmblaCarousel(root, {
+    align: 'center',
+    containScroll: 'trimSnaps',
+    dragThreshold: 10,
+    duration: flags.motionOff ? 0 : 26,   // reduced motion still advances, just instantly
+    loop: false,
+  });
+
+  const slides = embla.slideNodes();
+
+  /* Geometry is measured once (and on reInit), never per frame — the paint path
+     below does arithmetic only, so scrolling never forces a reflow.
+
+     Do NOT drive this off scrollSnapList() indices: with containScroll:'trimSnaps'
+     the outer snaps are clamped into the scrollable range, so adjacent snaps
+     bunch together at both ends and the centre treatment collapses there. Real
+     pixel positions do not have that problem. */
+  let geo = { centers: [], span: 0, viewport: 0 };
+  function measure() {
+    const viewport = root.clientWidth;
+    const container = root.querySelector('[data-embla-container]');
+    geo = {
+      viewport,
+      span: Math.max(1, container.scrollWidth - viewport),
+      centers: slides.map((s) => s.offsetLeft + s.offsetWidth / 2),
+    };
+  }
+
+  function paint() {
+    const progress = gsap.utils.clamp(0, 1, embla.scrollProgress());
+    const scrolled = progress * geo.span;
+    const middle = geo.viewport / 2;
+    slides.forEach((slide, i) => {
+      const distance = Math.abs(geo.centers[i] - scrolled - middle);
+      // 1 at dead centre, 0 once a slide is a full viewport-half away
+      const closeness = gsap.utils.clamp(0, 1, 1 - distance / middle);
+      slide.style.setProperty('--s', (0.9 + closeness * 0.1).toFixed(4));
+      slide.style.setProperty('--o', (0.7 + closeness * 0.3).toFixed(4));
+    });
+    bar.style.setProperty('--p', progress.toFixed(4));
+  }
+
+  function syncControls() {
+    prev.disabled = !embla.canScrollPrev();
+    next.disabled = !embla.canScrollNext();
+    count.textContent = `${embla.selectedScrollSnap() + 1} / ${slides.length}`;
+  }
+
+  embla
+    .on('scroll', paint)
+    .on('reInit', () => { measure(); paint(); syncControls(); })
+    .on('select', syncControls);
+  measure();
+  paint();
+  syncControls();
+
+  prev.addEventListener('click', () => embla.scrollPrev());
+  next.addEventListener('click', () => embla.scrollNext());
+
+  /* Keyboard parity: the carousel is operable without ever dragging. */
+  root.tabIndex = 0;
+  root.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') { embla.scrollPrev(); e.preventDefault(); }
+    if (e.key === 'ArrowRight') { embla.scrollNext(); e.preventDefault(); }
+  });
+
+  handles.embla = embla;
+}
+
+/* ── Draggable + inertia ──────────────────────────────────────────────────── */
+{
+  const strip = document.querySelector('[data-strip]');
+  const wrap = strip.parentElement;
+  const readout = document.querySelector('[data-inertia-readout]');
+  const minX = () => Math.min(0, wrap.clientWidth - strip.scrollWidth);
+
+  const [drag] = Draggable.create(strip, {
+    type: 'x',
+    inertia: !flags.motionOff,     // reduced motion → drag still works, throw does not
+    edgeResistance: 0.72,          // progressive resistance instead of a hard wall
+    dragResistance: 0,
+    bounds: { minX: minX(), maxX: 0 },
+    allowNativeTouchScrolling: true,
+    onDrag: report,
+    onThrowUpdate: report,
+  });
+
+  function report() {
+    const x = Math.round(gsap.getProperty(strip, 'x'));
+    readout.textContent = `x ${x}`;
+    window.__lab.stripX = x;
+    window.__lab.throwing = drag.isThrowing;
+  }
+  report();
+
+  addEventListener('resize', () => {
+    drag.applyBounds({ minX: minX(), maxX: 0 });
+  });
+
+  handles.drag = drag;
+}
+
+await ready(handles);
+</script>
+</body>
+</html>

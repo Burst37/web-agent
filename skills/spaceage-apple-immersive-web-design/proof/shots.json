@@ -1,0 +1,173 @@
+{
+  "generatedAt": "2026-08-05T08:37:52.065Z",
+  "shots": [
+    {
+      "name": "01-overview",
+      "path": "index.html",
+      "jump": 0,
+      "viewport": "1440x900",
+      "file": "proof/shots/01-overview.png"
+    },
+    {
+      "name": "02-scroll-hero-pinned",
+      "path": "scroll.html",
+      "jump": 0,
+      "viewport": "1440x900",
+      "file": "proof/shots/02-scroll-hero-pinned.png"
+    },
+    {
+      "name": "03-scroll-mid-scrub",
+      "path": "scroll.html",
+      "jump": 1500,
+      "viewport": "1440x900",
+      "file": "proof/shots/03-scroll-mid-scrub.png"
+    },
+    {
+      "name": "04-scroll-reveal",
+      "path": "scroll.html",
+      "jump": 3600,
+      "viewport": "1440x900",
+      "file": "proof/shots/04-scroll-reveal.png"
+    },
+    {
+      "name": "05-scroll-sticky-narrative",
+      "path": "scroll.html",
+      "jump": 4900,
+      "viewport": "1440x900",
+      "file": "proof/shots/05-scroll-sticky-narrative.png"
+    },
+    {
+      "name": "06-scroll-horizontal",
+      "path": "scroll.html",
+      "jump": 7400,
+      "viewport": "1440x900",
+      "file": "proof/shots/06-scroll-horizontal.png"
+    },
+    {
+      "name": "07-scroll-sticky-stack",
+      "path": "scroll.html",
+      "jump": 9500,
+      "viewport": "1440x900",
+      "file": "proof/shots/07-scroll-sticky-stack.png"
+    },
+    {
+      "name": "08-scroll-media-scrub",
+      "path": "scroll.html",
+      "jump": 11400,
+      "viewport": "1440x900",
+      "file": "proof/shots/08-scroll-media-scrub.png"
+    },
+    {
+      "name": "09-type-hero",
+      "path": "type.html",
+      "jump": 0,
+      "viewport": "1440x900",
+      "file": "proof/shots/09-type-hero.png"
+    },
+    {
+      "name": "10-type-split-lines",
+      "path": "type.html",
+      "jump": 1150,
+      "viewport": "1440x900",
+      "file": "proof/shots/10-type-split-lines.png"
+    },
+    {
+      "name": "11-type-axis-and-trim",
+      "path": "type.html",
+      "jump": 3900,
+      "viewport": "1440x900",
+      "file": "proof/shots/11-type-axis-and-trim.png"
+    },
+    {
+      "name": "12-material-glass",
+      "path": "material.html",
+      "jump": 0,
+      "viewport": "1440x900",
+      "file": "proof/shots/12-material-glass.png"
+    },
+    {
+      "name": "13-material-popover",
+      "path": "material.html",
+      "jump": 0,
+      "viewport": "1440x900",
+      "file": "proof/shots/13-material-popover.png"
+    },
+    {
+      "name": "14-material-depth",
+      "path": "material.html",
+      "jump": 1150,
+      "viewport": "1440x900",
+      "file": "proof/shots/14-material-depth.png"
+    },
+    {
+      "name": "15-carousel",
+      "path": "carousel.html",
+      "jump": 130,
+      "viewport": "1440x900",
+      "file": "proof/shots/15-carousel.png"
+    },
+    {
+      "name": "16-carousel-inertia-strip",
+      "path": "carousel.html",
+      "jump": 1250,
+      "viewport": "1440x900",
+      "file": "proof/shots/16-carousel-inertia-strip.png"
+    },
+    {
+      "name": "17-transitions-gallery",
+      "path": "transitions.html",
+      "jump": 130,
+      "viewport": "1440x900",
+      "file": "proof/shots/17-transitions-gallery.png"
+    },
+    {
+      "name": "18-transitions-flip-open",
+      "path": "transitions.html",
+      "jump": 130,
+      "viewport": "1440x900",
+      "file": "proof/shots/18-transitions-flip-open.png"
+    },
+    {
+      "name": "19-transitions-detail",
+      "path": "transitions-detail.html",
+      "jump": 0,
+      "viewport": "1440x900",
+      "file": "proof/shots/19-transitions-detail.png"
+    },
+    {
+      "name": "20-mobile-scroll-hero",
+      "path": "scroll.html",
+      "jump": 0,
+      "viewport": "430x932",
+      "file": "proof/shots/20-mobile-scroll-hero.png"
+    },
+    {
+      "name": "21-mobile-story",
+      "path": "scroll.html",
+      "jump": 2600,
+      "viewport": "430x932",
+      "file": "proof/shots/21-mobile-story.png"
+    },
+    {
+      "name": "22-mobile-carousel",
+      "path": "carousel.html",
+      "jump": 130,
+      "viewport": "430x932",
+      "file": "proof/shots/22-mobile-carousel.png"
+    },
+    {
+      "name": "23-reduced-motion-scroll",
+      "path": "scroll.html",
+      "jump": 900,
+      "viewport": "1440x900",
+      "file": "proof/shots/23-reduced-motion-scroll.png"
+    },
+    {
+      "name": "24-reduced-transparency-material",
+      "path": "material.html",
+      "jump": 0,
+      "viewport": "1440x900",
+      "file": "proof/shots/24-reduced-transparency-material.png"
+    }
+  ]
+}

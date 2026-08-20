@@ -1,0 +1,622 @@
+{
+  "generatedAt": "2026-08-05T08:37:14.543Z",
+  "node": "v22.22.2",
+  "total": 100,
+  "passed": 100,
+  "failed": 0,
+  "framePacing": {
+    "frames": 515,
+    "median": 16.7,
+    "p95": 16.9,
+    "worst": 28.1,
+    "longTasks": 0,
+    "longestTask": 0,
+    "refraction": {
+      "withLens": 49.3,
+      "withoutLens": 46.8,
+      "ratio": 1.05
+    }
+  },
+  "results": [
+    {
+      "group": "boot",
+      "name": "index.html reaches __ready",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boot",
+      "name": "index.html has no console or page errors",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boot",
+      "name": "scroll.html reaches __ready",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boot",
+      "name": "scroll.html has no console or page errors",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boot",
+      "name": "type.html reaches __ready",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boot",
+      "name": "type.html has no console or page errors",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boot",
+      "name": "material.html reaches __ready",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boot",
+      "name": "material.html has no console or page errors",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boot",
+      "name": "carousel.html reaches __ready",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boot",
+      "name": "carousel.html has no console or page errors",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boot",
+      "name": "transitions.html reaches __ready",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boot",
+      "name": "transitions.html has no console or page errors",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boot",
+      "name": "transitions-detail.html reaches __ready",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boot",
+      "name": "transitions-detail.html has no console or page errors",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boot",
+      "name": "smooth.html reaches __ready",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "boot",
+      "name": "smooth.html has no console or page errors",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "scroll",
+      "name": "pinned scene is fixed inside its range",
+      "pass": true,
+      "detail": "position: fixed"
+    },
+    {
+      "group": "scroll",
+      "name": "pinned scene releases after its range",
+      "pass": true,
+      "detail": "position: relative"
+    },
+    {
+      "group": "scroll",
+      "name": "clip-path wipe interpolates monotonically with scroll",
+      "pass": true,
+      "detail": "0:100.0% → 700:83.3% → 1400:14.5% → 2000:0.0%"
+    },
+    {
+      "group": "scroll",
+      "name": "scrubbed title travels with scroll",
+      "pass": true,
+      "detail": "0:0px → 700:-83px → 1400:-254px → 2000:-254px"
+    },
+    {
+      "group": "scroll",
+      "name": "panel materialises over the pinned range",
+      "pass": true,
+      "detail": "0 → 1"
+    },
+    {
+      "group": "scroll",
+      "name": "reveal is hidden before entering the viewport",
+      "pass": true,
+      "detail": "max 0.00"
+    },
+    {
+      "group": "scroll",
+      "name": "reveal resolves to visible in view",
+      "pass": true,
+      "detail": "min 1.00"
+    },
+    {
+      "group": "scroll",
+      "name": "horizontal track translates from vertical scroll",
+      "pass": true,
+      "detail": "0px → -1263px"
+    },
+    {
+      "group": "scroll",
+      "name": "nested containerAnimation trigger drives a per-card value",
+      "pass": true,
+      "detail": "--card-heat 0.12 → 0.7"
+    },
+    {
+      "group": "scroll",
+      "name": "media scrub maps scroll progress to frame index",
+      "pass": true,
+      "detail": "0 → 14 → 34"
+    },
+    {
+      "group": "scroll",
+      "name": "sticky stack holds multiple cards at staggered offsets",
+      "pass": true,
+      "detail": "tops 96, 114, 132, 621"
+    },
+    {
+      "group": "scroll",
+      "name": "scroll velocity drives a skew accent",
+      "pass": true,
+      "detail": "peak skew factor 0.0677"
+    },
+    {
+      "group": "scroll",
+      "name": "velocity accent returns to rest when scrolling stops",
+      "pass": true,
+      "detail": "resting 0.0000"
+    },
+    {
+      "group": "scroll",
+      "name": "mobile does not pin the hero scene",
+      "pass": true,
+      "detail": "position: relative"
+    },
+    {
+      "group": "scroll",
+      "name": "mobile receives the static composition branch",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "scroll",
+      "name": "reduced motion removes the pinned scrub",
+      "pass": true,
+      "detail": "position: relative"
+    },
+    {
+      "group": "scroll",
+      "name": "reduced motion leaves all revealed content visible",
+      "pass": true,
+      "detail": "min opacity 1.00"
+    },
+    {
+      "group": "type",
+      "name": "SplitText splits into multiple lines",
+      "pass": true,
+      "detail": "5 lines"
+    },
+    {
+      "group": "type",
+      "name": "mask: \"lines\" wraps every line in a clipping element",
+      "pass": true,
+      "detail": "5 masks, overflow: clip"
+    },
+    {
+      "group": "type",
+      "name": "word split produces one element per word",
+      "pass": true,
+      "detail": "8 words"
+    },
+    {
+      "group": "type",
+      "name": "character split is limited to a single short word",
+      "pass": true,
+      "detail": "9 chars"
+    },
+    {
+      "group": "type",
+      "name": "split lines keep one accessible sentence",
+      "pass": true,
+      "detail": "Lines rise out of their own mask, because …"
+    },
+    {
+      "group": "type",
+      "name": "split words keep their accessible sentence",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "type",
+      "name": "split characters keep their accessible word",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "type",
+      "name": "registered @property animates the gradient angle",
+      "pass": true,
+      "detail": "128.573deg → 164.568deg"
+    },
+    {
+      "group": "type",
+      "name": "text-box-trim reduces the rendered text box",
+      "pass": true,
+      "detail": "35.0px → 22.0px"
+    },
+    {
+      "group": "type",
+      "name": "marquee advances continuously",
+      "pass": true,
+      "detail": "-47.3 → -82.7"
+    },
+    {
+      "group": "type",
+      "name": "marquee direction follows scroll direction",
+      "pass": true,
+      "detail": "timeScale 1.61 → -1.55"
+    },
+    {
+      "group": "type",
+      "name": "scroll timeline interpolates the variable-font weight axis",
+      "pass": true,
+      "detail": "wght 300 → 820"
+    },
+    {
+      "group": "type",
+      "name": "the animated axis reaches font-variation-settings",
+      "pass": true,
+      "detail": "\"opsz\" 60, \"wght\" 820"
+    },
+    {
+      "group": "type",
+      "name": "CSS-only masked reveal advances with scroll",
+      "pass": true,
+      "detail": "--reveal 0 → 1"
+    },
+    {
+      "group": "type",
+      "name": "reduced motion pauses the marquee",
+      "pass": true,
+      "detail": "-1063.00 → -1063.00"
+    },
+    {
+      "group": "type",
+      "name": "reduced motion stops the gradient sheen",
+      "pass": true,
+      "detail": "animation-name: none"
+    },
+    {
+      "group": "material",
+      "name": "glass applies a real backdrop-filter",
+      "pass": true,
+      "detail": "blur(32px) saturate(1.48) contrast(1.04)"
+    },
+    {
+      "group": "material",
+      "name": "refraction rim is feature-probed, not assumed",
+      "pass": true,
+      "detail": "supported: true, applied to chrome: true"
+    },
+    {
+      "group": "material",
+      "name": "refraction rim stays off large content surfaces",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "material",
+      "name": "material weight scales with surface size",
+      "pass": true,
+      "detail": "10px vs 34px blur"
+    },
+    {
+      "group": "material",
+      "name": "popover opens",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "material",
+      "name": "anchor positioning aligns the menu to its trigger",
+      "pass": true,
+      "detail": "menu x 475 vs trigger x 475"
+    },
+    {
+      "group": "material",
+      "name": "glass materialises rather than only fading",
+      "pass": true,
+      "detail": "transitions: opacity, transform, filter, overlay, display @ 0.32s, 0.56s, 0.56s, 0.56s, 0.56s"
+    },
+    {
+      "group": "material",
+      "name": "materialisation is interpolated, not switched",
+      "pass": true,
+      "detail": "1 intermediate blur/scale frames"
+    },
+    {
+      "group": "material",
+      "name": "accordion reaches its intrinsic height",
+      "pass": true,
+      "detail": "112.2px"
+    },
+    {
+      "group": "material",
+      "name": "height:auto is interpolated, not snapped",
+      "pass": true,
+      "detail": "6 intermediate frames, e.g. 23.7px"
+    },
+    {
+      "group": "material",
+      "name": "depth anatomy stepper changes the shadow stack",
+      "pass": true,
+      "detail": "rgba(0, 0, 0, 0.5) 0px 2px 6… → none"
+    },
+    {
+      "group": "material",
+      "name": "reduced transparency removes every backdrop-filter",
+      "pass": true,
+      "detail": "backdrop-filter: none"
+    },
+    {
+      "group": "material",
+      "name": "reduced transparency substitutes an opaque surface",
+      "pass": true,
+      "detail": "background: oklch(0.19 0.02 255)"
+    },
+    {
+      "group": "material",
+      "name": "increased contrast raises border contrast",
+      "pass": true,
+      "detail": "border-color: rgba(255, 255, 255, 0.72)"
+    },
+    {
+      "group": "carousel",
+      "name": "previous control is disabled at the first slide",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "carousel",
+      "name": "next control advances the carousel",
+      "pass": true,
+      "detail": "index 1"
+    },
+    {
+      "group": "carousel",
+      "name": "live region reports the new position",
+      "pass": true,
+      "detail": "2 / 6"
+    },
+    {
+      "group": "carousel",
+      "name": "previous control enables once it can move",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "carousel",
+      "name": "keyboard reaches parity with drag",
+      "pass": true,
+      "detail": "index 2"
+    },
+    {
+      "group": "carousel",
+      "name": "progress-driven treatment favours the centre slide",
+      "pass": true,
+      "detail": "centre 0.999 vs far 0.900"
+    },
+    {
+      "group": "carousel",
+      "name": "drag tracks the pointer",
+      "pass": true,
+      "detail": "x -360px at release"
+    },
+    {
+      "group": "carousel",
+      "name": "release velocity is projected into inertia",
+      "pass": true,
+      "detail": "-360px → -381px after release"
+    },
+    {
+      "group": "carousel",
+      "name": "reduced motion collapses the transition duration",
+      "pass": true,
+      "detail": "duration 0"
+    },
+    {
+      "group": "carousel",
+      "name": "reduced motion disables the inertia throw",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "carousel",
+      "name": "reduced motion still allows advancing slides",
+      "pass": true,
+      "detail": "index 1"
+    },
+    {
+      "group": "transitions",
+      "name": "Flip animation is running mid-flight",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "transitions",
+      "name": "the same node lands in the detail view",
+      "pass": true,
+      "detail": "399px → 718px wide"
+    },
+    {
+      "group": "transitions",
+      "name": "Flip completes",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "transitions",
+      "name": "closing returns the element along the same path",
+      "pass": true,
+      "detail": "x 101 vs 101"
+    },
+    {
+      "group": "transitions",
+      "name": "filter changes the rendered rows",
+      "pass": true,
+      "detail": "6 → 3"
+    },
+    {
+      "group": "transitions",
+      "name": "the change ran through startViewTransition",
+      "pass": true,
+      "detail": "completed transitions: 1"
+    },
+    {
+      "group": "transitions",
+      "name": "surviving rows keep stable view-transition-names",
+      "pass": true,
+      "detail": "row-c, row-e, row-f"
+    },
+    {
+      "group": "transitions",
+      "name": "navigation reaches the destination document",
+      "pass": true,
+      "detail": "http://localhost:4321/transitions-detail.html"
+    },
+    {
+      "group": "transitions",
+      "name": "cross-document view transition actually runs",
+      "pass": true,
+      "detail": "pagereveal.viewTransition: true"
+    },
+    {
+      "group": "smooth",
+      "name": "Lenis is instantiated and driven by the GSAP ticker",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "smooth",
+      "name": "smoothed scrolling moves the document",
+      "pass": true,
+      "detail": "0 → 1400"
+    },
+    {
+      "group": "smooth",
+      "name": "ScrollTrigger stays in sync with the smoothed position",
+      "pass": true,
+      "detail": "probe progress 1.000"
+    },
+    {
+      "group": "smooth",
+      "name": "reduced motion never installs the smooth scroller",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "a11y",
+      "name": "scroll.html: every control has an accessible name",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "a11y",
+      "name": "scroll.html: focus produces a visible outline",
+      "pass": true,
+      "detail": "outline-style: auto"
+    },
+    {
+      "group": "a11y",
+      "name": "type.html: every control has an accessible name",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "a11y",
+      "name": "type.html: focus produces a visible outline",
+      "pass": true,
+      "detail": "outline-style: auto"
+    },
+    {
+      "group": "a11y",
+      "name": "material.html: every control has an accessible name",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "a11y",
+      "name": "material.html: focus produces a visible outline",
+      "pass": true,
+      "detail": "outline-style: auto"
+    },
+    {
+      "group": "a11y",
+      "name": "carousel.html: every control has an accessible name",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "a11y",
+      "name": "carousel.html: focus produces a visible outline",
+      "pass": true,
+      "detail": "outline-style: auto"
+    },
+    {
+      "group": "a11y",
+      "name": "transitions.html: every control has an accessible name",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "group": "a11y",
+      "name": "transitions.html: focus produces a visible outline",
+      "pass": true,
+      "detail": "outline-style: auto"
+    },
+    {
+      "group": "perf",
+      "name": "median frame interval stays under 20ms during a full scroll-through",
+      "pass": true,
+      "detail": "median 16.7ms · p95 16.9ms · worst 28.1ms"
+    },
+    {
+      "group": "perf",
+      "name": "no long task exceeds 200ms while scrolling",
+      "pass": true,
+      "detail": "0 long tasks, longest 0ms"
+    },
+    {
+      "group": "perf",
+      "name": "refraction rim cost is measured and bounded",
+      "pass": true,
+      "detail": "46.8ms → 49.3ms median frame (×1.05, software rasterisation)"
+    }
+  ]
+}

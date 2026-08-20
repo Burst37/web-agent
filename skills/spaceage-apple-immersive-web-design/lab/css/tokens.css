@@ -1,0 +1,324 @@
+/* ============================================================================
+   tokens.css — the portable half of this skill.
+   Copy this file into a real project. It has no lab-specific rules.
+
+   Contents
+   1. Registered custom properties (@property) — makes gradients, glow and
+      variable-font axes interpolable and compositor-friendly.
+   2. Motion tokens (duration / easing / spring-ish curves).
+   3. Fluid type scale + optical typography defaults.
+   4. Perceptual colour ramp (OKLCH) + single-light elevation.
+   5. Liquid Glass-inspired material with three honest fallback tiers.
+   6. Accessibility parallel design (reduced motion / transparency / contrast).
+   ========================================================================== */
+
+/* 1 ── Registered properties ------------------------------------------------
+   Unregistered custom properties are strings and cannot be animated. Registering
+   them gives the engine a type, so `--reveal: 0 -> 1` animates smoothly and can
+   drive masks, gradients and font axes from a single value. */
+
+@property --reveal {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --sheen-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 120deg;
+}
+@property --glow {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+@property --wght {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 400;
+}
+@property --edge-opacity {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
+:root {
+  color-scheme: dark;
+
+  /* 2 ── Motion ------------------------------------------------------------
+     Four durations, four curves. If a component needs a fifth, the component
+     is wrong, not the scale. */
+  --motion-instant: 100ms;
+  --motion-fast: 180ms;
+  --motion-base: 320ms;
+  --motion-slow: 560ms;
+
+  /* enter: fast out of the gate, long settle — reads as "arriving"          */
+  --ease-enter: linear(
+    0, 0.2278 2.1%, 0.4382 4.4%, 0.6172 6.9%, 0.7594 9.6%, 0.8679 12.6%,
+    0.9463 15.9%, 0.9987 19.8%, 1.0242 23.4%, 1.0319 27.4%, 1.0264 33.6%, 1 61.6%, 1
+  );
+  /* exit: slow to leave, fast to finish — reads as "dismissed"              */
+  --ease-exit: cubic-bezier(0.7, 0, 0.84, 0);
+  /* standard: the default for anything bidirectional                        */
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* spring: a real overshoot as a linear() curve, so CSS gets spring feel
+     without a JS runtime. Use for press/release and popovers.               */
+  --ease-spring: linear(
+    0, 0.0072 1.1%, 0.0286 2.3%, 0.1042 4.6%, 0.2264 7.1%, 0.5308 12.5%,
+    0.6803 15.2%, 0.8062 18%, 0.9092 21%, 0.9825 24.1%, 1.0281 27.4%,
+    1.0505 30.9%, 1.0538 34.8%, 1.0333 42.6%, 0.9993 51.7%, 0.9876 58.8%,
+    0.9975 74.2%, 1
+  );
+
+  --press-scale: 0.97;
+  --hover-lift: -4px;
+
+  /* 3 ── Type -------------------------------------------------------------- */
+  --step--1: clamp(0.78rem, 0.74rem + 0.18vw, 0.9rem);
+  --step-0: clamp(1rem, 0.94rem + 0.24vw, 1.15rem);
+  --step-1: clamp(1.35rem, 1.15rem + 0.85vw, 1.9rem);
+  --step-2: clamp(2rem, 1.45rem + 2.2vw, 3.5rem);
+  --step-3: clamp(3.1rem, 1.8rem + 5vw, 7.5rem);
+  --step-4: clamp(4.5rem, 2rem + 9vw, 12rem);
+
+  /* Tracking is a function of size: big type needs negative, small needs positive. */
+  --track-display: -0.055em;
+  --track-heading: -0.028em;
+  --track-body: 0em;
+  --track-micro: 0.06em;
+
+  --font-display: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Inter var',
+    Inter, 'Segoe UI', system-ui, sans-serif;
+  --font-text: var(--font-display);
+  --font-mono: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+
+  /* 4 ── Colour + elevation ------------------------------------------------
+     OKLCH keeps lightness perceptually even across hues, so a ramp built by
+     changing L reads as one material instead of five different plastics. */
+  --bg: oklch(10% 0.018 255);
+  --surface: oklch(17% 0.025 255);
+  --surface-raised: color-mix(in oklab, var(--surface) 84%, white);
+  --surface-sunken: color-mix(in oklab, var(--surface) 86%, black);
+  --ink: oklch(96% 0.01 255);
+  --muted: oklch(74% 0.035 255);
+  --line: color-mix(in oklab, white 13%, transparent);
+
+  --brand: oklch(72% 0.17 250);
+  --accent: oklch(78% 0.13 205);
+  --hot: oklch(72% 0.18 330);
+  --violet: oklch(66% 0.22 290);
+
+  /* One light source, above and slightly in front. Every shadow agrees. */
+  --shadow-1: 0 1px 1px rgb(0 0 0 / 0.18), 0 8px 24px rgb(0 0 0 / 0.14);
+  --shadow-2: 0 2px 2px rgb(0 0 0 / 0.18), 0 18px 60px rgb(0 0 0 / 0.24),
+    inset 0 1px 0 rgb(255 255 255 / 0.12);
+  --shadow-3: 0 4px 8px rgb(0 0 0 / 0.2), 0 34px 100px rgb(0 0 0 / 0.34),
+    inset 0 1px 0 rgb(255 255 255 / 0.14);
+
+  --radius-s: 12px;
+  --radius-m: 20px;
+  --radius-l: 28px;
+  --radius-pill: 999px;
+}
+
+/* Optical vertical metrics. text-box-trim removes the font's built-in leading
+   so a heading's visual box matches its cap height — the difference between
+   "aligned" and "actually aligned". Ignored by engines that lack it. */
+@supports (text-box-trim: trim-both) {
+  .trim-both {
+    text-box-trim: trim-both;
+    text-box-edge: cap alphabetic;
+  }
+}
+
+.display {
+  font-family: var(--font-display);
+  font-size: var(--step-4);
+  line-height: 0.86;
+  letter-spacing: var(--track-display);
+  font-optical-sizing: auto;
+  font-variation-settings: 'wght' var(--wght);
+  text-wrap: balance;
+}
+
+.lead {
+  font-size: var(--step-1);
+  line-height: 1.4;
+  letter-spacing: var(--track-heading);
+  text-wrap: pretty;
+  color: var(--muted);
+}
+
+body {
+  font-family: var(--font-text);
+  font-optical-sizing: auto;
+  letter-spacing: var(--track-body);
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 5 ── Liquid Glass-inspired material ---------------------------------------
+   Four layers, in this order, or it reads as a grey box with blur:
+     a. tint fill        — the material's own colour
+     b. specular top     — the light catching the top edge
+     c. sheen sweep      — the moving highlight (::before)
+     d. refraction rim   — the edge bending what is behind it (::after)
+   The `filter: url(#lg-refract)` line is the honest approximation of iOS's
+   lensing: an SVG displacement map warps the edge. It is applied only where
+   supported and only to the rim layer, never to text. */
+
+.glass {
+  --glass-fill: color-mix(in oklab, #10141f 58%, transparent);
+  --glass-line: color-mix(in oklab, white 24%, transparent);
+  --glass-blur: 24px;
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.13), transparent 38%),
+    var(--glass-fill);
+  border: 1px solid var(--glass-line);
+  box-shadow: var(--shadow-2);
+  backdrop-filter: blur(var(--glass-blur)) saturate(148%) contrast(1.04);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(148%) contrast(1.04);
+}
+
+.glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(100% 55% at 14% 0%, rgb(255 255 255 / 0.28), transparent 62%),
+    linear-gradient(
+      var(--sheen-angle),
+      transparent 20%,
+      rgb(255 255 255 / 0.09) 46%,
+      transparent 70%
+    );
+  mix-blend-mode: screen;
+  opacity: 0.72;
+}
+
+/* Rim refraction. Sits inside the clip, tracks the pointer via --light-x/y. */
+.glass::after {
+  content: '';
+  position: absolute;
+  inset: -30%;
+  pointer-events: none;
+  background: conic-gradient(
+    from 220deg,
+    transparent,
+    color-mix(in oklab, var(--accent) 20%, transparent),
+    transparent 36%,
+    color-mix(in oklab, var(--hot) 16%, transparent),
+    transparent 70%
+  );
+  filter: blur(28px);
+  opacity: 0.55;
+  transform: translate3d(var(--light-x, 0), var(--light-y, 0), 0);
+}
+
+/* Size drives weight: a bigger pane of glass is a thicker pane of glass. */
+.glass--thick {
+  --glass-blur: 32px;
+  box-shadow: var(--shadow-3);
+}
+.glass--clear {
+  --glass-fill: color-mix(in oklab, white 7%, transparent);
+  --glass-blur: 14px;
+}
+
+/* Tier 3 fallback: no backdrop-filter at all → opaque surface, same hierarchy. */
+@supports not (backdrop-filter: blur(1px)) {
+  .glass {
+    background: oklch(20% 0.02 255);
+  }
+  .glass::before,
+  .glass::after {
+    display: none;
+  }
+}
+
+/* Scroll-edge treatment: a soft gradient under floating chrome instead of a
+   hard divider. --edge-opacity is driven by scroll (JS or scroll-timeline). */
+.scroll-edge::after {
+  content: '';
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  bottom: -18px;
+  height: 22px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgb(0 0 0 / 0.22), transparent);
+  filter: blur(8px);
+  opacity: var(--edge-opacity, 0);
+}
+
+/* Interaction feedback: press responds on pointer-down, hover only where a
+   real pointer exists, focus is always visible. */
+.action {
+  transition: transform var(--motion-fast) var(--ease-enter),
+    box-shadow var(--motion-fast) var(--ease-enter),
+    background-color var(--motion-fast) linear;
+}
+.action:active {
+  transform: scale(var(--press-scale));
+}
+.action:focus-visible {
+  outline: 2px solid color-mix(in oklab, currentColor 70%, transparent);
+  outline-offset: 4px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .action:hover {
+    transform: translateY(var(--hover-lift));
+    box-shadow: var(--shadow-3);
+  }
+}
+
+/* 6 ── Accessibility parallel design ----------------------------------------
+   Not a kill switch: each query produces a coherent alternative composition. */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* Anything that moved spatially resolves to its resting state, visible. */
+  [data-parallax],
+  [data-scrub],
+  [data-kinetic] {
+    transform: none !important;
+    opacity: 1 !important;
+    filter: none !important;
+    clip-path: none !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass {
+    background: oklch(19% 0.02 255);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .glass::before,
+  .glass::after {
+    display: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .glass {
+    background: oklch(13% 0.015 255);
+    border-color: rgb(255 255 255 / 0.72);
+  }
+  :root {
+    --muted: oklch(88% 0.02 255);
+    --line: rgb(255 255 255 / 0.4);
+  }
+}
