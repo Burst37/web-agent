@@ -1,8 +1,8 @@
 ---
-name: brand-extractor
+name: hero-brand-extractor
 description: >
   Scrapes a live client URL to extract existing brand identity: color palette, typography,
-  visual vibe, and logo style. Returns a brand token package that cinematic-website-builder
+  visual vibe, and logo style. Returns a brand token package that cinematic-hero-director
   and ui-ux-design-system use to preserve brand continuity while modernizing a hero section.
   Use whenever a client URL is provided alongside a design or build request.
 category: Design
@@ -17,7 +17,7 @@ Pulls brand tokens from a live website so the design system can modernize the he
 - User provides a client URL with any design/build request ("here's our site: acme.com")
 - User asks to "modernize but keep our brand" or "redesign while staying on-brand"
 - User says "audit our current hero" — extract first, then recommend archetype delta
-- Auto-invoked by `cinematic-website-builder` when a URL is detected in the request
+- Auto-invoked by `cinematic-hero-director` when a URL is detected in the request
 
 Do NOT use for URLs that are product pages, login walls, or SPAs requiring auth — fall back to asking the user for their brand colors directly.
 
@@ -73,7 +73,7 @@ For each site, extract:
 
 ## Passing results downstream
 
-When auto-invoked by `cinematic-website-builder`, pass the full output object to `ui-ux-design-system` as `brand_tokens`. The design system will:
+When auto-invoked by `cinematic-hero-director`, pass the full output object to `ui-ux-design-system` as `brand_tokens`. The design system will:
 - Use `brand_overrides.primary` and `brand_overrides.secondary` instead of archetype defaults
 - Keep archetype effects, motion profile, and typography framework
 - Document overrides in `custom_overrides` field of the token bundle
@@ -92,4 +92,4 @@ Call `formatOutput` with the full brand token package. Always include `sources` 
 ## See also
 
 - [ui-ux-design-system](../ui-ux-design-system/SKILL.md) — consumes brand tokens to select and customize an archetype
-- [cinematic-website-builder](../cinematic-website-builder/SKILL.md) — orchestrates brand-extractor + design system + HTML build
+- [cinematic-hero-director](../cinematic-hero-director/SKILL.md) — orchestrates hero-brand-extractor + design system + HTML build

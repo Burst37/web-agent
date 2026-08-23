@@ -4,7 +4,7 @@ description: >
   Standalone design token library and hero archetype system. Use independently for design sprints,
   brand audits, Figma specs, design-only consultation. Outputs reusable design specifications
   (color palettes, typography scales, effect specs, component mappings) that feed
-  cinematic-website-builder or any frontend tool. Covers 6 scientifically-designed hero patterns
+  cinematic-hero-director or any frontend tool. Covers 6 scientifically-designed hero patterns
   (RED_EXPLOSIVE, BLUE_TECH, PURPLE_MYSTIC, LIME_GREEN_GENIUS, GOLD_CINEMATIC, PINK_SURREAL)
   plus full design token export in JSON, YAML, CSS variable, and Figma formats.
 category: Design
@@ -12,7 +12,7 @@ category: Design
 
 # UI/UX Design System
 
-Design-token-first hero section architect. Every decision is a token (color, type, effect, motion). No code assumptions — output flows to `cinematic-website-builder`, Figma, Canva, or any frontend.
+Design-token-first hero section architect. Every decision is a token (color, type, effect, motion). No code assumptions — output flows to `cinematic-hero-director`, Figma, Canva, or any frontend.
 
 ## When to use
 
@@ -20,7 +20,7 @@ Design-token-first hero section architect. Every decision is a token (color, typ
 - User asks "What colors should I use?" → output color palette as JSON
 - User asks "Show me 3 design directions" → run all 3 archetypes in parallel
 - User asks for a Figma-ready or dev-ready design spec → export full token package
-- Auto-invoked by `cinematic-website-builder` → run all phases, return token bundle
+- Auto-invoked by `cinematic-hero-director` → run all phases, return token bundle
 
 ## Phase 1 — Archetype Selection
 
@@ -175,6 +175,6 @@ Call `formatOutput` with:
 
 ## See also
 
-- [cinematic-website-builder](../cinematic-website-builder/SKILL.md) — full hero section build (HTML + design spec + AI prompt)
-- [brand-extractor](../brand-extractor/SKILL.md) — pull brand tokens from a live URL before archetype selection
+- [cinematic-hero-director](../cinematic-hero-director/SKILL.md) — full hero section build (HTML + design spec + AI prompt)
+- [hero-brand-extractor](../hero-brand-extractor/SKILL.md) — pull brand tokens from a live URL before archetype selection
 - [cinematic-prompt-director](../cinematic-prompt-director/SKILL.md) — ultra-detail focal image prompts

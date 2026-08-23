@@ -1,7 +1,7 @@
 ---
-name: cinematic-website-builder
+name: cinematic-hero-director
 description: >
-  Primary orchestrator for building world-class hero sections. Auto-invokes brand-extractor
+  Primary orchestrator for building world-class hero sections. Auto-invokes hero-brand-extractor
   (if URL provided), ui-ux-design-system (design tokens + archetype), and
   cinematic-prompt-director (AI focal image prompt), then generates production-ready
   single-file HTML with GSAP animations and CSS design tokens injected.
@@ -10,7 +10,7 @@ description: >
 category: Design
 ---
 
-# Cinematic Website Builder
+# Cinematic Hero Director
 
 End-to-end hero section pipeline. One request → complete package (design tokens + production HTML + AI image prompt). Composes three sub-skills automatically — the user interacts only with this orchestrator.
 
@@ -29,7 +29,7 @@ If the user only wants a design spec (no code), route to `ui-ux-design-system` i
 ```
 User Request
     │
-    ├─ URL provided? ──yes──▶ brand-extractor (scrape brand tokens)
+    ├─ URL provided? ──yes──▶ hero-brand-extractor (scrape brand tokens)
     │                                │
     │◀────────────────────────────────
     │
@@ -50,7 +50,7 @@ User Request
 
 ### Step 1 — Brand analysis (conditional)
 
-If the user provided a URL, invoke `brand-extractor`:
+If the user provided a URL, invoke `hero-brand-extractor`:
 - Pass URL; receive `brand_token_package` with extracted colors, fonts, vibe, and detected archetype
 - Pass `brand_token_package.brand_overrides` to Step 2 as `forced_overrides`
 
@@ -296,7 +296,7 @@ Then call `formatOutput` with:
 
 ## Brand preservation mode
 
-When `brand-extractor` ran and returned overrides:
+When `hero-brand-extractor` ran and returned overrides:
 - Set `primary` and `secondary` from `brand_overrides` (not archetype defaults)
 - Keep all archetype effects, motion, and typographic framework
 - Name the archetype `BLUE_TECH_CUSTOM` (or similar) in the design spec
@@ -322,10 +322,10 @@ Always include the entrance animation (fade-up stagger on title/subtitle/CTA) an
 
 - Generate placeholder copy (`hero_title`, `hero_subtitle`, `cta_label`) from the user's industry/vibe if they didn't provide specific text — don't leave blanks
 - Always include the `{{ focal_image_url }}` placeholder comment — users need the integration workflow to be explicit
-- If the user's request only mentions a redesign without specifying a new direction, run `brand-extractor` first, then show the archetype recommendation before generating HTML
+- If the user's request only mentions a redesign without specifying a new direction, run `hero-brand-extractor` first, then show the archetype recommendation before generating HTML
 
 ## See also
 
 - [ui-ux-design-system](../ui-ux-design-system/SKILL.md) — standalone design token consultation
-- [brand-extractor](../brand-extractor/SKILL.md) — brand token extraction from live URLs
+- [hero-brand-extractor](../hero-brand-extractor/SKILL.md) — brand token extraction from live URLs
 - [cinematic-prompt-director](../cinematic-prompt-director/SKILL.md) — standalone AI image prompt generation

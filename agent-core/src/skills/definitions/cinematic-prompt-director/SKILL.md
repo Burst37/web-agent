@@ -5,7 +5,7 @@ description: >
   Takes a design archetype plus brand/industry context and outputs a cinematographer-grade
   prompt ready to paste into Kling 3.0, Midjourney, or any image generation platform.
   Specifies character, camera body, lens, lighting rig, color science, and emotional intent
-  at professional film-production level. Auto-invoked by cinematic-website-builder.
+  at professional film-production level. Auto-invoked by cinematic-hero-director.
 category: Design
 ---
 
@@ -17,7 +17,7 @@ Produces publication-quality AI image prompts by applying cinematographer-grade 
 
 - User asks for an AI image prompt for their hero section
 - User says "give me a prompt for Midjourney / Kling / Stable Diffusion"
-- Auto-invoked by `cinematic-website-builder` after archetype is selected
+- Auto-invoked by `cinematic-hero-director` after archetype is selected
 - User wants to replace a stock photo with a custom AI-generated focal image
 
 ## Inputs required
@@ -108,4 +108,4 @@ Return the complete prompt as a single copyable text block (no markdown headers 
 ## See also
 
 - [ui-ux-design-system](../ui-ux-design-system/SKILL.md) — provides archetype + lighting philosophy inputs
-- [cinematic-website-builder](../cinematic-website-builder/SKILL.md) — orchestrates this skill and injects the generated image into HTML
+- [cinematic-hero-director](../cinematic-hero-director/SKILL.md) — orchestrates this skill and injects the generated image into HTML
