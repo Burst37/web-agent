@@ -1,5 +1,6 @@
 node_modules/
 dist/
+agent-core/package-lock.json
 coverage/
 __pycache__/
 *.pyc
@@ -16,3 +17,4 @@ tmp/
 .DS_Store
 .playwright-mcp/
 .internal/cli/dist/
+.vercel

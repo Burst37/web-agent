@@ -34,7 +34,13 @@ export { loadWorkerPrompt } from "./worker/loader";
 export { resolveModel } from "./resolve-model";
 
 // ─── Skills ───
-export { discoverSkills, buildDomainIndex, getDefaultSkillsDir } from "./skills/discovery";
+export {
+  discoverSkills,
+  buildDomainIndex,
+  getDefaultSkillsDir,
+  getRepoSkillsDir,
+  getDefaultSkillDirs,
+} from "./skills/discovery";
 export { createSkillTools } from "./skills/tools";
 export { parseSkillBody, validateSkillContent, type SkillValidationResult } from "./skills/parser";
 export { uploadSkills, type SkillUploadFile, type SkillUploadResult } from "./skills/upload";

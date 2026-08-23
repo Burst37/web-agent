@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scroll systems — SpaceAge Apple-Immersive Web Design</title>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/lab.css">
+<style>
+  /* ── A. Native scroll-driven reveal ────────────────────────────────────────
+     The whole reveal is three CSS declarations and zero JavaScript where the
+     engine supports view timelines. The IntersectionObserver fallback below
+     adds .is-visible; content is NEVER left at opacity 0 if both fail, because
+     the resting state is applied by a class the page only adds when it knows
+     one of the two mechanisms is live. */
+  .reveal { opacity: 1; transform: none; }
+  .js .reveal, .vt .reveal { opacity: 0; transform: translateY(2rem) scale(.985); }
+  .js .reveal.is-visible { opacity: 1; transform: none;
+    transition: opacity var(--motion-slow) var(--ease-enter), transform var(--motion-slow) var(--ease-enter); }
+
+  @supports (animation-timeline: view()) {
+    .vt .reveal {
+      animation: reveal-in both linear;
+      animation-timeline: view();
+      animation-range: entry 8% cover 34%;
+    }
+    @keyframes reveal-in { to { opacity: 1; transform: none; } }
+  }
+
+  /* ── B. scroll-state(): a sticky element that knows it is stuck ────────────
+     No scroll listener, no sentinel element, no layout reads. */
+  .stickybar-host { container-type: scroll-state; position: sticky; top: 0; z-index: 30; }
+  .stickybar {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 14px 20px; border-radius: 0 0 var(--radius-m) var(--radius-m);
+    border: 1px solid transparent; border-top: 0;
+    background: transparent; transition: background var(--motion-base) var(--ease-standard),
+      border-color var(--motion-base) var(--ease-standard), backdrop-filter var(--motion-base) linear;
+  }
+  .stickybar b { font-size: var(--step--1); letter-spacing: var(--track-micro); text-transform: uppercase; }
+  @supports (container-type: scroll-state) {
+    @container scroll-state(stuck: top) {
+      .stickybar {
+        background: color-mix(in oklab, #0d1018 72%, transparent);
+        border-color: var(--line);
+        backdrop-filter: blur(18px) saturate(150%);
+        -webkit-backdrop-filter: blur(18px) saturate(150%);
+      }
+      .stickybar [data-stuck-label]::after { content: 'stuck'; }
+    }
+  }
+
+  /* ── C. Pinned + scrubbed hero scene ─────────────────────────────────────── */
+  .scene { height: 100vh; position: relative; overflow: clip; display: grid; place-items: center; }
+  .scene__layer { position: absolute; inset: 0; }
+  .scene__sky {
+    background:
+      radial-gradient(80% 60% at 50% 120%, color-mix(in oklab, var(--brand) 55%, transparent), transparent 70%),
+      radial-gradient(60% 50% at 20% 10%, color-mix(in oklab, var(--violet) 45%, transparent), transparent 70%),
+      oklch(12% .03 265);
+    will-change: transform;
+  }
+  .scene__grid {
+    background-image: linear-gradient(color-mix(in oklab, white 8%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in oklab, white 8%, transparent) 1px, transparent 1px);
+    background-size: 74px 74px;
+    mask-image: radial-gradient(70% 60% at 50% 50%, black, transparent 78%);
+  }
+  .scene__title { position: relative; z-index: 3; text-align: center; padding: 0 20px; }
+  .scene__title h1 { font-size: var(--step-3); line-height: .88; letter-spacing: var(--track-display); margin: 0; }
+  .scene__title .lead { margin-inline: auto; }
+  .scene__panel {
+    position: absolute; z-index: 4; inset: auto 8% 12% auto; width: min(420px, 74vw);
+    padding: 26px; border-radius: var(--radius-l); opacity: 0;
+  }
+  .scene__panel h3 { margin: 0 0 8px; font-size: var(--step-0); }
+  .scene__panel p { margin: 0; font-size: var(--step--1); }
+  .scene__wipe {
+    position: absolute; z-index: 2; inset: 22% 10% 22% 10%; border-radius: var(--radius-l);
+    background: linear-gradient(120deg, color-mix(in oklab, var(--accent) 34%, transparent), color-mix(in oklab, var(--hot) 30%, transparent));
+    border: 1px solid var(--line);
+    clip-path: inset(0 100% 0 0 round var(--radius-l));
+  }
+  .scene__hint { position: absolute; inset: auto auto 26px 50%; translate: -50% 0; z-index: 5;
+    font-size: 12px; letter-spacing: var(--track-micro); text-transform: uppercase; color: var(--muted); }
+
+  /* ── D. Sticky narrative ─────────────────────────────────────────────────── */
+  .story { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
+  .story__visual { position: sticky; top: 96px; height: min(70vh, 560px); border-radius: var(--radius-l); overflow: clip; }
+  .story__stage { position: absolute; inset: 0; display: grid; place-items: center; }
+  .story__shape {
+    width: 46%; aspect-ratio: 1; border-radius: 30%;
+    background: conic-gradient(from 200deg, var(--accent), var(--brand), var(--hot), var(--accent));
+    box-shadow: 0 40px 120px color-mix(in oklab, var(--brand) 40%, transparent);
+    transition: border-radius var(--motion-slow) var(--ease-standard),
+      rotate var(--motion-slow) var(--ease-standard), scale var(--motion-slow) var(--ease-standard);
+  }
+  .story__visual[data-scene="2"] .story__shape { border-radius: 50%; rotate: 40deg; scale: .82; }
+  .story__visual[data-scene="3"] .story__shape { border-radius: 12%; rotate: -25deg; scale: 1.06; }
+  .story__steps { display: grid; gap: min(34vh, 300px); padding: 18vh 0 30vh; }
+  .story__step { opacity: .34; transition: opacity var(--motion-base) var(--ease-standard); }
+  .story__step[data-active="true"] { opacity: 1; }
+  .story__step h3 { margin-bottom: 10px; }
+  @media (max-width: 860px) {
+    /* Mobile recomposition: no sticky pairing, each scene is its own block. */
+    .story { grid-template-columns: 1fr; gap: 24px; }
+    .story__visual { position: relative; top: 0; height: 46vh; }
+    .story__steps { gap: 40px; padding: 30px 0 0; }
+    .story__step { opacity: 1; }
+  }
+
+  /* ── E. Horizontal gallery from vertical scroll ──────────────────────────── */
+  .htrack-wrap { overflow: clip; }
+  .htrack { display: flex; gap: 26px; padding-inline: 6vw; width: max-content; will-change: transform; }
+  .hcard {
+    width: min(400px, 74vw); aspect-ratio: 4 / 5; border-radius: var(--radius-l); padding: 26px;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow-2);
+    position: relative; overflow: clip;
+  }
+  .hcard::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(160deg, color-mix(in oklab, var(--brand) 40%, transparent), transparent 62%);
+    opacity: var(--card-heat, .25); transition: opacity var(--motion-base) linear;
+  }
+  .hcard > * { position: relative; }
+  .hcard b { font-size: var(--step-1); letter-spacing: var(--track-heading); }
+  .hcard span { color: var(--muted); font-size: var(--step--1); margin-top: 8px; display: block; }
+
+  /* ── F. Sticky card stack (pure CSS) ─────────────────────────────────────── */
+  .stack { display: grid; gap: 0; }
+  .stack__card {
+    position: sticky; top: calc(96px + var(--i) * 18px);
+    height: 62vh; border-radius: var(--radius-l); padding: 34px;
+    border: 1px solid var(--line); box-shadow: var(--shadow-3);
+    background: linear-gradient(160deg, var(--surface-raised), var(--surface));
+    display: flex; flex-direction: column; justify-content: space-between;
+    transform-origin: 50% 0;
+  }
+  .stack__card:nth-child(1) { --i: 0; }
+  .stack__card:nth-child(2) { --i: 1; }
+  .stack__card:nth-child(3) { --i: 2; }
+  .stack__card:nth-child(4) { --i: 3; }
+  .stack__num { font-family: var(--font-mono); color: var(--accent); font-size: var(--step--1); }
+
+  /* ── G. Media scrub ──────────────────────────────────────────────────────── */
+  .scrub { display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: center; }
+  .scrub__pin { height: 100vh; display: grid; place-items: center; }
+  .scrub canvas { width: 100%; max-width: 560px; aspect-ratio: 1; border-radius: var(--radius-l);
+    border: 1px solid var(--line); background: oklch(13% .02 262); box-shadow: var(--shadow-3); }
+  .scrub__meta { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  @media (max-width: 860px) { .scrub { grid-template-columns: 1fr; gap: 20px; } }
+
+  /* Velocity accent applies to a decorative layer only — never body copy. */
+  .skewable { will-change: transform; }
+</style>
+</head>
+<body>
+<div class="progress-rail" aria-hidden="true"><i></i></div>
+
+<nav class="labnav glass scroll-edge" aria-label="Lab sections">
+  <strong>SpaceAge</strong>
+  <a href="index.html">Overview</a>
+  <a href="scroll.html" aria-current="page">Scroll</a>
+  <a href="type.html">Type</a>
+  <a href="material.html">Material</a>
+  <a href="carousel.html">Carousel</a>
+  <a href="transitions.html">Transitions</a>
+  <a href="smooth.html">Smooth</a>
+</nav>
+
+<main>
+  <!-- C. Pinned + scrubbed scene ------------------------------------------ -->
+  <section class="scene" data-scroll-scene>
+    <div class="scene__layer scene__sky" data-layer="sky" data-scrub data-test="pin-sky"></div>
+    <div class="scene__layer scene__grid" data-layer="grid" data-scrub></div>
+    <div class="scene__wipe" data-layer="wipe" data-scrub data-test="pin-wipe"></div>
+    <div class="scene__title" data-layer="title" data-scrub data-test="pin-title">
+      <h1 class="display trim-both">Scroll is a camera.</h1>
+      <p class="lead" style="margin-inline:auto">Pinned, scrubbed, reversible — and it releases the page when the story ends.</p>
+    </div>
+    <aside class="scene__panel glass glass--thick" data-layer="panel" data-scrub data-test="pin-panel">
+      <h3>Scene 03 — detail</h3>
+      <p>The panel enters from the timeline, not from a scroll listener. Reverse the scroll and it leaves along the same path.</p>
+    </aside>
+    <div class="scene__hint" data-test="scene-hint">scroll</div>
+  </section>
+
+  <!-- B. scroll-state sticky bar ------------------------------------------- -->
+  <div class="stickybar-host">
+    <div class="shell">
+      <div class="stickybar" data-test="stickybar">
+        <b data-stuck-label>Scroll systems / </b>
+        <span class="scrub__meta" data-test="velocity-readout">velocity 0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- A. Native reveal ----------------------------------------------------- -->
+  <section class="section">
+    <div class="shell">
+      <div class="kicker reveal" data-test="reveal">01 — Reveal</div>
+      <h2 class="reveal" data-test="reveal">Native first. Library second.</h2>
+      <p class="reveal" data-test="reveal">
+        Where <code>animation-timeline: view()</code> exists, this reveal runs entirely on the
+        compositor with no JavaScript. Where it does not, one IntersectionObserver adds
+        <code>.is-visible</code>. Either way the content has a visible resting state, so a script
+        failure can never leave the page blank.
+      </p>
+      <div class="grid-cards">
+        <div class="card reveal" data-test="reveal"><h3>No scroll handler</h3><p>View timelines are declarative. Nothing runs on the main thread per frame.</p></div>
+        <div class="card reveal" data-test="reveal"><h3>Range control</h3><p><code>animation-range: entry 8% cover 34%</code> is the whole choreography.</p></div>
+        <div class="card reveal" data-test="reveal"><h3>Fail-visible</h3><p>The hidden state is applied by a class, only after a mechanism is confirmed.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- D. Sticky narrative --------------------------------------------------- -->
+  <section class="section">
+    <div class="shell">
+      <div class="kicker">02 — Sticky narrative</div>
+      <h2>One anchored visual, three advancing states.</h2>
+      <div class="story">
+        <div class="story__visual glass" data-scene="1" data-test="story-visual" aria-hidden="true">
+          <div class="story__stage"><div class="story__shape" data-test="story-shape"></div></div>
+        </div>
+        <div class="story__steps">
+          <article class="story__step" data-step="1" data-active="true"><h3>Anchor</h3><p>The visual holds orientation while the copy advances. The reader never loses the object.</p></article>
+          <article class="story__step" data-step="2"><h3>Change one thing</h3><p>Each step moves exactly one property group. Two simultaneous ideas read as noise.</p></article>
+          <article class="story__step" data-step="3"><h3>Release</h3><p>The section un-sticks the moment the narrative ends. Pinning past the story is the most common failure.</p></article>
+        </div>
+      </div>
+      <p class="note">Below 860px the sticky pairing is dropped entirely and each scene becomes its own block — a recomposition, not a scaled-down desktop sequence.</p>
+    </div>
+  </section>
+
+  <!-- E. Horizontal gallery -------------------------------------------------- -->
+  <section class="section htrack-wrap" data-htrack-section>
+    <div class="shell">
+      <div class="kicker">03 — Horizontal scene</div>
+      <h2>Vertical scroll, horizontal comparison.</h2>
+      <p>Only when side-by-side movement genuinely helps comparison. Each card's own animation is
+        driven by <code>containerAnimation</code>, so triggers stay correct while the track moves.</p>
+    </div>
+    <div class="htrack" data-htrack data-test="htrack">
+      <article class="hcard" data-hcard><b>Momentum</b><span>Velocity carries into the landing state instead of stopping dead at release.</span></article>
+      <article class="hcard" data-hcard><b>Continuity</b><span>Enter and exit share one origin and one path.</span></article>
+      <article class="hcard" data-hcard><b>Restraint</b><span>One motion idea per viewport. Parallax plus wobble plus blur is not three ideas, it is zero.</span></article>
+      <article class="hcard" data-hcard><b>Access</b><span>Keyboard reaches every card; reduced motion removes the horizontal run.</span></article>
+      <article class="hcard" data-hcard><b>Anchoring</b><span>A visible next-card cue tells the reader the axis changed on purpose.</span></article>
+      <article class="hcard" data-hcard><b>Release</b><span>The run ends inside its own section and hands the page back to vertical scroll.</span></article>
+    </div>
+  </section>
+
+  <!-- F. Sticky stack --------------------------------------------------------- -->
+  <section class="section">
+    <div class="shell">
+      <div class="kicker">04 — Sticky stack</div>
+      <h2>Depth from position, not from shadow spam.</h2>
+      <div class="stack" data-test="stack">
+        <article class="stack__card"><div class="stack__num">01</div><div><h3>Base fill</h3><p>The stack is four sticky elements with increasing offsets. No library, no measurement.</p></div></article>
+        <article class="stack__card"><div class="stack__num">02</div><div><h3>Occlusion</h3><p>Each card covers the one before it, so the shadow has something to sit on.</p></div></article>
+        <article class="stack__card"><div class="stack__num">03</div><div><h3>Specular edge</h3><p>The top highlight is what makes the card read as a physical object.</p></div></article>
+        <article class="stack__card"><div class="stack__num">04</div><div><h3>Release</h3><p>The last card scrolls away normally — no trap, no scroll-jack.</p></div></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- G. Media scrub ---------------------------------------------------------- -->
+  <section class="section" data-scrub-section>
+    <div class="scrub__pin">
+      <div class="shell scrub">
+        <canvas data-frames width="720" height="720" aria-hidden="true"></canvas>
+        <div>
+          <div class="kicker">05 — Media scrub</div>
+          <h2>Frame-accurate, decoded ahead.</h2>
+          <p>Scroll progress selects a frame; the frame is painted inside a single
+            <code>requestAnimationFrame</code>, never from the scroll event itself. Frames are decoded
+            to <code>ImageBitmap</code> before the sequence is reachable.</p>
+          <p class="scrub__meta">frame <span data-frame-readout>0</span> / <span data-frame-total>0</span></p>
+          <p class="note">In production these are AVIF/WebP files capped by viewport and DPR. Here they
+            are generated at runtime so the lab stays dependency-free and offline — the decode queue,
+            the rAF paint and the progress mapping are the real thing.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <h2 class="skewable" data-test="skew-target">Velocity accents ride decorative layers only.</h2>
+      <p>Scroll fast: the heading above skews via <code>gsap.quickTo</code> fed by
+        <code>ScrollTrigger.getVelocity()</code>, capped and eased back to zero. Body copy never
+        distorts, and the effect is removed entirely under reduced motion.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="footer"><div class="shell">Scroll lab · every claim on this page is asserted by <code>scripts/verify.mjs</code>.</div></footer>
+
+<script type="module">
+import { loadDeps, ready, flags } from './js/boot.js';
+
+const { gsap, ScrollTrigger } = await loadDeps(['gsap', 'ScrollTrigger']);
+gsap.registerPlugin(ScrollTrigger);
+
+const root = document.documentElement;
+const handles = {};
+
+/* ── A. Reveal: pick a mechanism, then apply the hidden state ────────────────
+   Order matters. The hidden state is only applied once we know something will
+   remove it. */
+if (CSS.supports('animation-timeline', 'view()')) {
+  root.classList.add('vt');
+} else {
+  root.classList.add('js');
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (e.isIntersecting) { e.target.classList.add('is-visible'); io.unobserve(e.target); }
+    }
+  }, { rootMargin: '0px 0px -12% 0px' });
+  document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
+}
+
+/* ── B. scroll-state fallback: only wire a sentinel if the engine lacks it ── */
+if (!CSS.supports('container-type', 'scroll-state')) {
+  const bar = document.querySelector('.stickybar');
+  const host = document.querySelector('.stickybar-host');
+  const sentinel = document.createElement('div');
+  sentinel.style.cssText = 'position:absolute;top:-1px;height:1px;width:1px;';
+  host.style.position = 'sticky';
+  host.before(sentinel);
+  new IntersectionObserver(([e]) => bar.dataset.stuck = String(!e.isIntersecting)).observe(sentinel);
+}
+
+/* ── C+D+E+G. Device-scoped timelines ────────────────────────────────────────
+   gsap.matchMedia() is the only correct way to build responsive scroll work:
+   everything created inside a context is reverted automatically when the query
+   stops matching, including pins, spacers and inline styles. */
+const mm = gsap.matchMedia();
+const DESKTOP = '(min-width: 861px)';
+const MOBILE = '(max-width: 860px)';
+const MOTION_OK = '(prefers-reduced-motion: no-preference)';
+
+/* C. Pinned hero — desktop only, and only when motion is welcome. */
+mm.add(`${DESKTOP} and ${MOTION_OK}`, () => {
+  const tl = gsap.timeline({
+    defaults: { ease: 'none' },               // linear inside a scrub: the scroll IS the easing
+    scrollTrigger: {
+      trigger: '[data-scroll-scene]',
+      start: 'top top',
+      end: '+=2200',
+      pin: true,
+      scrub: 0.65,                            // 0.65s catch-up = weight without lag
+      anticipatePin: 1,
+      invalidateOnRefresh: true,              // re-measure on resize instead of drifting
+    },
+  });
+
+  tl.to('[data-layer="sky"]', { scale: 1.14, yPercent: -6 }, 0)
+    .to('[data-layer="grid"]', { yPercent: -18, opacity: .35 }, 0)
+    .to('[data-layer="title"]', { yPercent: -120, opacity: 0 }, .18)
+    .fromTo('[data-layer="wipe"]',
+      { clipPath: 'inset(0 100% 0 0 round 28px)' },
+      { clipPath: 'inset(0 0% 0 0 round 28px)' }, .26)
+    .fromTo('[data-layer="panel"]',
+      { opacity: 0, yPercent: 14, filter: 'blur(10px)' },
+      { opacity: 1, yPercent: 0, filter: 'blur(0px)' }, .58)
+    .to('[data-test="scene-hint"]', { opacity: 0 }, .05);
+
+  handles.heroTimeline = tl;
+  return () => { handles.heroTimeline = null; };
+});
+
+/* C-mobile. No pin at all: the scene becomes a static composition. */
+mm.add(MOBILE, () => {
+  gsap.set('[data-layer="panel"]', { opacity: 1, clearProps: 'filter' });
+  gsap.set('[data-layer="wipe"]', { clipPath: 'inset(0 0% 0 0 round 28px)' });
+  handles.mobileStatic = true;
+  return () => { handles.mobileStatic = false; };
+});
+
+/* D. Sticky narrative state — an observer, not a scrub. Three states, no tween
+   per frame, so the cost is zero while scrolling. */
+{
+  const visual = document.querySelector('[data-test="story-visual"]');
+  const steps = [...document.querySelectorAll('.story__step')];
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      steps.forEach((s) => (s.dataset.active = String(s === e.target)));
+      visual.dataset.scene = e.target.dataset.step;
+    }
+  }, { rootMargin: '-45% 0px -45% 0px' });
+  steps.forEach((s) => io.observe(s));
+}
+
+/* E. Horizontal run + nested triggers via containerAnimation. */
+mm.add(`${DESKTOP} and ${MOTION_OK}`, () => {
+  const track = document.querySelector('[data-htrack]');
+  const distance = () => track.scrollWidth - window.innerWidth;
+
+  const run = gsap.to(track, {
+    x: () => -distance(),                     // function value → recalculated on refresh
+    ease: 'none',
+    scrollTrigger: {
+      trigger: '[data-htrack-section]',
+      start: 'top top',
+      end: () => `+=${distance()}`,
+      pin: true,
+      scrub: 0.6,
+      invalidateOnRefresh: true,
+    },
+  });
+
+  // Each card animates against its own position *inside the moving track*.
+  // Without containerAnimation these triggers would fire on vertical position
+  // and every card would light up at once.
+  document.querySelectorAll('[data-hcard]').forEach((card) => {
+    gsap.fromTo(card, { '--card-heat': .12, y: 26 }, {
+      '--card-heat': .7, y: 0, ease: 'none',
+      scrollTrigger: {
+        trigger: card,
+        containerAnimation: run,
+        start: 'left 88%',
+        end: 'center 52%',
+        scrub: true,
+      },
+    });
+  });
+
+  handles.horizontalRun = run;
+  return () => { handles.horizontalRun = null; };
+});
+
+/* G. Media scrub — decode first, paint in rAF, map progress → frame index. */
+{
+  const canvas = document.querySelector('[data-frames]');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  const TOTAL = 48;
+  document.querySelector('[data-frame-total]').textContent = String(TOTAL);
+
+  /* Stand-in for a real AVIF/WebP sequence: draw each frame once, then hand it
+     to createImageBitmap so the scrub path only ever blits a decoded bitmap. */
+  async function buildSequence() {
+    const bitmaps = [];
+    const off = document.createElement('canvas');
+    off.width = off.height = 720;
+    const octx = off.getContext('2d');
+    for (let i = 0; i < TOTAL; i++) {
+      const t = i / (TOTAL - 1);
+      octx.fillStyle = '#0d1119';
+      octx.fillRect(0, 0, 720, 720);
+      const g = octx.createLinearGradient(0, 0, 720, 720);
+      g.addColorStop(0, `hsl(${196 + t * 120} 90% 62%)`);
+      g.addColorStop(1, `hsl(${262 + t * 90} 84% 54%)`);
+      octx.save();
+      octx.translate(360, 360);
+      octx.rotate(t * Math.PI * 1.25);
+      octx.fillStyle = g;
+      const r = 120 + t * 150;
+      octx.beginPath();
+      for (let a = 0; a < 6; a++) {
+        const ang = (a / 6) * Math.PI * 2;
+        const rr = r * (a % 2 ? 0.62 : 1);
+        octx[a ? 'lineTo' : 'moveTo'](Math.cos(ang) * rr, Math.sin(ang) * rr);
+      }
+      octx.closePath();
+      octx.fill();
+      octx.restore();
+      octx.strokeStyle = 'rgba(255,255,255,.22)';
+      octx.lineWidth = 2;
+      octx.strokeRect(40, 40, 640, 640);
+      bitmaps.push(await createImageBitmap(off));
+    }
+    return bitmaps;
+  }
+
+  const frames = await buildSequence();
+  let wanted = 0;
+  let painted = -1;
+  let queued = false;
+
+  function paint() {
+    queued = false;
+    if (wanted === painted) return;
+    painted = wanted;
+    ctx.drawImage(frames[painted], 0, 0, canvas.width, canvas.height);
+    document.querySelector('[data-frame-readout]').textContent = String(painted);
+    window.__lab.frame = painted;
+  }
+  function request(index) {
+    wanted = gsap.utils.clamp(0, TOTAL - 1, Math.round(index));
+    if (!queued) { queued = true; requestAnimationFrame(paint); }
+  }
+  request(0);
+  paint();
+
+  ScrollTrigger.create({
+    trigger: '[data-scrub-section]',
+    start: 'top top',
+    end: '+=1600',
+    pin: '.scrub__pin',
+    scrub: true,
+    invalidateOnRefresh: true,
+    onUpdate: (self) => request(self.progress * (TOTAL - 1)),
+  });
+
+  handles.frameCount = TOTAL;
+}
+
+/* Velocity accent — quickTo keeps this to one interpolation per frame instead
+   of spawning a tween per scroll event. Skipped entirely under reduced motion. */
+if (!flags.motionOff) {
+  const skewTo = gsap.quickTo('[data-test="skew-target"]', 'skewY', {
+    duration: 0.45, ease: 'power3.out',
+  });
+  const readout = document.querySelector('[data-test="velocity-readout"]');
+
+  /* onUpdate only fires *while* the page is scrolling. Without the reset below
+     the last non-zero velocity stays applied forever, and the heading sits
+     permanently skewed — the single most common bug in velocity-driven accents.
+     A short debounce eases it back to rest instead of leaving it mid-gesture. */
+  let restId;
+  ScrollTrigger.create({
+    onUpdate: (self) => {
+      const v = self.getVelocity();
+      skewTo(gsap.utils.clamp(-5, 5, v / -320));
+      window.__lab.velocity = v;
+      if (readout) readout.textContent = `velocity ${Math.round(v)}`;
+      clearTimeout(restId);
+      restId = setTimeout(() => {
+        skewTo(0);
+        window.__lab.velocity = 0;
+        if (readout) readout.textContent = 'velocity 0';
+      }, 120);
+    },
+  });
+}
+
+await ready(handles);
+</script>
+</body>
+</html>

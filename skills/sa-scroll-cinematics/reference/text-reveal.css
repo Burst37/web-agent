@@ -1,0 +1,29 @@
+/* Masked line/char reveal — the single most reused pattern across both
+   reference sites. Apply to any heading/paragraph that should animate in
+   on intro or scroll. */
+
+.mask {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.06em; /* prevents descenders (g, y, p) from clipping */
+}
+
+.line {
+  display: block;
+}
+
+/* Character-level variant (hero titles) — built at runtime, see
+   reference/lenis-scrolltrigger-boilerplate.js for the split helper */
+.char-wrap {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+
+.char {
+  display: inline-block;
+  will-change: transform;
+}
+
+/* Initial state before intro/ScrollTrigger sets yPercent: 115 -> 0.
+   Set via gsap.set(), not CSS, so JS-disabled fallback still shows content. */
