@@ -1,6 +1,6 @@
 ---
-name: cinematic-website-director
-display_name: SPACE AGE — Cinematic Website Director (v6)
+name: cinematic-site-factory
+display_name: SPACE AGE — Cinematic Site Factory & Platform Director (v6)
 version: 6.1.0
 last_updated: 2026-08-14
 status: production
