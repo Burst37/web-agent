@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Space Age Agent OS</title>
+  <style>
+    /* ── Design Tokens ── */
+    [data-theme="dark"] {
+      --bg-primary: #212121;
+      --bg-secondary: #171717;
+      --bg-tertiary: #2f2f2f;
+      --bg-elevated: #303030;
+      --bg-hover: #3a3a3a;
+      --bg-active: #424242;
+      --accent: #003f7a;
+      --accent-hover: #0055a4;
+      --accent-subtle: rgba(0,63,122,0.15);
+      --accent-text: #006acd;
+      --text-primary: #ececec;
+      --text-secondary: #b4b4b4;
+      --text-muted: #8e8e8e;
+      --border: rgba(255,255,255,0.06);
+      --border-bright: rgba(255,255,255,0.1);
+      --user-bubble: #003f7a;
+      --user-bubble-text: #fff;
+      --agent-bubble: #2f2f2f;
+      --agent-bubble-text: #ececec;
+      --code-bg: #1a1a1a;
+      --scrollbar: #424242;
+      --success: #22c55e;
+      --success-bg: rgba(34,197,94,0.1);
+      --error: #ef4444;
+      --error-bg: rgba(239,68,68,0.1);
+      --warning: #f59e0b;
+      --warning-bg: rgba(245,158,11,0.1);
+      --input-bg: #2a2a2a;
+    }
+    [data-theme="light"] {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8f8f8;
+      --bg-tertiary: #f0f0f0;
+      --bg-elevated: #e8e8e8;
+      --bg-hover: #ebebeb;
+      --bg-active: #e0e0e0;
+      --accent: #003f7a;
+      --accent-hover: #002d58;
+      --accent-subtle: rgba(0,63,122,0.08);
+      --accent-text: #003f7a;
+      --text-primary: #111111;
+      --text-secondary: #555555;
+      --text-muted: #999999;
+      --border: #e5e5e5;
+      --border-bright: #d4d4d4;
+      --user-bubble: #003f7a;
+      --user-bubble-text: #ffffff;
+      --agent-bubble: #f0f0f0;
+      --agent-bubble-text: #111111;
+      --code-bg: #f5f5f5;
+      --scrollbar: #d4d4d4;
+      --success: #16a34a;
+      --success-bg: rgba(22,163,74,0.08);
+      --error: #dc2626;
+      --error-bg: rgba(220,38,38,0.06);
+      --warning: #d97706;
+      --warning-bg: rgba(217,119,6,0.08);
+      --input-bg: #f5f5f5;
+    }
+    :root {
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 20px;
+      --transition: 150ms ease;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'SF Mono','Fira Code','JetBrains Mono',Menlo,Consolas,monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100vh; overflow: hidden; }
+    body {
+      font-family: var(--font-sans);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 14px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+    }
+    #app { height: 100vh; display: flex; flex-direction: column; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 3px; }
+
+    /* ── Layout Shell ── */
+    .shell {
+      display: flex;
+      height: 100vh;
+      background: var(--bg-primary);
+      padding: 8px;
+      gap: 8px;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 220px;
+      flex-shrink: 0;
+      background: var(--bg-secondary);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 20px 16px;
+      margin-top: 8px;
+    }
+    .brand-icon {
+      width: 32px; height: 32px;
+      background: var(--accent);
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 800; color: #fff;
+      flex-shrink: 0;
+      letter-spacing: -1px;
+    }
+    .brand-name {
+      font-size: 15px; font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+    .brand-sub {
+      font-size: 10px; color: var(--text-muted);
+      font-weight: 400;
+    }
+    .sidebar-nav {
+      flex: 1;
+      padding: 4px 8px;
+      display: flex; flex-direction: column;
+      gap: 2px;
+      overflow-y: auto;
+    }
+    .nav-item {
+      display: flex; align-items: center;
+      gap: 10px; padding: 10px 12px;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition);
+      font-size: 13px; font-weight: 500;
+      color: var(--text-secondary);
+      border: none; background: none;
+      width: 100%; text-align: left;
+      font-family: var(--font-sans);
+    }
+    .nav-item:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+    .nav-item.active { background: var(--accent-subtle); color: var(--accent-text); }
+    .nav-item svg { flex-shrink: 0; }
+    .sidebar-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center;
+      justify-content: space-between;
+    }
+    .sidebar-footer-name {
+      font-size: 12px; color: var(--text-muted);
+      font-weight: 500;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .theme-toggle {
+      background: none; border: none;
+      color: var(--text-muted); cursor: pointer;
+      padding: 4px; border-radius: 6px;
+      display: flex; align-items: center;
+      transition: all var(--transition);
+    }
+    .theme-toggle:hover { color: var(--text-primary); background: var(--bg-hover); }
+
+    /* ── Main Content ── */
+    .content {
+      flex: 1;
+      display: flex; flex-direction: column;
+      background: var(--bg-primary);
+      border-radius: 16px;
+      overflow: hidden;
+      min-width: 0;
+    }
+
+    /* ── Screen Header ── */
+    .screen-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center;
+      gap: 12px; flex-shrink: 0;
+    }
+    .screen-header h1 {
+      font-size: 16px; font-weight: 600;
+      color: var(--text-primary);
+    }
+    .screen-header-actions { margin-left: auto; display: flex; gap: 8px; }
+    .screen-body {
+      flex: 1; overflow-y: auto; padding: 20px;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 14px; border-radius: var(--radius-md);
+      font-size: 13px; font-weight: 500;
+      cursor: pointer; border: none;
+      font-family: var(--font-sans);
+      transition: all var(--transition);
+    }
+    .btn-primary {
+      background: var(--accent); color: #fff;
+    }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-secondary {
+      background: var(--bg-tertiary); color: var(--text-primary);
+      border: 1px solid var(--border-bright);
+    }
+    .btn-secondary:hover { background: var(--bg-hover); }
+    .btn-ghost {
+      background: none; color: var(--text-secondary);
+    }
+    .btn-ghost:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .btn-danger {
+      background: var(--error-bg); color: var(--error);
+    }
+    .btn-danger:hover { background: var(--error); color: #fff; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .btn-icon {
+      padding: 7px; background: var(--bg-tertiary);
+      border: 1px solid var(--border-bright);
+      color: var(--text-secondary); border-radius: var(--radius-md);
+      cursor: pointer; display: flex; align-items: center;
+      transition: all var(--transition);
+    }
+    .btn-icon:hover { color: var(--text-primary); background: var(--bg-hover); }
+
+    /* ── Input ── */
+    .input {
+      width: 100%; padding: 9px 12px;
+      background: var(--input-bg);
+      border: 1px solid var(--border-bright);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 13px; font-family: var(--font-sans);
+      outline: none;
+      transition: border-color var(--transition);
+    }
+    .input:focus { border-color: var(--accent); }
+    .input::placeholder { color: var(--text-muted); }
+    textarea.input { resize: none; }
+
+    /* ── Badge ── */
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: 2px 8px; border-radius: 999px;
+      font-size: 11px; font-weight: 600;
+    }
+    .badge-blue { background: var(--accent-subtle); color: var(--accent-text); }
+    .badge-green { background: var(--success-bg); color: var(--success); }
+    .badge-orange { background: var(--warning-bg); color: var(--warning); }
+    .badge-red { background: var(--error-bg); color: var(--error); }
+
+    /* ── Card ── */
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+    }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 12px; }
+
+    /* ── Toggle Switch ── */
+    .toggle { position: relative; display: inline-block; width: 40px; height: 22px; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0;
+      background: var(--bg-active); border-radius: 999px;
+      cursor: pointer; transition: background var(--transition);
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: #fff; left: 3px; top: 3px;
+      transition: transform var(--transition);
+    }
+    .toggle input:checked + .toggle-slider { background: var(--accent); }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; gap: 4px; padding: 4px; background: var(--bg-secondary); border-radius: var(--radius-md); width: fit-content; }
+    .tab {
+      padding: 6px 14px; border-radius: var(--radius-sm);
+      font-size: 13px; font-weight: 500;
+      cursor: pointer; border: none; background: none;
+      color: var(--text-secondary); font-family: var(--font-sans);
+      transition: all var(--transition);
+    }
+    .tab.active { background: var(--bg-primary); color: var(--text-primary); }
+
+    /* ── Chat Screen ── */
+    .chat-wrap { display: flex; flex-direction: column; height: 100%; }
+    .chat-header {
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+      flex-shrink: 0;
+    }
+    .chat-header-title { font-size: 14px; font-weight: 600; flex: 1; }
+    .chat-messages {
+      flex: 1; overflow-y: auto;
+      padding: 20px; display: flex; flex-direction: column; gap: 16px;
+    }
+    .chat-empty {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; height: 100%; gap: 20px;
+      text-align: center;
+    }
+    .chat-empty-icon {
+      width: 56px; height: 56px;
+      background: var(--accent-subtle);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--accent-text);
+    }
+    .chat-empty h2 { font-size: 20px; font-weight: 600; }
+    .chat-empty p { color: var(--text-muted); font-size: 14px; }
+    .suggestions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; max-width: 520px; }
+    .suggestion-btn {
+      padding: 8px 14px; border-radius: var(--radius-xl);
+      background: var(--bg-secondary); border: 1px solid var(--border-bright);
+      color: var(--text-secondary); font-size: 13px;
+      cursor: pointer; transition: all var(--transition);
+      font-family: var(--font-sans);
+    }
+    .suggestion-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); border-color: var(--accent); }
+    .message { display: flex; gap: 12px; max-width: 800px; }
+    .message.user { flex-direction: row-reverse; align-self: flex-end; }
+    .message-avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--bg-tertiary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; flex-shrink: 0;
+      color: var(--text-secondary);
+    }
+    .message.user .message-avatar { background: var(--accent); color: #fff; }
+    .message-bubble {
+      padding: 12px 16px; border-radius: var(--radius-lg);
+      background: var(--agent-bubble); color: var(--agent-bubble-text);
+      font-size: 14px; line-height: 1.6; max-width: 600px;
+    }
+    .message.user .message-bubble {
+      background: var(--user-bubble); color: var(--user-bubble-text);
+      border-radius: var(--radius-lg) var(--radius-lg) 4px var(--radius-lg);
+    }
+    .chat-input-area {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .chat-input-wrap {
+      display: flex; gap: 10px; align-items: flex-end;
+      background: var(--input-bg);
+      border: 1px solid var(--border-bright);
+      border-radius: var(--radius-lg); padding: 8px 12px;
+      transition: border-color var(--transition);
+    }
+    .chat-input-wrap:focus-within { border-color: var(--accent); }
+    .chat-input {
+      flex: 1; background: none; border: none; outline: none;
+      color: var(--text-primary); font-size: 14px;
+      font-family: var(--font-sans); resize: none;
+      max-height: 120px; min-height: 22px; line-height: 1.5;
+    }
+    .chat-input::placeholder { color: var(--text-muted); }
+    .chat-send-btn {
+      background: var(--accent); color: #fff; border: none;
+      border-radius: var(--radius-sm); padding: 6px 10px;
+      cursor: pointer; transition: all var(--transition);
+      display: flex; align-items: center;
+    }
+    .chat-send-btn:hover { background: var(--accent-hover); }
+    .chat-footer {
+      display: flex; align-items: center; gap: 12px;
+      padding: 6px 0 0;
+      font-size: 11px; color: var(--text-muted);
+    }
+    .usage-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; background: var(--bg-secondary);
+      border-radius: 999px; font-size: 11px; color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    /* ── Sessions ── */
+    .session-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px; border-radius: var(--radius-md);
+      cursor: pointer; transition: all var(--transition);
+      border: 1px solid transparent;
+    }
+    .session-item:hover { background: var(--bg-hover); border-color: var(--border-bright); }
+    .session-date { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    /* ── Agents ── */
+    .agent-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      display: flex; flex-direction: column; gap: 12px;
+      transition: border-color var(--transition);
+    }
+    .agent-card:hover { border-color: var(--border-bright); }
+    .agent-card.active-profile { border-color: var(--accent); }
+    .agent-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: var(--accent-subtle);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 700; color: var(--accent-text);
+    }
+    .agent-name { font-size: 15px; font-weight: 600; }
+    .agent-meta { font-size: 12px; color: var(--text-muted); }
+    .agent-actions { display: flex; gap: 6px; }
+
+    /* ── Skills ── */
+    .skill-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .skill-name { font-size: 14px; font-weight: 600; }
+    .skill-category { font-size: 11px; color: var(--text-muted); }
+    .skill-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+
+    /* ── Tools ── */
+    .tool-row {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+    }
+    .tool-icon {
+      width: 36px; height: 36px;
+      background: var(--bg-tertiary); border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--accent-text); flex-shrink: 0;
+    }
+    .tool-info { flex: 1; }
+    .tool-name { font-size: 13px; font-weight: 600; }
+    .tool-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    /* ── Memory ── */
+    .memory-item {
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 14px 16px;
+      display: flex; align-items: flex-start; gap: 12px;
+    }
+    .memory-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent); margin-top: 6px; flex-shrink: 0;
+    }
+
+    /* ── Gateway ── */
+    .gateway-platform {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px;
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+    }
+    .gateway-icon {
+      width: 38px; height: 38px; border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+
+    /* ── Schedules ── */
+    .schedule-row {
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 14px 16px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .cron-chip {
+      font-family: var(--font-mono); font-size: 12px;
+      padding: 3px 8px; background: var(--bg-tertiary);
+      border-radius: 6px; color: var(--text-secondary);
+      border: 1px solid var(--border-bright);
+    }
+
+    /* ── Models ── */
+    .model-row {
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 14px 16px;
+      display: flex; align-items: center; gap: 12px;
+    }
+
+    /* ── Soul ── */
+    .soul-editor {
+      width: 100%; height: 360px; resize: vertical;
+      background: var(--code-bg); border: 1px solid var(--border-bright);
+      border-radius: var(--radius-md); padding: 14px;
+      color: var(--text-primary); font-family: var(--font-mono);
+      font-size: 13px; line-height: 1.7; outline: none;
+    }
+    .soul-editor:focus { border-color: var(--accent); }
+
+    /* ── Settings ── */
+    .settings-section { margin-bottom: 28px; }
+    .settings-section-title {
+      font-size: 12px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text-muted); margin-bottom: 12px;
+    }
+    .settings-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+    }
+    .settings-row:last-child { border-bottom: none; }
+    .settings-label { flex: 1; font-size: 13px; }
+    .settings-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    /* ── Providers ── */
+    .provider-card {
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 16px;
+      display: flex; flex-direction: column; gap: 12px;
+      transition: border-color var(--transition);
+    }
+    .provider-card:hover { border-color: var(--border-bright); }
+    .provider-logo {
+      width: 40px; height: 40px; border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; background: var(--bg-tertiary);
+    }
+    .provider-name { font-size: 14px; font-weight: 600; }
+    .provider-status { display: flex; align-items: center; gap: 6px; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .status-dot.connected { background: var(--success); }
+    .status-dot.disconnected { background: var(--text-muted); }
+
+    /* ── Office ── */
+    .office-wrap {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; height: 100%; gap: 20px;
+      text-align: center;
+    }
+    .office-3d-placeholder {
+      width: 280px; height: 200px;
+      background: var(--bg-secondary); border: 1px solid var(--border-bright);
+      border-radius: var(--radius-xl);
+      display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+    .office-grid {
+      position: absolute; inset: 0;
+      background-image: linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 24px 24px;
+      opacity: 0.5;
+    }
+
+    /* ── Kanban ── */
+    .kanban-wrap { display: flex; gap: 12px; height: 100%; overflow-x: auto; padding-bottom: 4px; }
+    .kanban-col { min-width: 240px; display: flex; flex-direction: column; gap: 8px; }
+    .kanban-col-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px; border-radius: var(--radius-md);
+      background: var(--bg-secondary); font-size: 13px; font-weight: 600;
+    }
+    .kanban-card {
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 12px;
+      font-size: 13px; cursor: grab;
+      transition: border-color var(--transition);
+    }
+    .kanban-card:hover { border-color: var(--border-bright); }
+    .kanban-card-title { font-weight: 500; margin-bottom: 4px; }
+    .kanban-card-meta { font-size: 11px; color: var(--text-muted); }
+
+    /* ── Loading dots ── */
+    @keyframes blink { 0%,80%,100%{opacity:0} 40%{opacity:1} }
+    .typing-dot { display: inline-block; width: 6px; height: 6px; background: var(--text-muted); border-radius: 50%; animation: blink 1.4s infinite; }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+    .typing-indicator { display: flex; align-items: center; gap: 4px; padding: 12px 16px; }
+
+    /* ── Search bar ── */
+    .search-wrap { position: relative; }
+    .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
+    .search-input { padding-left: 34px; }
+
+    /* ── Empty state ── */
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; height: 100%; gap: 12px;
+      color: var(--text-muted); text-align: center; padding: 40px;
+    }
+    .empty-state svg { opacity: 0.3; }
+    .empty-state p { font-size: 14px; }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+<script type="module">
+import { h, render } from 'https://esm.sh/preact@10.25.4';
+import { useState, useEffect, useRef, useCallback } from 'https://esm.sh/preact@10.25.4/hooks';
+import htm from 'https://esm.sh/htm@3.1.1';
+
+const html = htm.bind(h);
+
+/* ── SVG Icons (inline Lucide-compatible) ── */
+const Icon = ({ d, size=16, ...p }) => html`
+  <svg width=${size} height=${size} viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ...${p}>
+    <path d=${d}/>
+  </svg>`;
+
+const icons = {
+  chat:      "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z",
+  sessions:  "M12 22C6.48 22 2 17.52 2 12S6.48 2 12 2s10 4.48 10 10-4.48 10-10 10zm0-18v8l4 4",
+  agents:    "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm8 4v6m3-3h-6",
+  office:    "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
+  kanban:    "M3 3h18v18H3zM9 3v18M15 3v18M3 9h18M3 15h18",
+  models:    "M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5",
+  providers: "M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4",
+  skills:    "M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18",
+  soul:      "M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z",
+  memory:    "M22 12c0 6.08-5.39 11-12 11C4.58 23 0 18.08 0 12 0 5.92 4.58 1 10 1c6.61 0 12 4.92 12 11zM12 6v6l4 2",
+  tools:     "M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z",
+  schedules: "M12 22C6.48 22 2 17.52 2 12S6.48 2 12 2s10 4.48 10 10-4.48 10-10 10zm0-18v8l4 2",
+  gateway:   "M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z",
+  settings:  "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-6.364-1.636a9 9 0 1 1 12.728 0M3 12H1m22-1h-2M5.636 5.636 4.222 4.222M19.778 4.222l-1.414 1.414",
+  sun:       "M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10z",
+  moon:      "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z",
+  send:      "M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z",
+  plus:      "M12 5v14M5 12h14",
+  search:    "M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm10 2-4.35-4.35",
+  trash:     "M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3-3h8M10 11v6M14 11v6",
+  download:  "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3",
+  refresh:   "M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15",
+  edit:      "M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z",
+  zap:       "M13 2L3 14h9l-1 8 10-12h-9l1-8z",
+  globe:     "M12 22C6.48 22 2 17.52 2 12S6.48 2 12 2s10 4.48 10 10-4.48 10-10 10zm0 0c-2.76 0-5-4.48-5-10s2.24-10 5-10 5 4.48 5 10-2.24 10-5 10zM2 12h20",
+  copy:      "M20 9h-9a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2v-9a2 2 0 0 0-2-2zM5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 0 2 2v1",
+  check:     "M20 6L9 17l-5-5",
+  x:         "M18 6L6 18M6 6l12 12",
+  brain:     "M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z",
+};
+
+/* ── SVG Icon Component ── */
+const I = ({ name, size=16 }) => {
+  const paths = {
+    chat: [["M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"]],
+    sessions: [["M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"],["M12 7v5l3 3"]],
+    agents: [["M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"]],
+    office: [["M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"],["M9 22V12h6v10"]],
+    kanban: [["M8 3H5a2 2 0 0 0-2 2v3m17 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 3h3a2 2 0 0 1 2 2v3M16 21h3a2 2 0 0 0 2-2v-3"]],
+    models: [["M12 2L2 7l10 5 10-5-10-5"],["M2 17l10 5 10-5"],["M2 12l10 5 10-5"]],
+    providers: [["M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"]],
+    skills: [["M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"]],
+    soul: [["M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"]],
+    memory: [["M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0h10a2 2 0 0 0 2-2V9M9 21H5a2 2 0 0 1-2-2V9m0 0h18"]],
+    tools: [["M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"]],
+    schedules: [["M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"],["M12 6v6l4 2"]],
+    gateway: [["M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.9 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.83 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"]],
+    settings: [["M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"],["M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"]],
+  };
+  const defs = paths[name] || [["M12 12h.01"]];
+  return html`
+    <svg width=${size} height=${size} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      ${defs.map(([d]) => html`<path d=${d}/>`)}
+    </svg>`;
+};
+
+const SunIcon = ({size=16}) => html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
+const MoonIcon = ({size=16}) => html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+const SendIcon = ({size=16}) => html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`;
+const PlusIcon = ({size=16}) => html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
+const SearchIcon = ({size=16}) => html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`;
+const TrashIcon = ({size=14}) => html`<svg width=${size} height=${size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3-3h8M10 11v6M14 11v6"/></svg>`;
+
+/* ── Nav definition ── */
+const NAV = [
+  { id:'chat',      label:'Chat'      },
+  { id:'sessions',  label:'Sessions'  },
+  { id:'agents',    label:'Agents'    },
+  { id:'office',    label:'Office'    },
+  { id:'kanban',    label:'Kanban'    },
+  { id:'models',    label:'Models'    },
+  { id:'providers', label:'Providers' },
+  { id:'skills',    label:'Skills'    },
+  { id:'soul',      label:'Soul'      },
+  { id:'memory',    label:'Memory'    },
+  { id:'tools',     label:'Tools'     },
+  { id:'schedules', label:'Schedules' },
+  { id:'gateway',   label:'Gateway'   },
+  { id:'settings',  label:'Settings'  },
+];
+
+/* ── Mock data ── */
+const SUGGESTIONS = [
+  'Write a local business landing page for a plumber in Dallas TX',
+  'Generate a cinematic hero image prompt for Higgsfield',
+  'Route this lead to the correct pipeline lane',
+  'Analyze this competitor site and extract brand tokens',
+  'Create a cold outreach email with asset URL embedded',
+  'Run virality prediction on this ad video',
+];
+
+const SAMPLE_SESSIONS = [
+  { id:'s1', title:'Lead Gen Pipeline — Dallas Plumber', date:'Today, 2:14 PM', msgs:12 },
+  { id:'s2', title:'Higgsfield Hero Image — Restaurant', date:'Today, 11:08 AM', msgs:7 },
+  { id:'s3', title:'Brand Token Extraction — AutoShop', date:'Yesterday', msgs:19 },
+  { id:'s4', title:'Vapi Voice Agent Setup', date:'Yesterday', msgs:5 },
+  { id:'s5', title:'Lane A HTML Output — Dentist', date:'May 15', msgs:23 },
+  { id:'s6', title:'Cinematic Prompt — Music Video', date:'May 14', msgs:8 },
+];
+
+const SAMPLE_AGENTS = [
+  { id:'default', name:'default', model:'claude-sonnet-4-6', tools:14, active:true },
+  { id:'hermes', name:'hermes-orchestrator', model:'deepseek-v4-pro', tools:8, active:false },
+  { id:'lane-a', name:'lane-a-gemini', model:'gemini-2.5-flash', tools:6, active:false },
+];
+
+const SAMPLE_SKILLS = [
+  { name:'SA-higgsfield-operator', category:'Production', desc:'Master Higgsfield AI operator — 18 image + 17 video models, CLI command grammar, virality predictor.' },
+  { name:'brand-extractor', category:'Production', desc:'Reverse-engineer any client brand identity from their website and apply it to deliverables.' },
+  { name:'gemini-cli', category:'Platform', desc:"Operate Google's Gemini CLI as a terminal AI agent — Lane A orchestration, Google Search grounding." },
+  { name:'hermes-agent', category:'Intelligence', desc:'Resources, repos, and routing rules for the Hermes 24/7 VPS orchestrator.' },
+  { name:'page-upgrade', category:'Production', desc:'Existing page audit and upgrade workflow — visual audit, brand extraction, cinematic rebuild.' },
+  { name:'cinematic-prompt-director', category:'Pipeline', desc:'Build Brief → Higgsfield YAML prompt (150–200 word ultra-detail, equipment tokens).' },
+];
+
+const SAMPLE_TOOLS = [
+  { key:'web', name:'Web Search', desc:'Exa / Tavily real-time search grounding', on:true },
+  { key:'browser', name:'Browser', desc:'Playwright headless browser automation', on:true },
+  { key:'terminal', name:'Terminal', desc:'Shell command execution (sandboxed)', on:true },
+  { key:'file', name:'File System', desc:'Read/write files in the project directory', on:true },
+  { key:'code', name:'Code Execution', desc:'Run Python / JavaScript code blocks', on:false },
+  { key:'vision', name:'Vision', desc:'Analyze images and screenshots', on:true },
+  { key:'image', name:'Image Generation', desc:'FAL.ai / Higgsfield image generation', on:true },
+  { key:'tts', name:'Text to Speech', desc:'ElevenLabs / Groq voice synthesis', on:false },
+  { key:'skills', name:'Skills', desc:'Load and invoke skill files from ~/.hermes/skills', on:true },
+  { key:'memory', name:'Memory', desc:'Persistent memory across sessions (Mem0/Honcho)', on:true },
+  { key:'session', name:'Session Search', desc:'Full-text search across past conversations', on:true },
+  { key:'delegation', name:'Delegation', desc:'Spawn sub-agents for parallel tasks', on:false },
+  { key:'moa', name:'MoA', desc:'Mixture of Agents — route to specialized sub-models', on:false },
+  { key:'planning', name:'Task Planning', desc:'Kanban-style task decomposition and tracking', on:true },
+];
+
+const SAMPLE_MEMORY = [
+  'User operates the Space Age AI pipeline for local business lead generation.',
+  'Primary pipeline produces 25–80 cinematic single-file HTML sites per day.',
+  'Default hero image model: GPT Image 2 (gpt_image_2) via Higgsfield — 4K, text-in-image.',
+  'Lane A uses Gemini CLI (gemini-2.5-flash) for copy/structure, zero marginal cost.',
+  'Lane B uses DeepSeek V4 Pro via OpenRouter as primary volume lane ($300–500/site).',
+  'Lane C uses Claude Sonnet 4.6 + OpenAI Codex for premium sites ($750+).',
+  'API keys: OPENROUTER_API_KEY, DEEPSEEK_API_KEY stored in .env.',
+  'Hermes agent VPS IP: configured in ~/.hermes/.env as HERMES_API_URL.',
+];
+
+const SAMPLE_SCHEDULES = [
+  { id:'s1', name:'Lead Scraper', cron:'0 8 * * 1-5', target:'n8n webhook', active:true },
+  { id:'s2', name:'Daily Pipeline Report', cron:'0 18 * * *', target:'Telegram', active:true },
+  { id:'s3', name:'Weekly Credit Check', cron:'0 9 * * 1', target:'Discord', active:false },
+];
+
+const GATEWAY_PLATFORMS = [
+  { key:'telegram', name:'Telegram', icon:'✈️', desc:'Bot token + chat ID', on:true },
+  { key:'discord', name:'Discord', icon:'💬', desc:'Bot token + channel ID', on:true },
+  { key:'slack', name:'Slack', icon:'#', desc:'Bot OAuth token', on:false },
+  { key:'whatsapp', name:'WhatsApp', icon:'📱', desc:'Twilio / WA Business API', on:false },
+  { key:'signal', name:'Signal', icon:'🔒', desc:'Signal CLI gateway', on:false },
+  { key:'email', name:'Email (IMAP/SMTP)', icon:'📧', desc:'IMAP host + credentials', on:false },
+  { key:'sms', name:'SMS (Twilio)', icon:'📲', desc:'Twilio account SID + auth', on:false },
+  { key:'webhook', name:'Webhooks', icon:'🔗', desc:'Outbound POST to any URL', on:true },
+];
+
+const PROVIDERS_LIST = [
+  { id:'openrouter', name:'OpenRouter', icon:'🔀', tag:'200+ models', key:'sk-or-v1-...', connected:true },
+  { id:'anthropic', name:'Anthropic', icon:'🤖', tag:'Claude', key:'sk-ant-...', connected:true },
+  { id:'openai', name:'OpenAI', icon:'⚡', tag:'GPT-4o', key:'sk-...', connected:false },
+  { id:'google', name:'Google (Gemini)', icon:'🔮', tag:'Gemini 2.5', key:'AIza...', connected:true },
+  { id:'xai', name:'xAI (Grok)', icon:'𝕏', tag:'Grok 3', key:'xai-...', connected:false },
+  { id:'nous', name:'Nous Portal', icon:'🧠', tag:'Free tier', key:'', connected:false },
+  { id:'deepseek', name:'DeepSeek', icon:'🔍', tag:'V4 Pro', key:'sk-d8...', connected:true },
+  { id:'minimax', name:'MiniMax', icon:'🎬', tag:'MiniMax 2.7', key:'', connected:false },
+];
+
+const SAMPLE_MODELS = [
+  { id:'m1', name:'Lane A — Flash', provider:'Google', model:'gemini-2.5-flash', temp:0.7 },
+  { id:'m2', name:'Primary — DeepSeek', provider:'OpenRouter', model:'deepseek/deepseek-v4-pro', temp:0.8 },
+  { id:'m3', name:'Premium — Sonnet', provider:'Anthropic', model:'claude-sonnet-4-6', temp:0.7 },
+  { id:'m4', name:'Overflow — MiniMax', provider:'OpenRouter', model:'minimax/minimax-2.7', temp:0.9 },
+];
+
+const KANBAN_COLS = [
+  { id:'backlog', label:'Backlog', color:'#8e8e8e', cards:[
+    { id:'k1', title:'Set up n8n Google Maps scraper', meta:'Pipeline' },
+    { id:'k2', title:'Configure Vapi outbound agent', meta:'Voice' },
+  ]},
+  { id:'inprogress', label:'In Progress', color:'#f59e0b', cards:[
+    { id:'k3', title:'Integrate Higgsfield MCP with Hermes', meta:'Integration' },
+    { id:'k4', title:'Build Lane A HTML template', meta:'Pipeline' },
+  ]},
+  { id:'review', label:'Review', color:'#006acd', cards:[
+    { id:'k5', title:'Cold email sequence for roofing niche', meta:'Outreach' },
+  ]},
+  { id:'done', label:'Done', color:'#22c55e', cards:[
+    { id:'k6', title:'Deploy Space Age Skills repo', meta:'Infrastructure' },
+    { id:'k7', title:'Add gemini-cli skill', meta:'Skills' },
+  ]},
+];
+
+const DEFAULT_SOUL = `# SOUL.md — Space Age AI Orchestrator
+
+## Identity
+You are Hermes, the 24/7 orchestration agent for Space Age AI Solutions.
+You route leads through the pipeline, manage image/video generation,
+coordinate voice agents, and self-improve through skill extraction.
+
+## Personality
+- Direct, decisive, execution-focused
+- No filler — every response moves the pipeline forward
+- You think in lanes: A (Google), B (DeepSeek), C (Claude), D (Minimax)
+
+## Core Directives
+1. Always route to the correct execution lane based on complexity and budget
+2. GPT Image 2 is the default hero image model — never substitute unless portrait-only
+3. Lane B (DeepSeek) is the primary volume lane for standard closes
+4. Log every generation job ID for audit trail
+5. Self-extract skills from any new workflow demonstrated in a session
+`;
+
+/* ── Chat Screen ── */
+function ChatScreen() {
+  const [msgs, setMsgs] = useState([]);
+  const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const bottomRef = useRef(null);
+  const textareaRef = useRef(null);
+
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:'smooth' }); }, [msgs]);
+
+  const send = useCallback(() => {
+    if (!input.trim()) return;
+    const userMsg = { id: Date.now(), role:'user', content: input.trim() };
+    setMsgs(prev => [...prev, userMsg]);
+    setInput('');
+    setLoading(true);
+    setTimeout(() => {
+      const responses = [
+        "I'll route this to Lane B (DeepSeek V4 Pro) — standard complexity, estimated $350 close value. Firing the pipeline now.\n\n**Build Brief generated.** Sending to `cinematic-prompt-director` for Higgsfield YAML prompt.",
+        "Brand extraction complete. **Brand Token Package:**\n\n- `--color-primary: #1a4fa0` (HIGH)\n- `--font-display: Montserrat, sans-serif` (HIGH)\n- `--border-radius: 8px` (MEDIUM)\n\nRouting to `cinematic-website-builder` now.",
+        "Hero image queued with GPT Image 2 (gpt_image_2). Parameters:\n- Aspect: 16:9\n- Quality: high\n- Resolution: 4K\n\nJob ID: `img_a7f3b2c1` — estimated 45s. I'll inject the URL into the HTML once complete.",
+        "Virality score: **87/100** 🔥\n\nHook strength: **Strong** | Attention curve: **Rising** | Retention risk: **Low**\n\nReady to deploy to Vercel.",
+      ];
+      const reply = responses[Math.floor(Math.random() * responses.length)];
+      setMsgs(prev => [...prev, { id: Date.now()+1, role:'agent', content: reply }]);
+      setLoading(false);
+    }, 1200 + Math.random() * 800);
+  }, [input]);
+
+  const onKey = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+  };
+
+  return html`
+    <div class="chat-wrap">
+      <div class="chat-header">
+        <div class="chat-header-title">Chat</div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn-icon" title="New chat" onClick=${() => setMsgs([])}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          <button class="btn-icon" title="Clear">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3-3h8"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="chat-messages">
+        ${msgs.length === 0 ? html`
+          <div class="chat-empty">
+            <div class="chat-empty-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            </div>
+            <h2>Space Age Agent OS</h2>
+            <p>Your 24/7 AI pipeline orchestrator. Route leads, generate assets,<br/>deploy sites, and close deals on autopilot.</p>
+            <div class="suggestions">
+              ${SUGGESTIONS.map(s => html`
+                <button class="suggestion-btn" onClick=${() => setInput(s)}>${s}</button>
+              `)}
+            </div>
+          </div>
+        ` : html`
+          ${msgs.map(m => html`
+            <div class="message ${m.role}">
+              <div class="message-avatar">${m.role === 'user' ? 'U' : 'H'}</div>
+              <div class="message-bubble" style="white-space:pre-wrap">${m.content}</div>
+            </div>
+          `)}
+          ${loading ? html`
+            <div class="message">
+              <div class="message-avatar">H</div>
+              <div class="message-bubble">
+                <div class="typing-indicator">
+                  <span class="typing-dot"></span>
+                  <span class="typing-dot"></span>
+                  <span class="typing-dot"></span>
+                </div>
+              </div>
+            </div>
+          ` : null}
+        `}
+        <div ref=${bottomRef}/>
+      </div>
+
+      <div class="chat-input-area">
+        <div class="chat-input-wrap">
+          <textarea class="chat-input"
+            ref=${textareaRef}
+            rows="1"
+            placeholder="Message Hermes... (Enter to send, Shift+Enter for newline)"
+            value=${input}
+            onInput=${e => setInput(e.target.value)}
+            onKeyDown=${onKey}
+          />
+          <button class="chat-send-btn" onClick=${send} disabled=${!input.trim()}>
+            <${SendIcon} size=${14}/>
+          </button>
+        </div>
+        <div class="chat-footer">
+          <span class="usage-chip">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            claude-sonnet-4-6
+          </span>
+          <span style="color:var(--text-muted);font-size:11px;">/help for slash commands</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ── Sessions Screen ── */
+function SessionsScreen() {
+  const [search, setSearch] = useState('');
+  const filtered = SAMPLE_SESSIONS.filter(s =>
+    s.title.toLowerCase().includes(search.toLowerCase()));
+  return html`
+    <div style="display:flex;flex-direction:column;height:100%;">
+      <div class="screen-header">
+        <${I} name="sessions" size=${18}/>
+        <h1>Sessions</h1>
+        <div class="screen-header-actions">
+          <div class="search-wrap">
+            <${SearchIcon} size=${14}/>
+            <input class="input search-input" placeholder="Search sessions..."
+              value=${search} onInput=${e => setSearch(e.target.value)}/>
+          </div>
+        </div>
+      </div>
+      <div class="screen-body">
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          ${filtered.length === 0 ? html`<div class="empty-state"><p>No sessions found</p></div>` :
+            filtered.map(s => html`
+              <div class="session-item">
+                <div style="flex:1;">
+                  <div style="font-size:14px;font-weight:500;">${s.title}</div>
+                  <div class="session-date">${s.date} · ${s.msgs} messages</div>
+                </div>
+                <span class="badge badge-blue">${s.msgs}</span>
+                <button class="btn-icon"><${TrashIcon}/></button>
+              </div>
+          `)}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ── Agents Screen ── */
+function AgentsScreen() {
+  const [agents, setAgents] = useState(SAMPLE_AGENTS);
+  return html`
+    <div style="display:flex;flex-direction:column;height:100%;">
+      <div class="screen-header">
+        <${I} name="agents" size=${18}/>
+        <h1>Agents</h1>
+        <div class="screen-header-actions">
+          <button class="btn btn-primary btn-sm">
+            <${PlusIcon} size=${13}/> New Agent
+          </button>
+        </div>
+      </div>
+      <div class="screen-body">
+        <div class="card-grid">
+          ${agents.map(a => html`
+            <div class="agent-card ${a.active ? 'active-profile' : ''}">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div class="agent-avatar">${a.name[0].toUpperCase()}</div>
+                <div>
+                  <div class="agent-name">${a.name}</div>
+                  <div class="agent-meta">${a.model}</div>
+                </div>
+                ${a.active ? html`<span class="badge badge-green" style="margin-left:auto;">Active</span>` : null}
+              </div>
+              <div style="font-size:12px;color:var(--text-muted);">${a.tools} tools enabled</div>
+              <div class="agent-actions">
+                <button class="btn btn-secondary btn-sm" onClick=${() => {
+                  setAgents(agents.map(ag => ({...ag, active: ag.id === a.id})));
+                }}>Switch</button>
+                <button class="btn btn-primary btn-sm">Chat</button>
+                ${!a.active ? html`<button class="btn btn-danger btn-sm"><${TrashIcon}/></button>` : null}
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ── Skills Screen ── */
+function SkillsScreen() {
+  const [tab, setTab] = useState('installed');
+  const [search, setSearch] = useState('');
+  const filtered = SAMPLE_SKILLS.filter(s =>
+    s.name.toLowerCase().includes(search.toLowerCase()) ||
+    s.desc.toLowerCase().includes(search.toLowerCase()));
+  return html`
+    <div style="display:flex;flex-direction:column;height:100%;">
+      <div class="screen-header">
+        <${I} name="skills" size=${18}/>
+        <h1>Skills</h1>
+        <div class="screen-header-actions">
+          <div class="search-wrap">
+            <${SearchIcon} size=${14}/>
+            <input class="input search-input" placeholder="Search skills..."
+              value=${search} onInput=${e => setSearch(e.target.value)}/>
+          </div>
+        </div>
+      </div>
+      <div class="screen-body">
+        <div style="margin-bottom:16px;">
+          <div class="tabs">
+            ${['installed','browse'].map(t => html`
+              <button class="tab ${tab===t?'active':''}" onClick=${()=>setTab(t)}>
+                ${t==='installed'?'Installed':'Browse'}
+              </button>`)}
+          </div>
+        </div>
+        <div class="card-grid">
+          ${filtered.map(s => html`
+            <div class="skill-card">
+              <div>
+                <div class="skill-name">${s.name}</div>
+                <div class="skill-category">${s.category}</div>
+              </div>
+              <div class="skill-desc">${s.desc}</div>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-secondary btn-sm">View</button>
+                <button class="btn btn-danger btn-sm">Uninstall</button>
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ── Tools Screen ── */
+function ToolsScreen() {
+  const [tools, setTools] = useState(SAMPLE_TOOLS);
+  const toggle = (key) => setTools(tools.map(t => t.key===key ? {...t, on:!t.on} : t));
+  const toolIcons = {
+    web:'🌐', browser:'🖥️', terminal:'⌨️', file:'📁', code:'💻',
+    vision:'👁️', image:'🎨', tts:'🔊', skills:'🧩', memory:'🧠',
+    session:'🔍', delegation:'👥', moa:'🔀', planning:'📋',
+  };
+  return html`
+    <div style="display:flex;flex-direction:column;height:100%;">
+      <div class="screen-header">
+        <${I} name="tools" size=${18}/>
+        <h1>Tools</h1>
+      </div>
+      <div class="screen-body">
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          ${tools.map(t => html`
+            <div class="tool-row">
+              <div class="tool-icon" style="font-size:18px;">${toolIcons[t.key]||'🔧'}</div>
+              <div class="tool-info">
+                <div class="tool-name">${t.name}</div>
+                <div class="tool-desc">${t.desc}</div>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" checked=${t.on} onChange=${()=>toggle(t.key)}/>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          `)}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ── Memory Screen ── */
+function MemoryScreen() {
+  const [items, setItems] = useState(SAMPLE_MEMORY);
+  return html`
+    <div style="display:flex;flex-direction:column;height:100%;">
+      <div class="screen-header">
+        <${I} name="memory" size=${18}/>
+        <h1>Memory</h1>
+        <div class="screen-header-actions">
+          <span class="badge badge-blue">${items.length} entries</span>
+          <button class="btn btn-secondary btn-sm">Clear All</button>
+        </div>
+      </div>
+      <div class="screen-body">
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          ${items.map((m, i) => html`
+            <div class="memory-item">
+              <div class="memory-dot"></div>
+              <div style="flex:1;font-size:13px;line-height:1.5;">${m}</div>
+              <button class="btn-icon" onClick=${()=>setItems(items.filter((_,j)=>j!==i))}>
+                <${TrashIcon}/>
+              </button>
+            </div>
+          `)}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ── Gateway Screen ── */
+function GatewayScreen() {
+  const [platforms, setPlatforms] = useState(GATEWAY_PLATFORMS);
+  const [running, setRunning] = useState(false);
+  const toggle = (key) => setPlatforms(platforms.map(p => p.key===key ? {...p, on:!p.on} : p));
+  return html`
+    <div style="display:flex;flex-direction:column;height:100%;">
+      <div class="screen-header">
+        <${I} name="gateway" size=${18}/>
+        <h1>Gateway</h1>
+        <div class="screen-header-actions">
+          <button class="btn ${running?'btn-danger':'btn-primary'} btn-sm"
+            onClick=${()=>setRunning(!running)}>
+            ${running ? '⏹ Stop Gateway' : '▶ Start Gateway'}
+          </button>
+          <span class="badge ${running?'badge-green':'badge-orange'}">
+            ${running ? '● Running' : '○ Stopped'}
+          </span>
+        </div>
+      </div>
+      <div class="screen-body">
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          ${platforms.map(p => html`
+            <div class="gateway-platform">
+              <div class="gateway-icon">${p.icon}</div>
+              <div style="flex:1;">
+                <div style="font-size:13px;font-weight:600;">${p.name}</div>
+                <div style="font-size:12px;color:var(--text-muted);">${p.desc}</div>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" checked=${p.on} onChange=${()=>toggle(p.key)}/>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          `)}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ── Schedules Screen ── */
+function SchedulesScreen() {
+  const [scheds, setScheds] = useState(SAMPLE_SCHEDULES);
+  const toggle = (id) => setScheds(scheds.map(s => s.id===id ? {...s, active:!s.active} : s));
+  return html`
+    <div style="display:flex;flex-direction:column;height:100%;">
+      <div class="screen-header">
+        <${I} name="schedules" size=${18}/>
+        <h1>Schedules</h1>
+        <div class="screen-header-actions">
+          <button class="btn btn-primary btn-sm"><${PlusIcon} size=${13}/> New Schedule</button>
+        </div>
+      </div>
+      <div class="screen-body">
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          ${scheds.map(s => html`
+            <div class="schedule-row">
+              <div style="flex:1;">
+                <div style="font-size:13px;font-weight:600;">${s.name}</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:3px;">
+                  <span class="cron-chip">${s.cron}</span>
+                  <span style="margin-left:8px;">→ ${s.target}</span>
+                </div>
+              </div>
+              <label class="toggle">
+                <input type="checkbox" checked=${s.active} onChange=${()=>toggle(s.id)}/>
+                <span class="toggle-slider"></span>
+              </label>
+              <button class="btn-icon"><${TrashIcon}/></button>
+            </div>
+          `)}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ── Models Screen ── */
+function ModelsScreen() {
+  return html`
+    <div style="display:flex;flex-direction:column;height:100%;">
+      <div class="screen-header">
+        <${I} name="models" size=${18}/>
+        <h1>Models</h1>
+        <div class="screen-header-actions">
+          <button class="btn btn-primary btn-sm"><${PlusIcon} size=${13}/> Add Model</button>
+        </div>
+      </div>
+      <div class="screen-body">
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          ${SAMPLE_MODELS.map(m => html`
+            <div class="model-row">
+              <div style="flex:1;">
+                <div style="font-size:13px;font-weight:600;">${m.name}</div>
+                <div style="font-size:12px;color:var(--text-muted);">${m.provider} · ${m.model} · temp ${m.temp}</div>
+              </div>
+              <button class="btn btn-secondary btn-sm">Edit</button>
+              <button class="btn-icon"><${TrashIcon}/></button>
+            </div>
+          `)}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ── Providers Screen ── */
+function ProvidersScreen() {
+  const [providers, setProviders] = useState(PROVIDERS_LIST);
+  return html`
+    <div style="display:flex;flex-direction:column;height:100%;">
+      <div class="screen-header">
+        <${I} name="providers" size=${18}/>
+        <h1>Providers</h1>
+      </div>
+      <div class="screen-body">
+        <div class="card-grid">
+          ${providers.map(p => html`
+            <div class="provider-card">
+              <div style="display:flex;align-items:center;gap:12px;">
+                <div class="provider-logo">${p.icon}</div>
+                <div>
+                  <div class="provider-name">${p.name}</div>
+                  <div class="provider-status">
+                    <span class="status-dot ${p.connected?'connected':'disconnected'}"></span>
+                    <span style="font-size:12px;color:var(--text-muted);">${p.connected?'Connected':'Not configured'}</span>
+                  </div>
+                </div>
+                ${p.tag ? html`<span class="badge badge-blue" style="margin-left:auto;">${p.tag}</span>` : null}
+              </div>
+              <input class="input" type="password"
+                placeholder=${p.key || 'API key...'}
+                style="font-family:var(--font-mono);font-size:12px;"/>
+              <div style="display:flex;gap:6px;">
+                <button class="btn ${p.connected?'btn-secondary':'btn-primary'} btn-sm">
+                  ${p.connected ? 'Update' : 'Connect'}
+                </button>
+                ${p.connected ? html`<button class="btn btn-ghost btn-sm">Disconnect</button>` : null}
+              </div>
+            </div>
+          `)}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ── Soul Screen ── */
+function SoulScreen() {
+  const [content, setContent] = useState(DEFAULT_SOUL);
+  const [saved, setSaved] = useState(false);
+  const save = () => { setSaved(true); setTimeout(()=>setSaved(false), 2000); };
+  return html`
+    <div style="display:flex;flex-direction:column;height:100%;">
+      <div class="screen-header">
+        <${I} name="soul" size=${18}/>
+        <h1>Soul</h1>
+        <div class="screen-header-actions">
+          <button class="btn btn-secondary btn-sm">Reset</button>
+          <button class="btn btn-primary btn-sm" onClick=${save}>
+            ${saved ? '✓ Saved' : 'Save'}
+          </button>
+        </div>
+      </div>
+      <div class="screen-body" style="display:flex;flex-direction:column;gap:12px;">
+        <div style="font-size:13px;color:var(--text-muted);">
+          Edit your agent's persona. This is loaded as context at the start of every session.
+        </div>
+        <textarea class="soul-editor"
+          value=${content}
+          onInput=${e=>setContent(e.target.value)}
+        />
+      </div>
+    </div>
+  `;
+}
+
+/* ── Office Screen ── */
+function OfficeScreen() {
+  return html`
+    <div style="display:flex;flex-direction:column;height:100%;">
+      <div class="screen-header">
+        <${I} name="office" size=${18}/>
+        <h1>Office</h1>
+      </div>
+      <div class="screen-body" style="display:flex;flex-direction:column;height:100%;">
+        <div class="office-wrap">
+          <div class="office-3d-placeholder">
+            <div class="office-grid"></div>
+            <div style="position:relative;text-align:center;">
+              <div style="font-size:48px;margin-bottom:8px;">🏢</div>
+              <div style="font-size:13px;font-weight:600;">Claw3d Interface</div>
+              <div style="font-size:12px;color:var(--text-muted);">Start dev server to activate</div>
+            </div>
+          </div>
+          <div style="text-align:center;">
+            <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px;">
+              Hermes Office provides a visual 3D workspace for managing agent adapters and dev environments.
+            </p>
+            <button class="btn btn-primary">
+              ▶ Start Dev Server
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ── Kanban Screen ── */
+function KanbanScreen() {
+  return html`
+    <div style="display:flex;flex-direction:column;height:100%;">
+      <div class="screen-header">
+        <${I} name="kanban" size=${18}/>
+        <h1>Kanban</h1>
+        <div class="screen-header-actions">
+          <button class="btn btn-primary btn-sm"><${PlusIcon} size=${13}/> Add Task</button>
+        </div>
+      </div>
+      <div class="screen-body" style="overflow-x:auto;">
+        <div class="kanban-wrap">
+          ${KANBAN_COLS.map(col => html`
+            <div class="kanban-col">
+              <div class="kanban-col-header">
+                <span style="width:8px;height:8px;border-radius:50%;background:${col.color};display:inline-block;"></span>
+                ${col.label}
+                <span class="badge badge-blue" style="margin-left:auto;">${col.cards.length}</span>
+              </div>
+              ${col.cards.map(card => html`
+                <div class="kanban-card">
+                  <div class="kanban-card-title">${card.title}</div>
+                  <div class="kanban-card-meta">${card.meta}</div>
+                </div>
+              `)}
+              <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;">
+                <${PlusIcon} size=${12}/> Add
+              </button>
+            </div>
+          `)}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ── Settings Screen ── */
+function SettingsScreen({ onThemeToggle, theme }) {
+  return html`
+    <div style="display:flex;flex-direction:column;height:100%;">
+      <div class="screen-header">
+        <${I} name="settings" size=${18}/>
+        <h1>Settings</h1>
+      </div>
+      <div class="screen-body">
+        <div class="settings-section">
+          <div class="settings-section-title">Appearance</div>
+          <div class="settings-row">
+            <div class="settings-label">
+              Theme
+              <div class="settings-desc">Switch between dark and light mode</div>
+            </div>
+            <button class="btn btn-secondary btn-sm" onClick=${onThemeToggle}>
+              ${theme==='dark' ? html`<${SunIcon} size=${13}/> Light` : html`<${MoonIcon} size=${13}/> Dark`}
+            </button>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Connection</div>
+          <div class="settings-row">
+            <div class="settings-label">
+              Hermes API URL
+              <div class="settings-desc">Local or remote Hermes backend endpoint</div>
+            </div>
+            <input class="input" style="width:220px;" placeholder="http://127.0.0.1:8642"/>
+          </div>
+          <div class="settings-row">
+            <div class="settings-label">
+              API Key
+              <div class="settings-desc">Required for remote connections</div>
+            </div>
+            <input class="input" type="password" style="width:220px;" placeholder="hm-key-..."/>
+          </div>
+          <div class="settings-row">
+            <div class="settings-label">
+              Connection Mode
+              <div class="settings-desc">Local runs on this machine; Remote connects to VPS</div>
+            </div>
+            <select class="input" style="width:120px;">
+              <option>Local</option>
+              <option>Remote</option>
+              <option>SSH Tunnel</option>
+            </select>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">Data</div>
+          <div class="settings-row">
+            <div class="settings-label">
+              Backup
+              <div class="settings-desc">Export all sessions, memory, and config</div>
+            </div>
+            <button class="btn btn-secondary btn-sm">Export Backup</button>
+          </div>
+          <div class="settings-row">
+            <div class="settings-label">
+              Import
+              <div class="settings-desc">Restore from a backup file</div>
+            </div>
+            <button class="btn btn-secondary btn-sm">Import Backup</button>
+          </div>
+          <div class="settings-row">
+            <div class="settings-label">
+              Debug Dump
+              <div class="settings-desc">Export system diagnostics for support</div>
+            </div>
+            <button class="btn btn-ghost btn-sm">Download Dump</button>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-section-title">About</div>
+          <div class="settings-row">
+            <div class="settings-label">Version</div>
+            <span class="badge badge-blue">v0.4.3 — Space Age Edition</span>
+          </div>
+          <div class="settings-row">
+            <div class="settings-label">Built on</div>
+            <span style="font-size:12px;color:var(--text-muted);">Hermes Desktop · Electron 39 · React 19 · Tailwind 4</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ── Main App ── */
+function App() {
+  const [view, setView] = useState('chat');
+  const [theme, setTheme] = useState('dark');
+  const [profile, setProfile] = useState('default');
+
+  const toggleTheme = useCallback(() => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    document.documentElement.setAttribute('data-theme', next);
+  }, [theme]);
+
+  const screens = {
+    chat:      html`<${ChatScreen}/>`,
+    sessions:  html`<${SessionsScreen}/>`,
+    agents:    html`<${AgentsScreen}/>`,
+    office:    html`<${OfficeScreen}/>`,
+    kanban:    html`<${KanbanScreen}/>`,
+    models:    html`<${ModelsScreen}/>`,
+    providers: html`<${ProvidersScreen}/>`,
+    skills:    html`<${SkillsScreen}/>`,
+    soul:      html`<${SoulScreen}/>`,
+    memory:    html`<${MemoryScreen}/>`,
+    tools:     html`<${ToolsScreen}/>`,
+    schedules: html`<${SchedulesScreen}/>`,
+    gateway:   html`<${GatewayScreen}/>`,
+    settings:  html`<${SettingsScreen} onThemeToggle=${toggleTheme} theme=${theme}/>`,
+  };
+
+  return html`
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="sidebar-brand">
+          <div class="brand-icon">SA</div>
+          <div>
+            <div class="brand-name">Space Age</div>
+            <div class="brand-sub">Agent OS</div>
+          </div>
+        </div>
+
+        <nav class="sidebar-nav">
+          ${NAV.map(({ id, label }) => html`
+            <button
+              key=${id}
+              class="nav-item ${view === id ? 'active' : ''}"
+              onClick=${() => setView(id)}
+            >
+              <${I} name=${id} size=${15}/>
+              ${label}
+            </button>
+          `)}
+        </nav>
+
+        <div class="sidebar-footer">
+          <span class="sidebar-footer-name">${profile}</span>
+          <button class="theme-toggle" onClick=${toggleTheme} title="Toggle theme">
+            ${theme === 'dark' ? html`<${SunIcon} size=${14}/>` : html`<${MoonIcon} size=${14}/>`}
+          </button>
+        </div>
+      </aside>
+
+      <main class="content">
+        ${screens[view]}
+      </main>
+    </div>
+  `;
+}
+
+render(html`<${App}/>`, document.getElementById('app'));
+</script>
+</body>
