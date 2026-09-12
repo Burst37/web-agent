@@ -120,3 +120,11 @@ Rules:
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+
+## Standing rules
+
+- Start a fresh conversation for each new task rather than continuing one long thread.
+- Plan non-trivial work before building it, and hand the plan to a new conversation.
+- Never give me PDFs or screenshots. Convert to markdown, or connect the underlying tool.
+- Use subagents for anything that reads many files, so the main thread stays clean.
+- Tell me when a task would be faster or cheaper for me to do myself without AI.
