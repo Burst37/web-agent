@@ -1,0 +1,31 @@
+{
+  "name": "jev-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MCP server exposing TypeSafe System One judgments as a single judge tool",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "jev-mcp": "./dist/server.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "node --import tsx/esm src/server.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "smoke": "node --import tsx/esm scripts/smoke.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.3.3",
+    "vitest": "^4.1.3"
+  },
+  "license": "MIT"
+}
