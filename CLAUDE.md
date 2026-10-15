@@ -120,3 +120,11 @@ Rules:
 - If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
 - Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
 - After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+
+## Token discipline (always on)
+
+Space Age rule, hardwired in every project (source: `Burst37/Space-Age-Skills` → `CLAUDE.md` RULE #2):
+
+- **Ponytail** (smallest complete change): reuse existing code → stdlib → installed deps → new code last; no unrequested abstractions, options or dependencies; never cut validation, error handling, security or accessibility; non-trivial logic gets one small test; end coding replies with one line on what was skipped and any risk.
+- **Caveman** (terse chat): no preamble or recap; lead with the result; status as done / failed / blocked.
+- Never compress commit messages, PR bodies, security warnings or user-facing deliverables.
