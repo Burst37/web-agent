@@ -128,3 +128,11 @@ Rules:
 - Never give me PDFs or screenshots. Convert to markdown, or connect the underlying tool.
 - Use subagents for anything that reads many files, so the main thread stays clean.
 - Tell me when a task would be faster or cheaper for me to do myself without AI.
+
+## Token discipline (always on)
+
+Space Age rule, hardwired in every project (source: `Burst37/Space-Age-Skills` → `CLAUDE.md` RULE #2):
+
+- **Ponytail** (smallest complete change): reuse existing code → stdlib → installed deps → new code last; no unrequested abstractions, options or dependencies; never cut validation, error handling, security or accessibility; non-trivial logic gets one small test; end coding replies with one line on what was skipped and any risk.
+- **Caveman** (terse chat): no preamble or recap; lead with the result; status as done / failed / blocked.
+- Never compress commit messages, PR bodies, security warnings or user-facing deliverables.
