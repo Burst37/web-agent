@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Material &amp; depth — SpaceAge Apple-Immersive Web Design</title>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/lab.css">
+<style>
+  /* interpolate-size unlocks transitions to intrinsic sizes (auto, min-content).
+     Declared once at the root; every height:auto transition below depends on it. */
+  :root { interpolate-size: allow-keywords; }
+
+  /* A deliberately busy backdrop — glass is only honest when tested over one. */
+  .busy {
+    position: relative; min-height: 100vh; display: grid; place-items: center;
+    align-content: center; gap: 30px; padding: 140px 0 60px; overflow: clip;
+    background:
+      conic-gradient(from 40deg at 30% 30%, oklch(62% .24 300), oklch(72% .18 220), oklch(78% .16 150), oklch(72% .2 20), oklch(62% .24 300)),
+      var(--bg);
+  }
+  .busy::after {
+    content: ''; position: absolute; inset: 0;
+    background-image: repeating-linear-gradient(45deg, rgb(0 0 0 / .28) 0 18px, transparent 18px 36px);
+    mix-blend-mode: multiply;
+  }
+  .busy > * { position: relative; z-index: 2; }
+
+  .panel { width: min(560px, 88vw); padding: 34px; border-radius: var(--radius-l); }
+  .panel h2 { font-size: var(--step-1); margin-bottom: 10px; }
+  .panel p { margin: 0; font-size: var(--step--1); }
+
+  /* Size drives material weight. Three sizes, three blur/shadow pairings. */
+  .weights { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+    align-items: end; max-width: 560px; }
+  .weights > div { border-radius: var(--radius-m); padding: 16px; font-size: var(--step--1);
+    display: flex; align-items: flex-end; }
+  .w-s { --glass-blur: 10px; height: 92px; }
+  .w-m { --glass-blur: 20px; height: 124px; }
+  .w-l { --glass-blur: 34px; height: 158px; box-shadow: var(--shadow-3); }
+  @media (max-width: 860px) { .weights { grid-template-columns: 1fr; } }
+
+  /* Depth anatomy: the eight layers, shown one at a time. */
+  .anatomy { display: grid; grid-template-columns: 300px 1fr; gap: 34px; align-items: center; }
+  .anatomy__stage { aspect-ratio: 1; display: grid; place-items: center; }
+  .anatomy__obj {
+    width: 74%; aspect-ratio: 1; border-radius: 30px; position: relative;
+    background: linear-gradient(160deg, var(--surface-raised), var(--surface-sunken));
+  }
+  .anatomy__obj[data-l="1"] { box-shadow: none; }
+  .anatomy__obj[data-l="2"] { background:
+      radial-gradient(120% 80% at 30% 0%, color-mix(in oklab, var(--brand) 26%, transparent), transparent 60%),
+      linear-gradient(160deg, var(--surface-raised), var(--surface-sunken)); }
+  .anatomy__obj[data-l="3"] { box-shadow: 0 2px 6px rgb(0 0 0 / .5); }
+  .anatomy__obj[data-l="4"] { box-shadow: 0 2px 6px rgb(0 0 0 / .5), 0 34px 70px rgb(0 0 0 / .45); }
+  .anatomy__obj[data-l="5"] { box-shadow: 0 2px 6px rgb(0 0 0 / .5), 0 34px 70px rgb(0 0 0 / .45), inset 0 1px 0 rgb(255 255 255 / .38); }
+  .anatomy__obj[data-l="6"] { box-shadow: 0 2px 6px rgb(0 0 0 / .5), 0 34px 70px rgb(0 0 0 / .45), inset 0 1px 0 rgb(255 255 255 / .38), 0 24px 90px color-mix(in oklab, var(--brand) 42%, transparent); }
+  .anatomy__steps { display: grid; gap: 6px; }
+  .anatomy__steps button { text-align: left; padding: 10px 14px; border-radius: var(--radius-s);
+    border: 1px solid transparent; background: transparent; cursor: pointer; color: var(--muted); font-size: var(--step--1); }
+  .anatomy__steps button[aria-pressed="true"] { background: rgb(255 255 255 / .07); border-color: var(--line); color: var(--ink); }
+  @media (max-width: 860px) { .anatomy { grid-template-columns: 1fr; } }
+
+  /* Popover + anchor positioning. The menu is positioned by the browser
+     relative to its trigger — no getBoundingClientRect, no reposition listener. */
+  .menu-trigger { anchor-name: --menu-trigger; }
+  #glass-menu {
+    position: absolute;
+    position-anchor: --menu-trigger;
+    position-area: bottom span-right;
+    /* The UA stylesheet gives [popover] `inset: 0; margin: auto`. Both must be
+       cleared or they win over the anchor placement — only the margin that
+       creates the gap is kept. Do NOT re-declare `inset` here: an explicit
+       inset value overrides the position-area placement entirely. */
+    margin: 10px 0 0 0;
+    border: 1px solid var(--glass-line, rgb(255 255 255 / .24));
+    padding: 8px; border-radius: var(--radius-m); min-width: 240px;
+    position-try-fallbacks: flip-block, flip-inline;
+  }
+  #glass-menu menu { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+  #glass-menu button { width: 100%; text-align: left; padding: 10px 12px; border-radius: 10px;
+    background: transparent; border: 0; cursor: pointer; }
+  #glass-menu button:hover, #glass-menu button:focus-visible { background: rgb(255 255 255 / .1); }
+
+  /* Material motion: glass materialises (blur + scale + fade), it does not
+     merely fade. @starting-style provides the entry state for an element that
+     was display:none a frame ago; allow-discrete keeps it in the overlay while
+     the exit transition runs. */
+  [popover] {
+    opacity: 0; transform: translateY(10px) scale(.96); filter: blur(10px);
+    transition: opacity var(--motion-base) var(--ease-enter),
+      transform var(--motion-slow) var(--ease-spring),
+      filter var(--motion-slow) var(--ease-enter),
+      overlay var(--motion-slow) allow-discrete,
+      display var(--motion-slow) allow-discrete;
+  }
+  [popover]:popover-open { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  @starting-style {
+    [popover]:popover-open { opacity: 0; transform: translateY(10px) scale(.96); filter: blur(10px); }
+  }
+
+  /* interpolate-size accordion: a real height:auto transition. */
+  .acc { border: 1px solid var(--line); border-radius: var(--radius-m); background: var(--surface); overflow: clip; }
+  .acc + .acc { margin-top: 10px; }
+  .acc__head { width: 100%; display: flex; justify-content: space-between; gap: 16px; align-items: center;
+    padding: 18px 20px; background: transparent; border: 0; cursor: pointer; font-size: var(--step-0); }
+  .acc__head::after { content: '+'; font-family: var(--font-mono); color: var(--accent); transition: rotate var(--motion-base) var(--ease-standard); }
+  .acc[data-open="true"] .acc__head::after { rotate: 45deg; }
+  .acc__body { height: 0; transition: height var(--motion-base) var(--ease-standard); }
+  .acc[data-open="true"] .acc__body { height: auto; }
+  .acc__body p { padding: 0 20px 20px; margin: 0; font-size: var(--step--1); }
+
+  .elev { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 24px; }
+  .elev > div { border-radius: var(--radius-m); padding: 22px; background: var(--surface); border: 1px solid var(--line); font-size: var(--step--1); }
+  .elev .e1 { box-shadow: var(--shadow-1); }
+  .elev .e2 { box-shadow: var(--shadow-2); }
+  .elev .e3 { box-shadow: var(--shadow-3); }
+  @media (max-width: 860px) { .elev { grid-template-columns: 1fr; } }
+
+  /* Refraction rim, applied by class (never by inline style) so the
+     accessibility fallbacks below can still win the cascade. The .lens class is
+     added by script only after the engine is confirmed to support url() inside
+     backdrop-filter.
+
+     It is deliberately scoped to small chrome — the floating nav and the popover
+     menu — and never to the large panel. Measured on the harness machine
+     (software rasterisation, no GPU): a viewport-sized busy backdrop with four
+     blurred panes runs ~50ms/frame, and adding the displacement map pushes that
+     to ~67ms. On real GPU hardware both numbers are far lower, but the ratio
+     holds: displacement refraction is roughly a third again as expensive as the
+     blur it sits on top of. Small surfaces only, and measure on target hardware. */
+  .lens { backdrop-filter: blur(24px) saturate(150%) url(#lg-refract);
+          -webkit-backdrop-filter: blur(24px) saturate(150%); }
+  @media (prefers-reduced-transparency: reduce) {
+    .lens { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  }
+  @media (prefers-contrast: more) {
+    .lens { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  }
+</style>
+</head>
+<body>
+<div class="progress-rail" aria-hidden="true"><i></i></div>
+<nav class="labnav glass scroll-edge" data-lens aria-label="Lab sections">
+  <strong>SpaceAge</strong>
+  <a href="index.html">Overview</a><a href="scroll.html">Scroll</a><a href="type.html">Type</a>
+  <a href="material.html" aria-current="page">Material</a>
+  <a href="carousel.html">Carousel</a><a href="transitions.html">Transitions</a><a href="smooth.html">Smooth</a>
+</nav>
+
+<!-- Refraction source. A displacement map bends whatever the rim samples, which
+     is what makes an edge read as glass instead of as frosted plastic. Applied
+     only where the engine actually supports url() inside backdrop-filter — the
+     support probe result is published to __lab.support. -->
+<svg width="0" height="0" aria-hidden="true" style="position:absolute">
+  <filter id="lg-refract" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.008 0.014" numOctaves="2" seed="7" result="noise"/>
+    <feGaussianBlur in="noise" stdDeviation="3" result="soft"/>
+    <feDisplacementMap in="SourceGraphic" in2="soft" scale="26" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+
+<main>
+  <section class="busy">
+    <div class="panel glass glass--thick" data-test="glass-panel">
+      <div class="kicker">Liquid Glass-inspired</div>
+      <h2>Functional chrome, not decoration.</h2>
+      <p>Glass belongs to navigation, toolbars, transient overlays and controls that float above content.
+        It is tested over the busiest background on the site, because that is where it fails.</p>
+      <div style="display:flex;gap:10px;margin-top:20px;flex-wrap:wrap">
+        <button class="pill action menu-trigger" id="menu-trigger" popovertarget="glass-menu" data-test="menu-trigger">Open menu</button>
+        <button class="ghost action" data-test="ghost-button">Secondary</button>
+      </div>
+    </div>
+
+    <!-- Deliberately OUTSIDE the panel. Glass stacked on glass collapses the
+         hierarchy — both layers sample a backdrop that is itself translucent,
+         so neither reads as a surface. Each sample sits directly on the busy
+         background, which is the only place material weight is legible. -->
+    <div class="shell weights">
+      <div class="glass w-s" data-test="w-s">small · blur 10</div>
+      <div class="glass w-m">medium · blur 20</div>
+      <div class="glass w-l" data-test="w-l">large · blur 34</div>
+    </div>
+
+    <div id="glass-menu" class="glass" popover data-lens data-test="glass-menu">
+      <menu>
+        <li><button autofocus>Duplicate layer</button></li>
+        <li><button>Adjust material</button></li>
+        <li><button>Reset elevation</button></li>
+      </menu>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <div class="kicker">Depth anatomy</div>
+      <h2>One light source, six honest layers.</h2>
+      <div class="anatomy">
+        <div class="anatomy__stage"><div class="anatomy__obj" data-l="6" data-test="anatomy-obj"></div></div>
+        <div class="anatomy__steps" role="group" aria-label="Depth layers">
+          <button aria-pressed="false" data-l="1">1 · base fill only</button>
+          <button aria-pressed="false" data-l="2">2 · + ambient gradient</button>
+          <button aria-pressed="false" data-l="3">3 · + occlusion shadow</button>
+          <button aria-pressed="false" data-l="4">4 · + directional cast</button>
+          <button aria-pressed="false" data-l="5">5 · + specular edge</button>
+          <button aria-pressed="true" data-l="6">6 · + colour spill</button>
+        </div>
+      </div>
+      <p class="note">Every shadow in the set agrees about where the light is. Mixed light directions are the
+        single fastest way to make an interface look assembled from screenshots.</p>
+      <div class="elev">
+        <div class="e1">elevation 1 — resting card</div>
+        <div class="e2">elevation 2 — raised / hovered</div>
+        <div class="e3">elevation 3 — floating chrome</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <div class="kicker">interpolate-size</div>
+      <h2>Height to <code>auto</code>, actually animated.</h2>
+      <div class="acc" data-acc data-test="acc-1">
+        <button class="acc__head" aria-expanded="false">Why this used to require JavaScript</button>
+        <div class="acc__body"><p>Before <code>interpolate-size: allow-keywords</code>, <code>auto</code> was not an
+          interpolable value, so every accordion measured <code>scrollHeight</code> and animated a pixel number —
+          then broke whenever the content reflowed. This transitions the keyword itself.</p></div>
+      </div>
+      <div class="acc" data-acc data-test="acc-2">
+        <button class="acc__head" aria-expanded="false">What to do without support</button>
+        <div class="acc__body"><p>Fall back to an instant open. A jump is acceptable; a clipped panel is not.
+          <code>calc-size()</code> covers the cases where you need arithmetic on an intrinsic size.</p></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer"><div class="shell">Material lab · fallback tiers asserted under emulated reduced-transparency in <code>scripts/verify.mjs</code>.</div></footer>
+
+<script type="module">
+import { ready, support } from './js/boot.js';
+
+const handles = {};
+
+/* Refraction probe. url() inside backdrop-filter is not universally supported;
+   applying it blind produces an invisible or fully-broken pane depending on the
+   engine, so it is feature-detected and reported instead of assumed. */
+const lensSupported = CSS.supports('backdrop-filter', 'blur(2px) url(#lg-refract)');
+if (lensSupported) {
+  for (const el of document.querySelectorAll('[data-lens]')) el.classList.add('lens');
+}
+handles.lensSupported = lensSupported;
+
+/* Depth anatomy stepper. */
+{
+  const obj = document.querySelector('[data-test="anatomy-obj"]');
+  const buttons = [...document.querySelectorAll('.anatomy__steps button')];
+  for (const b of buttons) {
+    b.addEventListener('click', () => {
+      buttons.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      obj.dataset.l = b.dataset.l;
+    });
+  }
+}
+
+/* Accordion — the class toggle is all that is needed; the height animation is
+   pure CSS thanks to interpolate-size. */
+for (const acc of document.querySelectorAll('[data-acc]')) {
+  const head = acc.querySelector('.acc__head');
+  head.addEventListener('click', () => {
+    const open = acc.dataset.open !== 'true';
+    acc.dataset.open = String(open);
+    head.setAttribute('aria-expanded', String(open));
+  });
+}
+
+/* Pointer-tracked specular highlight. Runs on a rAF, writes two custom
+   properties, and only on devices with a fine pointer. */
+if (matchMedia('(hover: hover) and (pointer: fine)').matches) {
+  let queued = false, px = 0, py = 0;
+  addEventListener('pointermove', (e) => {
+    px = (e.clientX / innerWidth - 0.5) * 16;
+    py = (e.clientY / innerHeight - 0.5) * 16;
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => {
+      queued = false;
+      document.documentElement.style.setProperty('--light-x', `${px}px`);
+      document.documentElement.style.setProperty('--light-y', `${py}px`);
+    });
+  }, { passive: true });
+}
+
+/* Scroll-edge opacity under the floating nav. */
+{
+  const nav = document.querySelector('.labnav');
+  addEventListener('scroll', () => {
+    nav.style.setProperty('--edge-opacity', String(Math.min(scrollY / 160, 1)));
+  }, { passive: true });
+}
+
+handles.support = support();
+await ready(handles);
+</script>
+</body>
+</html>

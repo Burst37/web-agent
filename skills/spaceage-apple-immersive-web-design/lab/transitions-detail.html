@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Detail — cross-document view transition</title>
+<!-- Registered before anything else can run: `pagereveal` fires before the
+     first rendering opportunity of the new document, and its `viewTransition`
+     property is the only direct proof that a cross-document transition is
+     actually running rather than merely declared. -->
+<script>
+  window.__vtCrossDoc = null;
+  addEventListener('pagereveal', (e) => { window.__vtCrossDoc = Boolean(e.viewTransition); });
+</script>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/lab.css">
+<style>
+  @view-transition { navigation: auto; }
+
+  ::view-transition-old(hero-media),
+  ::view-transition-new(hero-media) {
+    animation-duration: 420ms;
+    animation-timing-function: cubic-bezier(.16, 1, .3, 1);
+  }
+
+  .hero-media {
+    view-transition-name: hero-media;      /* same name as the origin page */
+    height: 52vh; border-radius: var(--radius-l); margin-top: 24px;
+    background: conic-gradient(from 210deg, oklch(70% .2 250), oklch(76% .16 200), oklch(72% .18 330), oklch(70% .2 250));
+    border: 1px solid var(--line); box-shadow: var(--shadow-3);
+  }
+</style>
+</head>
+<body>
+<nav class="labnav glass" aria-label="Lab sections">
+  <strong>SpaceAge</strong>
+  <a href="index.html">Overview</a><a href="transitions.html">← Back to transitions</a>
+</nav>
+
+<main class="section section--lead">
+  <div class="shell">
+    <div class="kicker">Destination</div>
+    <h1 class="display trim-both" style="font-size:var(--step-2)">One element, two documents.</h1>
+    <div class="hero-media" data-test="hero-media" aria-hidden="true"></div>
+    <p style="margin-top:24px">The panel above is a different element in a different document. Because both
+      documents give it <code>view-transition-name: hero-media</code> and both opt in with
+      <code>@view-transition</code>, the browser treats them as the same object and morphs between them.</p>
+    <p>No shared runtime, no client-side router, no framework. It also degrades perfectly: an engine without
+      support performs an ordinary navigation.</p>
+    <p><a class="pill action" href="transitions.html">← Back</a></p>
+  </div>
+</main>
+
+<footer class="footer"><div class="shell">Cross-document view transition destination.</div></footer>
+
+<script type="module">
+import { ready } from './js/boot.js';
+await ready({ crossDoc: window.__vtCrossDoc });
+</script>
+</body>
+</html>
