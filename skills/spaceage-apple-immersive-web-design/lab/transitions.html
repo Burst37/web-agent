@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transitions &amp; continuity — SpaceAge Apple-Immersive Web Design</title>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/lab.css">
+<style>
+  /* Cross-document view transitions. Two declarations — this one, and the same
+     one on the destination page — are the entire opt-in. */
+  @view-transition { navigation: auto; }
+
+  ::view-transition-old(hero-media),
+  ::view-transition-new(hero-media) {
+    animation-duration: 420ms;
+    animation-timing-function: cubic-bezier(.16, 1, .3, 1);
+  }
+
+  .gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 30px; }
+  .tile {
+    border-radius: var(--radius-m); overflow: clip; border: 1px solid var(--line);
+    background: var(--surface); cursor: pointer; text-align: left; padding: 0; width: 100%;
+  }
+  .tile__art { aspect-ratio: 16 / 11; }
+  .tile:nth-child(1) .tile__art { background: linear-gradient(150deg, oklch(70% .2 250), oklch(58% .24 300)); }
+  .tile:nth-child(2) .tile__art { background: linear-gradient(150deg, oklch(78% .15 200), oklch(62% .2 250)); }
+  .tile:nth-child(3) .tile__art { background: linear-gradient(150deg, oklch(74% .18 330), oklch(60% .22 285)); }
+  .tile:nth-child(4) .tile__art { background: linear-gradient(150deg, oklch(80% .16 150), oklch(66% .18 200)); }
+  .tile:nth-child(5) .tile__art { background: linear-gradient(150deg, oklch(76% .17 60), oklch(64% .2 20)); }
+  .tile:nth-child(6) .tile__art { background: linear-gradient(150deg, oklch(72% .14 220), oklch(56% .2 265)); }
+  .tile__meta { padding: 14px 16px; }
+  .tile__meta b { display: block; font-size: var(--step-0); }
+  .tile__meta span { font-size: var(--step--1); color: var(--muted); }
+  @media (max-width: 860px) { .gallery { grid-template-columns: 1fr 1fr; } }
+
+  /* Flip target: the detail panel the tile grows into. */
+  .detail {
+    position: fixed; inset: 0; z-index: 80; display: none; place-items: center;
+    background: rgb(4 6 12 / .62); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  }
+  .detail[data-open="true"] { display: grid; }
+  .detail__frame { width: min(720px, 90vw); border-radius: var(--radius-l); overflow: clip;
+    border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow-3); }
+  .detail__frame .tile__art { aspect-ratio: 16 / 9; }
+  .detail__body { padding: 26px; }
+  .detail__close { margin-top: 18px; }
+
+  /* Same-document view transition for a filtered list. Each row keeps a stable
+     view-transition-name, so rows that survive the filter are *moved* by the
+     browser rather than being torn down and faded in somewhere else. */
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin: 26px 0 18px; }
+  .filters button[aria-pressed="true"] { background: rgb(255 255 255 / .12); }
+  .rows { display: grid; gap: 10px; }
+  .row {
+    display: flex; justify-content: space-between; gap: 16px; align-items: center;
+    padding: 16px 20px; border-radius: var(--radius-m); border: 1px solid var(--line);
+    background: var(--surface); font-size: var(--step--1);
+  }
+  .row b { font-size: var(--step-0); }
+  .row span { color: var(--muted); font-family: var(--font-mono); font-size: 12px; }
+
+  .hero-media {
+    view-transition-name: hero-media;
+    height: 260px; border-radius: var(--radius-l); margin-top: 26px;
+    background: conic-gradient(from 210deg, oklch(70% .2 250), oklch(76% .16 200), oklch(72% .18 330), oklch(70% .2 250));
+    border: 1px solid var(--line); box-shadow: var(--shadow-2);
+  }
+</style>
+</head>
+<body>
+<div class="progress-rail" aria-hidden="true"><i></i></div>
+<nav class="labnav glass scroll-edge" aria-label="Lab sections">
+  <strong>SpaceAge</strong>
+  <a href="index.html">Overview</a><a href="scroll.html">Scroll</a><a href="type.html">Type</a>
+  <a href="material.html">Material</a><a href="carousel.html">Carousel</a>
+  <a href="transitions.html" aria-current="page">Transitions</a><a href="smooth.html">Smooth</a>
+</nav>
+
+<main>
+  <section class="section section--lead">
+    <div class="shell">
+      <div class="kicker">Shared element — GSAP Flip</div>
+      <h2>The detail grows from the thing you touched.</h2>
+      <p>Flip records the tile's real position, moves it into the overlay, then animates the difference.
+        The element is never duplicated, so there is no cross-fade between two copies of the same object.</p>
+      <div class="gallery" data-gallery>
+        <button class="tile action" data-tile><div class="tile__art"></div><div class="tile__meta"><b>Aurora</b><span>spatial continuity</span></div></button>
+        <button class="tile action" data-tile><div class="tile__art"></div><div class="tile__meta"><b>Meridian</b><span>shared identity</span></div></button>
+        <button class="tile action" data-tile><div class="tile__art"></div><div class="tile__meta"><b>Vellum</b><span>origin-anchored</span></div></button>
+        <button class="tile action" data-tile><div class="tile__art"></div><div class="tile__meta"><b>Cobalt</b><span>reversible</span></div></button>
+        <button class="tile action" data-tile><div class="tile__art"></div><div class="tile__meta"><b>Ember</b><span>interruptible</span></div></button>
+        <button class="tile action" data-tile><div class="tile__art"></div><div class="tile__meta"><b>Drift</b><span>one path</span></div></button>
+      </div>
+    </div>
+  </section>
+
+  <div class="detail" data-detail role="dialog" aria-modal="true" aria-label="Detail view">
+    <div class="detail__frame" data-detail-frame>
+      <div class="detail__body">
+        <h3 data-detail-title>Aurora</h3>
+        <p>The same node that was in the grid is now here. Closing runs the identical measurement in
+          reverse, so the exit path matches the entrance exactly.</p>
+        <button class="ghost action detail__close" data-detail-close>Close</button>
+      </div>
+    </div>
+  </div>
+
+  <section class="section">
+    <div class="shell">
+      <div class="kicker">Same-document view transition</div>
+      <h2>Filter without losing the reader's place.</h2>
+      <div class="filters" role="group" aria-label="Filter rows">
+        <button class="ghost action" data-filter="all" aria-pressed="true">All</button>
+        <button class="ghost action" data-filter="motion" aria-pressed="false">Motion</button>
+        <button class="ghost action" data-filter="material" aria-pressed="false">Material</button>
+      </div>
+      <div class="rows" data-rows></div>
+      <p class="note">Where the View Transition API is missing, the same handler applies the state change
+        directly — the filter still works, it simply changes instantly.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="shell">
+      <div class="kicker">Cross-document view transition</div>
+      <h2>Continuity across a real navigation.</h2>
+      <div class="hero-media" data-test="hero-media" aria-hidden="true"></div>
+      <p style="margin-top:22px">The block above carries <code>view-transition-name: hero-media</code> on this
+        page and on the destination. With <code>@view-transition { navigation: auto }</code> declared on both,
+        a plain link becomes a morph — no router, no framework.</p>
+      <p><a class="pill action" href="transitions-detail.html" data-test="cross-doc-link">Open the detail page</a></p>
+    </div>
+  </section>
+</main>
+
+<footer class="footer"><div class="shell">Transitions lab · the cross-document transition is asserted via the destination's <code>pagereveal</code> event.</div></footer>
+
+<script type="module">
+import { loadDeps, ready } from './js/boot.js';
+
+const { gsap, Flip } = await loadDeps(['gsap', 'Flip']);
+gsap.registerPlugin(Flip);
+
+const handles = { vt: { sameDoc: 0, supported: typeof document.startViewTransition === 'function' } };
+
+/* ── Flip shared element ─────────────────────────────────────────────────── */
+{
+  const detail = document.querySelector('[data-detail]');
+  const frame = document.querySelector('[data-detail-frame]');
+  const title = document.querySelector('[data-detail-title]');
+  const closeBtn = document.querySelector('[data-detail-close]');
+  let openTile = null;
+  let placeholder = null;
+
+  function open(tile) {
+    if (openTile) return;
+    openTile = tile;
+    title.textContent = tile.querySelector('b').textContent;
+
+    // 1. record where the art currently is, on screen, right now
+    const art = tile.querySelector('.tile__art');
+    const state = Flip.getState(art, { props: 'borderRadius' });
+
+    // 2. leave a placeholder so the grid does not collapse behind the overlay
+    placeholder = document.createElement('div');
+    placeholder.className = 'tile__art';
+    placeholder.style.visibility = 'hidden';
+    tile.prepend(placeholder);
+
+    // 3. move the *same node* into the overlay
+    detail.dataset.open = 'true';
+    frame.prepend(art);
+
+    // 4. animate the difference between the two measurements.
+    //    Published on window.__lab directly, not on `handles`: ready() copies
+    //    `handles` once at boot, so anything assigned later would never appear.
+    window.__lab.flip = Flip.from(state, {
+      duration: 0.62,
+      ease: 'power3.inOut',
+      absolute: true,
+      scale: false,
+      onComplete: () => { window.__lab.flipDone = true; },
+    });
+    closeBtn.focus();
+  }
+
+  function close() {
+    if (!openTile) return;
+    const art = frame.querySelector('.tile__art');
+    const state = Flip.getState(art, { props: 'borderRadius' });
+    placeholder.replaceWith(art);
+    placeholder = null;
+    Flip.from(state, {
+      duration: 0.52,
+      ease: 'power3.inOut',
+      absolute: true,
+      onComplete: () => { detail.dataset.open = 'false'; },
+    });
+    openTile.focus();
+    openTile = null;
+  }
+
+  document.querySelectorAll('[data-tile]').forEach((t) => t.addEventListener('click', () => open(t)));
+  closeBtn.addEventListener('click', close);
+  detail.addEventListener('click', (e) => { if (e.target === detail) close(); });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+
+  handles.openDetail = open;
+  handles.closeDetail = close;
+}
+
+/* ── Same-document view transition ───────────────────────────────────────── */
+{
+  const DATA = [
+    { id: 'a', name: 'Pinned scrub', kind: 'motion', v: '2200px' },
+    { id: 'b', name: 'Spring release', kind: 'motion', v: 'bounce .18' },
+    { id: 'c', name: 'Glass — regular', kind: 'material', v: 'blur 24' },
+    { id: 'd', name: 'Velocity skew', kind: 'motion', v: '±5deg' },
+    { id: 'e', name: 'Glass — clear', kind: 'material', v: 'blur 14' },
+    { id: 'f', name: 'Elevation 3', kind: 'material', v: '100px 34%' },
+  ];
+  const rows = document.querySelector('[data-rows]');
+  let filter = 'all';
+
+  function render() {
+    rows.innerHTML = '';
+    for (const d of DATA) {
+      if (filter !== 'all' && d.kind !== filter) continue;
+      const el = document.createElement('div');
+      el.className = 'row';
+      // Stable per-row name → the browser moves survivors instead of re-creating them
+      el.style.viewTransitionName = `row-${d.id}`;
+      el.innerHTML = `<b>${d.name}</b><span>${d.v}</span>`;
+      rows.append(el);
+    }
+  }
+  render();
+
+  function setFilter(next) {
+    filter = next;
+    document.querySelectorAll('[data-filter]').forEach((b) =>
+      b.setAttribute('aria-pressed', String(b.dataset.filter === next)));
+
+    // Progressive enhancement, not a hard dependency: without the API the same
+    // render() call runs, it just does not animate.
+    if (!document.startViewTransition) { render(); return; }
+    const t = document.startViewTransition(() => render());
+    t.finished.then(() => { handles.vt.sameDoc += 1; });
+  }
+
+  document.querySelectorAll('[data-filter]').forEach((b) =>
+    b.addEventListener('click', () => setFilter(b.dataset.filter)));
+
+  handles.setFilter = setFilter;
+}
+
+await ready(handles);
+</script>
+</body>
+</html>

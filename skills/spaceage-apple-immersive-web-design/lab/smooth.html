@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smooth scroll, correctly wired — SpaceAge Apple-Immersive Web Design</title>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/lab.css">
+<style>
+  .rule { display: grid; grid-template-columns: 42px 1fr; gap: 16px; align-items: start;
+    padding: 18px 0; border-bottom: 1px solid var(--line); }
+  .rule b { font-family: var(--font-mono); color: var(--accent); font-size: 12px; }
+  .rule p { margin: 0; }
+  .probe { height: 60vh; display: grid; place-items: center; border-radius: var(--radius-l);
+    border: 1px dashed var(--line); margin-top: 30px; }
+  .probe__box { width: 180px; height: 180px; border-radius: 40px;
+    background: conic-gradient(from 180deg, var(--accent), var(--brand), var(--hot), var(--accent));
+    box-shadow: var(--shadow-3); }
+  .readout { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="progress-rail" aria-hidden="true"><i></i></div>
+<nav class="labnav glass scroll-edge" aria-label="Lab sections">
+  <strong>SpaceAge</strong>
+  <a href="index.html">Overview</a><a href="scroll.html">Scroll</a><a href="type.html">Type</a>
+  <a href="material.html">Material</a><a href="carousel.html">Carousel</a>
+  <a href="transitions.html">Transitions</a><a href="smooth.html" aria-current="page">Smooth</a>
+</nav>
+
+<main>
+  <section class="section section--lead">
+    <div class="shell">
+      <div class="kicker">Smooth scroll</div>
+      <h2>Native first. Lenis only with a reason.</h2>
+      <p>A smoothing library replaces the browser's scrolling with your own. That is a real cost: it can
+        break find-in-page position, scrollbar dragging, accessibility tooling and every other
+        ScrollTrigger on the page if it is not wired into the same tick. Ship it when the design genuinely
+        depends on continuous scroll easing — not by default.</p>
+
+      <div class="rule"><b>01</b><p>One clock. Lenis must run inside GSAP's ticker, not its own rAF loop, or
+        the smoothed position and the scrubbed timelines drift a frame apart and everything feels loose.</p></div>
+      <div class="rule"><b>02</b><p><code>gsap.ticker.lagSmoothing(0)</code>. GSAP's lag smoothing fakes elapsed
+        time after a long frame; combined with an easing scroller that produces visible jumps.</p></div>
+      <div class="rule"><b>03</b><p>Never hide the scrollbar and never intercept the wheel to move to a fixed
+        destination. Smoothing eases the position the user asked for; scroll-jacking replaces it.</p></div>
+      <div class="rule"><b>04</b><p>Reduced motion turns it off completely — the page falls back to the
+        browser's own scrolling, which is the correct behaviour, not a degraded one.</p></div>
+
+      <p class="readout" style="margin-top:24px" data-readout>scrollY 0 · trigger 0.00</p>
+
+      <div class="probe">
+        <div class="probe__box" data-probe-box></div>
+      </div>
+      <div style="height:120vh"></div>
+      <p class="note">The square above rotates on a scrubbed ScrollTrigger. If the wiring were wrong it would
+        lag behind the smoothed scroll position; the harness asserts that the trigger's progress tracks the
+        actual scroll offset.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="footer"><div class="shell">Smooth-scroll lab.</div></footer>
+
+<script type="module">
+import { loadDeps, ready, flags } from './js/boot.js';
+
+const { gsap, ScrollTrigger, Lenis } = await loadDeps(['gsap', 'ScrollTrigger', 'Lenis']);
+gsap.registerPlugin(ScrollTrigger);
+
+const handles = {};
+
+/* Reduced motion: do not instantiate at all. A "disabled" smooth scroller that
+   still owns the scroll position is worse than never having installed one. */
+if (!flags.motionOff) {
+  const lenis = new Lenis({
+    autoRaf: false,          // GSAP drives the tick instead
+    duration: 0.9,
+    smoothWheel: true,
+  });
+
+  // One clock for both systems.
+  lenis.on('scroll', ScrollTrigger.update);
+  gsap.ticker.add((time) => lenis.raf(time * 1000));
+  gsap.ticker.lagSmoothing(0);
+
+  handles.lenis = lenis;
+}
+
+const spin = gsap.to('[data-probe-box]', {
+  rotate: 220,
+  scale: 1.18,
+  borderRadius: '50%',
+  ease: 'none',
+  scrollTrigger: {
+    trigger: '.probe',
+    start: 'top 85%',
+    end: 'bottom 20%',
+    scrub: 0.5,
+    onUpdate: (self) => {
+      const el = document.querySelector('[data-readout]');
+      if (el) el.textContent = `scrollY ${Math.round(scrollY)} · trigger ${self.progress.toFixed(2)}`;
+      window.__lab.probeProgress = self.progress;
+    },
+  },
+});
+handles.spin = spin;
+
+await ready(handles);
+</script>
+</body>
+</html>
