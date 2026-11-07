@@ -168,5 +168,5 @@ body,input,select,textarea{font-family:var(--type-reading)}
 @media(max-width:700px){.hero-brand{top:20px;width:130px;border-radius:9px}.cinema-hero{padding-top:170px}}
 /* Transparent logo artwork: no panel, rounded tile or rectangular shadow. */
 .hero-brand{background:transparent;border:0;border-radius:0;overflow:visible;box-shadow:none;width:clamp(170px,19vw,250px)}
-.hero-brand img,.footer-logo{background:transparent;border:0;border-radius:0;box-shadow:none;filter:drop-shadow(0 1px 1px #ffffffaa) drop-shadow(0 2px 3px #ffffff55)}
+.hero-brand img,.footer-logo{background:transparent;border:0;border-radius:0;box-shadow:none;filter:none}
 @media(max-width:700px){.hero-brand{width:160px;border-radius:0}}
