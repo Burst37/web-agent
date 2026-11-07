@@ -1,0 +1,128 @@
+{
+  "ambulatory": {
+    "programs": [],
+    "streams": [
+      {
+        "codec_type": "video",
+        "width": 1280,
+        "height": 720
+      }
+    ],
+    "format": {
+      "duration": "10.125000",
+      "size": "1654002"
+    }
+  },
+  "wheelchair": {
+    "programs": [],
+    "streams": [
+      {
+        "codec_type": "video",
+        "width": 1280,
+        "height": 720
+      }
+    ],
+    "format": {
+      "duration": "10.125000",
+      "size": "1525169"
+    }
+  },
+  "hospital": {
+    "programs": [],
+    "streams": [
+      {
+        "codec_type": "video",
+        "width": 1280,
+        "height": 720
+      }
+    ],
+    "format": {
+      "duration": "10.125000",
+      "size": "1896591"
+    }
+  },
+  "doctor": {
+    "programs": [],
+    "streams": [
+      {
+        "codec_type": "video",
+        "width": 1280,
+        "height": 720
+      }
+    ],
+    "format": {
+      "duration": "10.125000",
+      "size": "1339423"
+    }
+  },
+  "dialysis": {
+    "programs": [],
+    "streams": [
+      {
+        "codec_type": "video",
+        "width": 1280,
+        "height": 720
+      }
+    ],
+    "format": {
+      "duration": "10.125000",
+      "size": "1477726"
+    }
+  },
+  "rehabilitation": {
+    "programs": [],
+    "streams": [
+      {
+        "codec_type": "video",
+        "width": 1280,
+        "height": 720
+      }
+    ],
+    "format": {
+      "duration": "10.125000",
+      "size": "1838070"
+    }
+  },
+  "facility": {
+    "programs": [],
+    "streams": [
+      {
+        "codec_type": "video",
+        "width": 1280,
+        "height": 720
+      }
+    ],
+    "format": {
+      "duration": "10.125000",
+      "size": "1815411"
+    }
+  },
+  "hero": {
+    "programs": [],
+    "streams": [
+      {
+        "codec_type": "video",
+        "width": 1280,
+        "height": 720
+      }
+    ],
+    "format": {
+      "duration": "12.250000",
+      "size": "2633405"
+    }
+  },
+  "company-explainer": {
+    "programs": [],
+    "streams": [
+      {
+        "codec_type": "video",
+        "width": 1280,
+        "height": 720
+      }
+    ],
+    "format": {
+      "duration": "15.000000",
+      "size": "971193"
+    }
+  }
+}
