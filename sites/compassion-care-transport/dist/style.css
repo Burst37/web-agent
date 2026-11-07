@@ -119,8 +119,12 @@ p,li,dd,summary{overflow-wrap:break-word}
 
 /* Display-led control typography, distinct from the reading text. */
 .service-index a{font-family:var(--font-display);font-weight:700;font-size:14px;line-height:1.15;letter-spacing:.035em;text-transform:uppercase;padding:13px 20px;gap:11px;flex:0 0 auto}
-.service-index a span{display:inline-grid;place-items:center;min-width:25px;min-height:25px;border:1px solid #c5eee533;border-radius:50%;font-family:var(--font-body);font-size:10px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.02em;color:#aee3dc;background:#071c354d}
+.service-index a span{display:inline-grid;place-items:center;min-width:25px;min-height:25px;border:1px solid #c5eee533;border-radius:50%;font-family:var(--font-display);font-size:10px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.02em;color:#aee3dc;background:#071c354d}
 .service-index a[aria-current="location"] span{border-color:#173d5755;background:#eafff32b;color:#102c45}
 .button,.menu-toggle,.reception-launcher,.service-chapter .explore,.assistant-suggestions button,.voice-controls #voice-stop{font-family:var(--font-display);font-weight:700;letter-spacing:.025em;line-height:1.2}
 .button{font-size:16px}.menu-toggle{font-size:15px}.reception-launcher{font-size:14px}.assistant-suggestions button{font-size:12px}
 @media(max-width:700px){.service-index a{font-size:12px;padding:11px 15px;gap:9px}.service-index a span{min-width:22px;min-height:22px;font-size:9px}.button{font-size:15px}#assistant-dock .reception-launcher{font-size:13px}}
+
+/* One type treatment for every pill, across every page. */
+.button,.menu-toggle,.reception-launcher,.service-index a,.service-chapter .explore,.assistant-suggestions button,.voice-controls #voice-stop{font-family:var(--font-display);font-weight:700;font-style:normal;text-transform:uppercase;letter-spacing:.035em}
+.button,.menu-toggle,.reception-launcher,.assistant-suggestions button,.voice-controls #voice-stop{white-space:normal;text-align:center;max-width:100%}
