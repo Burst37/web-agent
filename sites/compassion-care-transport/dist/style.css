@@ -170,3 +170,11 @@ body,input,select,textarea{font-family:var(--type-reading)}
 .hero-brand{background:transparent;border:0;border-radius:0;overflow:visible;box-shadow:none;width:clamp(170px,19vw,250px)}
 .hero-brand img,.footer-logo{background:transparent;border:0;border-radius:0;box-shadow:none;filter:none}
 @media(max-width:700px){.hero-brand{width:160px;border-radius:0}}
+
+/* Client-selected option 2: one display family throughout the website. */
+@font-face{font-family:'Melodrama';src:url('/assets/melodrama-bold.woff2') format('woff2');font-weight:700;font-style:normal;font-display:swap}
+:root{--font-display:'Melodrama',Georgia,serif;--type-display:'Melodrama',Georgia,serif}
+h1,h2,h3,.cinema-hero h1,.service-title,.footer-name,.footer-slogan,.service-recap li,.destination-recap>p:last-child,.section-intro>p,.questions summary,.education-faq summary,.planning dt,.button,.menu-toggle,.reception-launcher,.service-index a,.service-chapter .explore,.assistant-suggestions button,.voice-controls #voice-stop{font-family:var(--type-display);font-weight:700;font-synthesis:none;letter-spacing:0;word-spacing:.04em}
+.cinema-hero h1{font-size:clamp(88px,12.5vw,190px);line-height:.95;max-width:11ch;letter-spacing:-.025em}
+.button{font-size:20px}.service-index a{font-size:17px}.menu-toggle,.reception-launcher{font-size:18px}.assistant-suggestions button{font-size:15px}
+@media(max-width:700px){.cinema-hero h1{font-size:clamp(62px,16vw,112px);line-height:1.02}.button{font-size:19px}.service-index a{font-size:16px}.menu-toggle{font-size:17px}#assistant-dock .reception-launcher{font-size:17px}.service-recap li{font-size:clamp(25px,6.3vw,33px)}}
