@@ -146,3 +146,18 @@ p,li,dd,summary{overflow-wrap:break-word}
 .footer>div:first-child>a{font-weight:700;letter-spacing:.015em}
 .section-intro>p{font-family:var(--font-display);font-weight:700;font-size:clamp(19px,2vw,26px);line-height:1.3;color:#ceeae7}
 @media(max-width:700px){.service-recap{margin-block:28px;padding-block:24px}.service-recap ol{grid-template-columns:minmax(0,1fr)}.service-recap li{font-size:clamp(21px,5.5vw,29px);padding-block:16px;gap:12px}.destination-recap{padding-left:16px}.destination-recap>p:last-child{font-size:clamp(22px,5.8vw,30px)}.footer-slogan{font-size:clamp(29px,8vw,40px)}.footer-connect{margin-top:40px!important}.footer-connect>a{font-size:15px}}
+
+/* Shared type hierarchy across landing page, service pages and assistant. */
+:root{--type-display:'Clash Display',Arial,sans-serif;--type-reading:'Satoshi',Arial,sans-serif;--type-heading-weight:700;--type-control-tracking:.035em}
+h1,h2,h3,.service-title,.footer-name,.footer-slogan,.destination-recap>p:last-child,.service-recap li,.section-intro>p{font-family:var(--type-display);font-weight:var(--type-heading-weight);font-style:normal}
+.button,.menu-toggle,.reception-launcher,.service-index a,.service-chapter .explore,.assistant-suggestions button,.voice-controls #voice-stop{font-family:var(--type-display);font-weight:var(--type-heading-weight);letter-spacing:var(--type-control-tracking);text-transform:uppercase}
+body,input,select,textarea{font-family:var(--type-reading)}
+.lead{font-weight:700;letter-spacing:-.012em}
+.questions summary,.education-faq summary,.planning dt{font-family:var(--type-display);font-weight:700;line-height:1.3}
+.service-recap li{display:block;padding:0}
+.recap-link{display:flex;align-items:baseline;gap:16px;width:100%;padding:20px 0;color:inherit;text-decoration:none;transition:color .2s ease,background-color .2s ease}
+.recap-link>span:not(.recap-number):not(.recap-arrow){min-width:0;flex:1}
+.recap-link .recap-arrow{flex:0 0 auto;color:#a4e4da;font-size:.7em;transition:transform .2s ease}
+.recap-link:hover{color:#a4e4da;background:#8addce0a}.recap-link:hover .recap-arrow{transform:translate(3px,-3px)}
+.recap-link:focus-visible{outline:2px solid #c3f7eb;outline-offset:5px;border-radius:8px}
+@media(max-width:700px){.recap-link{gap:12px;padding-block:18px}.recap-link .recap-number{flex-basis:22px}.recap-link .recap-arrow{font-size:16px}}

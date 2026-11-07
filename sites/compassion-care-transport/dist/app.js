@@ -11,10 +11,12 @@ function configureSmoothScroll(){
 }
 configureSmoothScroll();reduced.addEventListener('change',configureSmoothScroll);
 document.addEventListener('click',event=>{
- const link=event.target.closest('a[href]');if(!careLenis||!link||event.defaultPrevented||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
+ const link=event.target.closest('a[href]');if(!link||event.defaultPrevented||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
  const url=new URL(link.href,location.href);if(url.origin!==location.origin||url.pathname!==location.pathname||!url.hash)return;
  let target;try{target=document.querySelector(url.hash);}catch{return;}if(!target)return;
- event.preventDefault();history.replaceState(null,'',url.hash);careLenis.scrollTo(target,{offset:-24,duration:1.25});
+ if(link.classList.contains('recap-link')){const details=target.querySelector('.service-disclosure');if(details)details.open=true;target.querySelector('summary')?.focus({preventScroll:true});window.ScrollTrigger?.refresh();}
+ if(!careLenis)return;
+ event.preventDefault();history.replaceState(null,'',url.hash);careLenis.scrollTo(target,{offset:target.classList.contains('service-chapter')?-104:-24,duration:1.25});
 });
 let paused=reduced.matches;
 let activeFilm=null;
