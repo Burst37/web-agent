@@ -33,3 +33,13 @@ body{background:radial-gradient(ellipse at 100% 30%,#34335977,transparent 45%),r
 .services.container{max-width:none;padding-inline:var(--gutter)}.services>.section-intro{max-width:1300px;margin-inline:auto}.service-index{max-width:1300px;margin-inline:auto}.hero-backdrop>img{content:url(/assets/hero.webp)}
 
 .nav{justify-content:flex-end}.hero-copy .eyebrow{max-width:45ch}.service-chapter .film-video{z-index:1}.service-chapter .film:after{z-index:2;pointer-events:none}
+
+/* Slow aurora fields: turquoise and lavender light over the navy canvas. */
+.mission,.area-section,.planning,.questions,.request,.story,footer{position:relative;isolation:isolate;overflow:clip;background:#081c35}
+.mission::before,.area-section::before,.planning::before,.questions::before,.request::before,.story::before,footer::before{content:"";position:absolute;inset:-18%;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 12% 28%,#168f9b99 0%,transparent 49%),radial-gradient(ellipse at 87% 70%,#7850b49c 0%,transparent 48%),radial-gradient(ellipse at 62% 8%,#2f6c9e88 0%,transparent 48%);transform:translate3d(-3%,1%,0) scale(1.04);animation:care-aurora 22s ease-in-out infinite alternate;will-change:transform}
+.area-section::before,.questions::before,.story::before{animation-delay:-11s;background:radial-gradient(ellipse at 84% 18%,#9571cb88 0%,transparent 48%),radial-gradient(ellipse at 16% 80%,#159b9c88 0%,transparent 50%),radial-gradient(ellipse at 45% 32%,#1d507d88 0%,transparent 55%)}
+.planning::before,.request::before{animation-delay:-6s;animation-duration:27s}
+.mission::after,.area-section::after,.planning::after,.questions::after,.request::after,.story::after,footer::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(115deg,#071b3544,transparent 55%,#071b3533);box-shadow:inset 0 1px #b8a4ec18}
+@keyframes care-aurora{0%{transform:translate3d(-3%,1%,0) scale(1.04)}50%{transform:translate3d(3%,-4%,0) scale(1.12)}100%{transform:translate3d(-1%,4%,0) scale(1.06)}}
+@media(max-width:700px){.mission::before,.area-section::before,.planning::before,.questions::before,.request::before,.story::before,footer::before{inset:-12%;animation-duration:30s;will-change:auto}}
+@media(prefers-reduced-motion:reduce){.mission::before,.area-section::before,.planning::before,.questions::before,.request::before,.story::before,footer::before{animation:none;transform:none;will-change:auto}}
