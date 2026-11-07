@@ -43,3 +43,34 @@ body{background:radial-gradient(ellipse at 100% 30%,#34335977,transparent 45%),r
 @keyframes care-aurora{0%{transform:translate3d(-3%,1%,0) scale(1.04)}50%{transform:translate3d(3%,-4%,0) scale(1.12)}100%{transform:translate3d(-1%,4%,0) scale(1.06)}}
 @media(max-width:700px){.mission::before,.area-section::before,.planning::before,.questions::before,.request::before,.story::before,footer::before{inset:-12%;animation-duration:30s;will-change:auto}}
 @media(prefers-reduced-motion:reduce){.mission::before,.area-section::before,.planning::before,.questions::before,.request::before,.story::before,footer::before{animation:none;transform:none;will-change:auto}}
+
+/* Sculpted pill controls with a visible raised rim and tactile press. */
+.button,.menu-toggle,.reception-launcher,.service-index a,.voice-controls #voice-stop{border-radius:999px;border:1px solid #c9f7ef80;box-shadow:inset 0 2px 2px #ffffff70,inset 0 -3px 5px #143a5c45,7px 9px 19px #020e2280,-3px -3px 10px #90dcd322;transition:transform 180ms ease,box-shadow 180ms ease,background 180ms ease}
+.button{background:linear-gradient(145deg,#9aeddd 0%,#70cfc9 38%,#bba4ed 100%);font-weight:800;letter-spacing:.01em}
+.menu-toggle,.reception-launcher,.voice-controls #voice-stop{background:linear-gradient(145deg,#294a62ed,#112c44f5);color:#f1faf8;border-color:#b9e3df66}
+.service-index{padding:12px;gap:10px;background:linear-gradient(145deg,#17374fea,#0b2039f5);border-radius:999px;box-shadow:inset 2px 2px 7px #020d2180,inset -1px -1px 4px #9acfd622,0 12px 28px #020e2240}
+.service-index a{min-height:44px;padding:11px 18px;background:linear-gradient(145deg,#284960,#173149);border-color:#bddfe533;box-shadow:inset 0 1px 1px #c6f7ee33,4px 5px 10px #030f2466,-2px -2px 6px #91d9dc14;font-weight:750;color:#e7f4f3}
+.service-index a[aria-current="location"]{background:linear-gradient(145deg,#6ad2c4,#9b8bc9);color:#071c35;box-shadow:inset 2px 2px 5px #143d5a44,inset -1px -1px 3px #ffffff66,0 0 0 1px #a9f1e3}
+.service-index a[aria-current="location"] span{color:#183f58}
+@media(hover:hover){.button:hover,.menu-toggle:hover,.reception-launcher:hover,.service-index a:hover{transform:translateY(-2px);box-shadow:inset 0 2px 2px #ffffff77,inset 0 -2px 4px #143a5c33,9px 12px 24px #020e2290,-3px -3px 12px #90dcd333}.button:hover{background:linear-gradient(145deg,#b6f5e9,#c8b3f1)}}
+.button:active,.menu-toggle:active,.reception-launcher:active,.service-index a:active,.voice-controls #voice-stop:active{transform:translateY(2px);box-shadow:inset 4px 4px 9px #06172a66,inset -2px -2px 5px #e6fff54d,1px 2px 4px #020e2244}
+.button:focus-visible,.menu-toggle:focus-visible,.service-index a:focus-visible{outline:3px solid #d8fff3;outline-offset:5px}
+@media(max-width:700px){.service-index{border-radius:24px;padding:9px;gap:8px}.service-index a{padding:10px 15px;font-size:12px}.button{font-size:15px}}
+
+@font-face{font-family:'Clash Display';src:url('/assets/clash-display-bold.woff2') format('woff2');font-weight:700;font-style:normal;font-display:swap}
+:root{--font-display:'Clash Display',Arial,sans-serif;--display-weight:700}
+h1,h2,h3,.service-title,.footer-name{font-family:var(--font-display);font-weight:700;letter-spacing:-.045em;text-wrap:balance}
+.cinema-hero h1{font-family:var(--font-display);font-weight:700;font-size:clamp(86px,12vw,184px);line-height:.93;letter-spacing:-.055em;max-width:10ch;text-shadow:0 4px 28px #06182e30}
+.mission h2,.planning h2,.request h2{font-size:clamp(50px,6.1vw,92px);line-height:1.02;letter-spacing:-.045em}
+.section-intro h2,.questions h2,.story .section-intro h2{font-size:clamp(48px,6vw,88px);line-height:1.03}
+.area-section h2{font-size:clamp(56px,7vw,108px);line-height:.98}
+.service-title{font-size:clamp(52px,6.7vw,104px);line-height:.98}
+.eyebrow,.service-name{font-weight:750;letter-spacing:.16em}.service-name{font-size:13px;text-transform:uppercase}.lead{font-weight:500}.questions summary,dt{font-weight:750}.footer-name{font-size:clamp(40px,4.4vw,68px);line-height:1.04}
+.service-chapter .explore{display:inline-flex;gap:32px;min-height:50px;padding:10px 22px;border:1px solid #c3eae14d;border-radius:999px;background:linear-gradient(145deg,#28495fe8,#102c44ee);box-shadow:inset 0 1px 2px #d8fff34d,5px 7px 18px #020e2266,-2px -2px 7px #a6e8df19;font-weight:700}
+.mission,.area-section,.planning,.questions,.request,.story{scroll-margin-top:24px}.planning dl>div{border-bottom-color:#b9e8e633}.questions details{border-bottom-color:#b9e8e633}
+@media(max-width:700px){.cinema-hero h1{font-size:clamp(68px,17.2vw,112px);line-height:.98;letter-spacing:-.055em}.mission h2,.planning h2,.request h2,.section-intro h2,.questions h2,.story .section-intro h2{font-size:clamp(43px,11.5vw,60px);line-height:1.04}.area-section h2{font-size:clamp(48px,13vw,70px)}.service-title{font-size:clamp(43px,11.7vw,68px)}.service-name{font-size:11px;letter-spacing:.12em;line-height:1.5}.service-chapter .explore{font-size:13px;gap:20px}.footer-name{font-size:44px}}
+@font-face{font-family:'Satoshi';src:url('/assets/satoshi-500.woff2') format('woff2');font-weight:400 500;font-style:normal;font-display:swap}
+@font-face{font-family:'Satoshi';src:url('/assets/satoshi-700.woff2') format('woff2');font-weight:600 900;font-style:normal;font-display:swap}
+:root{--font-body:'Satoshi',Arial,sans-serif}body{font-family:var(--font-body)}
+h1,h2,h3,.cinema-hero h1,.service-title,.footer-name,.mission h2,.planning h2,.request h2,.area-section h2,.section-intro h2,.questions h2,.story .section-intro h2{letter-spacing:0;word-spacing:.08em}
+html.lenis,html.lenis body{height:auto}.lenis.lenis-smooth{scroll-behavior:auto!important}.lenis.lenis-smooth [data-lenis-prevent]{overscroll-behavior:contain}.lenis.lenis-stopped{overflow:hidden}.lenis.lenis-scrolling iframe{pointer-events:none}

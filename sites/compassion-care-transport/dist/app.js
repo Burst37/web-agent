@@ -1,4 +1,21 @@
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+let careLenis=null,careRaf=0;
+const careScrollTick=time=>careLenis?.raf(time*1000);
+function configureSmoothScroll(){
+ if(careLenis){window.gsap?.ticker.remove(careScrollTick);cancelAnimationFrame(careRaf);careLenis.destroy();careLenis=null;}
+ if(reduced.matches||!window.Lenis)return;
+ careLenis=new Lenis({duration:1.18,smoothWheel:true,syncTouch:false,anchors:false,prevent:node=>Boolean(node.closest('#reception-panel,textarea,select,.service-index'))});
+ if(window.ScrollTrigger)careLenis.on('scroll',ScrollTrigger.update);
+ if(window.gsap){gsap.ticker.add(careScrollTick);gsap.ticker.lagSmoothing(0);}
+ else{const tick=time=>{careLenis?.raf(time);careRaf=requestAnimationFrame(tick);};careRaf=requestAnimationFrame(tick);}
+}
+configureSmoothScroll();reduced.addEventListener('change',configureSmoothScroll);
+document.addEventListener('click',event=>{
+ const link=event.target.closest('a[href]');if(!careLenis||!link||event.defaultPrevented||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;
+ const url=new URL(link.href,location.href);if(url.origin!==location.origin||url.pathname!==location.pathname||!url.hash)return;
+ let target;try{target=document.querySelector(url.hash);}catch{return;}if(!target)return;
+ event.preventDefault();history.replaceState(null,'',url.hash);careLenis.scrollTo(target,{offset:-24,duration:1.25});
+});
 let paused=reduced.matches;
 let activeFilm=null;
 const films=[...document.querySelectorAll('[data-film]')];
@@ -30,11 +47,11 @@ if(window.gsap&&window.ScrollTrigger){
   gsap.registerPlugin(ScrollTrigger);
   const media=gsap.matchMedia();
   media.add('(prefers-reduced-motion: no-preference)',()=>{
-    document.querySelectorAll('.mission h2,.section-intro h2,.planning h2,.questions h2,.request h2').forEach(el=>gsap.from(el,{y:30,opacity:0,duration:.6,ease:'power3.out',scrollTrigger:{trigger:el,start:'clamp(top 92%)',once:true}}));
-    document.querySelectorAll('.service-chapter').forEach(el=>gsap.from(el.querySelector('.film'),{y:30,scale:.985,duration:.7,ease:'power3.out',scrollTrigger:{trigger:el,start:'clamp(top 92%)',once:true}}));
+    document.querySelectorAll('.mission h2,.section-intro h2,.planning h2,.questions h2,.request h2').forEach(el=>gsap.from(el,{y:52,opacity:0,duration:.95,ease:'expo.out',scrollTrigger:{trigger:el,start:'clamp(top 92%)',once:true}}));
+    document.querySelectorAll('.service-heading').forEach(el=>gsap.from(el,{opacity:0,y:48,duration:.95,ease:'power3.out',scrollTrigger:{trigger:el,start:'clamp(top 94%)',once:true}}));
   });
   media.add('(min-width: 961px) and (prefers-reduced-motion: no-preference)',()=>{
-    document.querySelectorAll('.service-heading').forEach(el=>gsap.fromTo(el,{y:12},{y:-12,ease:'none',scrollTrigger:{trigger:el.closest('.service-chapter'),start:'top bottom',end:'bottom top',scrub:.35}}));
+    document.querySelectorAll('.service-chapter .film-video,.hero-backdrop .film-video').forEach(el=>gsap.fromTo(el,{yPercent:-3,scale:1.08},{yPercent:3,scale:1.08,ease:'none',scrollTrigger:{trigger:el.closest('.service-chapter,.cinema-hero'),start:'top bottom',end:'bottom top',scrub:1.1}}));
   });
   document.querySelectorAll('.service-disclosure').forEach(el=>el.addEventListener('toggle',()=>{
     if(el.open&&!reduced.matches)gsap.from(el.querySelector('.service-detail'),{opacity:0,y:12,duration:.3,ease:'power2.out',clearProps:'all'});
@@ -50,6 +67,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&menuToggle?.getAttr
 const chapterObserver=new IntersectionObserver(entries=>{const candidates=entries.filter(e=>e.isIntersecting).sort((a,b)=>b.intersectionRatio-a.intersectionRatio);if(!candidates.length)return;const active=candidates[0].target.id.replace('service-','');document.querySelectorAll('.service-index a').forEach(a=>{if(a.dataset.chapter===active)a.setAttribute('aria-current','location');else a.removeAttribute('aria-current');});},{rootMargin:'-20% 0px -30% 0px',threshold:[0,.2,.5]});
 document.querySelectorAll('.service-chapter').forEach(el=>chapterObserver.observe(el));
 const reception=document.querySelector('#reception-panel');document.querySelector('.reception-launcher')?.addEventListener('click',()=>reception.showModal());document.querySelector('.reception-close')?.addEventListener('click',()=>reception.close());document.querySelectorAll('.reception-action').forEach(a=>a.addEventListener('click',()=>reception.close()));reception?.addEventListener('click',e=>{if(e.target===reception){const r=reception.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)reception.close();}});
+document.querySelector('.reception-launcher')?.addEventListener('click',()=>careLenis?.stop());reception?.addEventListener('close',()=>careLenis?.start());
 document.querySelector('#service-help')?.addEventListener('submit',e=>{
   e.preventDefault();const q=document.querySelector('#service-question').value.trim().toLowerCase();if(!q)return;
   const keys=[['wheelchair','wheelchair'],['chair','wheelchair'],['dialysis','dialysis'],['rehab','rehabilitation'],['therapy','rehabilitation'],['discharge','hospital'],['hospital','hospital'],['nursing','facility'],['assisted living','facility'],['facility','facility'],['doctor','doctor'],['appointment','doctor'],['walker','ambulatory'],['cane','ambulatory'],['ambulatory','ambulatory']];
@@ -64,3 +82,14 @@ document.querySelector('#service-help')?.addEventListener('submit',e=>{
   else if(entry){answer.textContent=entry.summary+' '+entry.detail;link.href='/services/'+entry.slug+'/';link.textContent='Explore '+entry.title.toLowerCase();link.hidden=false;}
   else answer.textContent='Compassion Care offers ambulatory and wheelchair rides, hospital discharges, doctor appointments, dialysis, rehabilitation, and facility transportation. Ask about one of these services or prepare a trip request below.';
 });
+
+// Staggered content reveals connect the cinematic service chapters.
+if(window.gsap&&window.ScrollTrigger){
+ const motion=gsap.matchMedia();
+ motion.add('(prefers-reduced-motion: no-preference)',()=>{
+  gsap.from('.hero-copy .eyebrow,.hero-copy h1,.hero-copy .lead,.hero-copy .actions',{opacity:0,y:36,stagger:.13,duration:1.05,ease:'power3.out',delay:.12,clearProps:'transform,opacity'});
+  const groups=[['.mission .container','.mission p'],['.area-section .container','.area-section .eyebrow,.area-section h2,.area-section .lead,.area-section p:not(.lead):not(.eyebrow)'],['.planning-grid','.planning dl>div'],['.questions','.questions details'],['.request-grid','.request form'],['.story','.story .section-intro p,.story .story-video,.story>.caption,.story>.button'],['.footer','.footer>div,.footer>.caption'],['.service-page','.service-page>nav,.service-page>.eyebrow,.service-page>h1,.service-page>.lead']];
+  groups.forEach(([trigger,selector])=>{const elements=document.querySelectorAll(selector);if(!elements.length)return;gsap.from(elements,{opacity:0,y:38,stagger:.12,duration:.9,ease:'power3.out',scrollTrigger:{trigger,start:'clamp(top 88%)',once:true},clearProps:'transform,opacity'});});
+  document.querySelectorAll('.service-page section').forEach(el=>gsap.from(el,{opacity:0,y:32,duration:.85,ease:'power2.out',scrollTrigger:{trigger:el,start:'clamp(top 90%)',once:true},clearProps:'transform,opacity'}));
+ });
+}
