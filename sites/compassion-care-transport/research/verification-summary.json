@@ -1,0 +1,21 @@
+{
+  "pages": 8,
+  "unique_titles": 8,
+  "unique_canonicals": 8,
+  "h1_per_page": 1,
+  "structured_data_types": {
+    "Organization": 8,
+    "WebSite": 8,
+    "FAQPage": 8,
+    "OfferCatalog": 1,
+    "ItemList": 1,
+    "VideoObject": 15,
+    "WebPage": 8,
+    "Service": 7,
+    "BreadcrumbList": 7
+  },
+  "knowledge_tests": 8,
+  "knowledge_tests_passed": 8,
+  "video_sitemap_pages": 8,
+  "reviewed": "2026-11-07"
+}

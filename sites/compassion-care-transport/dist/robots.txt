@@ -1,3 +1,4 @@
 User-agent: *
 Allow: /
-Sitemap: https://www.compassioncaretransport.com/sitemap.xml
+Sitemap: https://compassion-care-transport.vercel.app/sitemap.xml
+Sitemap: https://compassion-care-transport.vercel.app/video-sitemap.xml

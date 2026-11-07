@@ -68,19 +68,22 @@ const chapterObserver=new IntersectionObserver(entries=>{const candidates=entrie
 document.querySelectorAll('.service-chapter').forEach(el=>chapterObserver.observe(el));
 const reception=document.querySelector('#reception-panel');document.querySelector('.reception-launcher')?.addEventListener('click',()=>reception.showModal());document.querySelector('.reception-close')?.addEventListener('click',()=>reception.close());document.querySelectorAll('.reception-action').forEach(a=>a.addEventListener('click',()=>reception.close()));reception?.addEventListener('click',e=>{if(e.target===reception){const r=reception.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)reception.close();}});
 document.querySelector('.reception-launcher')?.addEventListener('click',()=>careLenis?.stop());reception?.addEventListener('close',()=>careLenis?.start());
-document.querySelector('#service-help')?.addEventListener('submit',e=>{
-  e.preventDefault();const q=document.querySelector('#service-question').value.trim().toLowerCase();if(!q)return;
-  const keys=[['wheelchair','wheelchair'],['chair','wheelchair'],['dialysis','dialysis'],['rehab','rehabilitation'],['therapy','rehabilitation'],['discharge','hospital'],['hospital','hospital'],['nursing','facility'],['assisted living','facility'],['facility','facility'],['doctor','doctor'],['appointment','doctor'],['walker','ambulatory'],['cane','ambulatory'],['ambulatory','ambulatory']];
-  const hit=keys.find(([term])=>q.includes(term));const entry=window.compassionCareServices?.find(s=>s.key===hit?.[1]);
-  const answer=document.querySelector('#service-answer'),link=document.querySelector('#service-answer-link');link.hidden=true;
-  if(/emergency|chest pain|can't breathe|cannot breathe/.test(q))answer.textContent='Compassion Care provides non-emergency transportation. For a medical emergency, call 911.';
-  else if(/book|schedule|reserve|availability|calendar/.test(q)&&!entry)answer.textContent='You can prepare your trip details with Plan a ride request. The team must confirm vehicle suitability, availability and pickup. Call 214-566-3869 to arrange your ride, or use the request form to email our team.';
-  else if(/pickup|pick up|drop.off|from home|clinic/.test(q))answer.textContent='Pickup and drop-off can be arranged at hospitals, nursing homes, doctors’ offices, clinics and homes in the Dallas–Fort Worth area. Share both addresses so the team can confirm trip availability and assistance needs.';
-  else if(/area|city|where|dallas|fort worth|dfw/.test(q))answer.textContent='Compassion Care Transport serves the Dallas–Fort Worth area. Share the pickup and destination so the team can confirm trip availability, vehicle suitability and assistance arrangements.';
-  else if(/price|cost|insurance|medicaid|medicare|hours|phone/.test(q))answer.textContent='Call 214-566-3869 or email Compassioncaretransport@yahoo.com for pricing, payment options and operating hours.';
-  else if(/recurring|regular|weekly|repeat/.test(q)&&!entry)answer.textContent='Share the appointment dates, required arrival times, pickup and destination, and assistance needs. The team can then review a recurring transportation schedule.';
-  else if(entry){answer.textContent=entry.summary+' '+entry.detail;link.href='/services/'+entry.slug+'/';link.textContent='Explore '+entry.title.toLowerCase();link.hidden=false;}
-  else answer.textContent='Compassion Care offers ambulatory and wheelchair rides, hospital discharges, doctor appointments, dialysis, rehabilitation, and facility transportation. Ask about one of these services or prepare a trip request below.';
+let assistantService=(window.compassionCareServices||[]).find(s=>location.pathname.includes(s.slug))?.key||null;
+const assistantDock=document.querySelector('#assistant-dock');
+function showAssistantDock(){if(!assistantDock)return;try{if(assistantDock.showPopover){if(!assistantDock.matches(':popover-open'))assistantDock.showPopover();}else assistantDock.removeAttribute('popover');}catch{assistantDock.removeAttribute('popover');}}
+if(assistantDock){document.body.append(assistantDock);showAssistantDock();}
+document.querySelector('.reception-launcher')?.addEventListener('click',()=>{assistantService=document.querySelector('.service-index a[aria-current="location"]')?.dataset.chapter||assistantService;try{if(assistantDock?.matches(':popover-open'))assistantDock.hidePopover();}catch{}});
+reception?.addEventListener('close',showAssistantDock);
+document.querySelectorAll('[data-question]').forEach(button=>button.addEventListener('click',()=>{document.querySelector('#service-question').value=button.dataset.question;document.querySelector('#service-help').requestSubmit();}));
+document.querySelector('#service-help')?.addEventListener('submit',event=>{
+ event.preventDefault();const input=document.querySelector('#service-question').value.trim();if(!input)return;
+ const result=window.CareKnowledge?.answer(input,{service:assistantService});
+ const answer=document.querySelector('#service-answer'),link=document.querySelector('#service-answer-link'),sources=document.querySelector('#assistant-sources');link.hidden=true;sources.replaceChildren();sources.hidden=true;
+ if(!result){answer.textContent='Please call 214-566-3869 for transportation assistance.';return;}
+ assistantService=result.service;answer.textContent=result.text;
+ const service=(window.compassionCareServices||[]).find(s=>s.key===result.service);
+ if(service){link.href='/services/'+service.slug+'/';link.textContent='Learn about '+service.title.toLowerCase();link.hidden=false;}
+ if(result.sources.length){const label=document.createElement('span');label.textContent='General planning sources:';sources.append(label);result.sources.forEach(source=>{const a=document.createElement('a');a.href=source.url;a.textContent=source.title;a.target='_blank';a.rel='noopener noreferrer';sources.append(a);});sources.hidden=false;}
 });
 
 // Staggered content reveals connect the cinematic service chapters.
@@ -91,5 +94,15 @@ if(window.gsap&&window.ScrollTrigger){
   const groups=[['.mission .container','.mission p'],['.area-section .container','.area-section .eyebrow,.area-section h2,.area-section .lead,.area-section p:not(.lead):not(.eyebrow)'],['.planning-grid','.planning dl>div'],['.questions','.questions details'],['.request-grid','.request form'],['.story','.story .section-intro p,.story .story-video,.story>.caption,.story>.button'],['.footer','.footer>div,.footer>.caption'],['.service-page','.service-page>nav,.service-page>.eyebrow,.service-page>h1,.service-page>.lead']];
   groups.forEach(([trigger,selector])=>{const elements=document.querySelectorAll(selector);if(!elements.length)return;gsap.from(elements,{opacity:0,y:38,stagger:.12,duration:.9,ease:'power3.out',scrollTrigger:{trigger,start:'clamp(top 88%)',once:true},clearProps:'transform,opacity'});});
   document.querySelectorAll('.service-page section').forEach(el=>gsap.from(el,{opacity:0,y:32,duration:.85,ease:'power2.out',scrollTrigger:{trigger:el,start:'clamp(top 90%)',once:true},clearProps:'transform,opacity'}));
+ });
+}
+
+if(window.gsap&&window.ScrollTrigger){
+ const knowledgeMotion=gsap.matchMedia();
+ knowledgeMotion.add('(prefers-reduced-motion: no-preference)',()=>{
+  const revealed=new WeakSet();
+  function revealKnowledge(container){container.querySelectorAll('.education-intro,.education-card,.education-faq,.education-confirm,.education-sources').forEach((el,index)=>{if(revealed.has(el))return;revealed.add(el);gsap.from(el,{opacity:0,y:28,duration:.75,delay:Math.min(index,2)*.06,ease:'power3.out',scrollTrigger:{trigger:el,start:'clamp(top 95%)',once:true},clearProps:'opacity,transform'});});ScrollTrigger.refresh();}
+  document.querySelectorAll('.service-disclosure').forEach(details=>details.addEventListener('toggle',()=>{if(details.open)revealKnowledge(details);}));
+  document.querySelectorAll('.service-page .service-education').forEach(revealKnowledge);
  });
 }
