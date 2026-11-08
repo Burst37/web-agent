@@ -77,16 +77,6 @@ if(assistantDock){document.body.append(assistantDock);showAssistantDock();}
 document.querySelector('.reception-launcher')?.addEventListener('click',()=>{assistantService=document.querySelector('.service-index a[aria-current="location"]')?.dataset.chapter||assistantService;try{if(assistantDock?.matches(':popover-open'))assistantDock.hidePopover();}catch{}});
 reception?.addEventListener('close',showAssistantDock);
 document.querySelectorAll('[data-question]').forEach(button=>button.addEventListener('click',()=>{document.querySelector('#service-question').value=button.dataset.question;document.querySelector('#service-help').requestSubmit();}));
-document.querySelector('#service-help')?.addEventListener('submit',event=>{
- event.preventDefault();const input=document.querySelector('#service-question').value.trim();if(!input)return;
- const result=window.CareKnowledge?.answer(input,{service:assistantService});
- const answer=document.querySelector('#service-answer'),link=document.querySelector('#service-answer-link'),sources=document.querySelector('#assistant-sources');link.hidden=true;sources.replaceChildren();sources.hidden=true;
- if(!result){answer.textContent='Please call 214-566-3869 for transportation assistance.';return;}
- assistantService=result.service;answer.textContent=result.text;
- const service=(window.compassionCareServices||[]).find(s=>s.key===result.service);
- if(service){link.href='/services/'+service.slug+'/';link.textContent='Learn about '+service.title.toLowerCase();link.hidden=false;}
- if(result.sources.length){const label=document.createElement('span');label.textContent='General planning sources:';sources.append(label);result.sources.forEach(source=>{const a=document.createElement('a');a.href=source.url;a.textContent=source.title;a.target='_blank';a.rel='noopener noreferrer';sources.append(a);});sources.hidden=false;}
-});
 
 // Staggered content reveals connect the cinematic service chapters.
 if(window.gsap&&window.ScrollTrigger){
