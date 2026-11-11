@@ -8,12 +8,16 @@
 <link rel="icon" type="image/webp" href="assets/logo.webp">
 <style>
   /* ---- vendored fonts (self-contained, no CDN) ---- */
-  @font-face{font-family:'Anton';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/anton-400.woff2) format('woff2')}
+  /* Alfa Slab One — heavy vintage badge/poster slab serif, matches the crest wordmark
+     (swapped in for Anton, which read as generic AI-template type, not brand identity). */
+  @font-face{font-family:'Alfa Slab One';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/alfaslabone-400.woff2) format('woff2')}
   @font-face{font-family:'Barlow';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/barlow-400.woff2) format('woff2')}
   @font-face{font-family:'Barlow';font-style:normal;font-weight:500;font-display:swap;src:url(fonts/barlow-500.woff2) format('woff2')}
   @font-face{font-family:'Barlow';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/barlow-600.woff2) format('woff2')}
   @font-face{font-family:'Barlow';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/barlow-700.woff2) format('woff2')}
-  @font-face{font-family:'Caveat';font-style:normal;font-weight:500 600;font-display:swap;src:url(fonts/caveat-latin.woff2) format('woff2')}
+  /* Yesteryear — 1950s sign-painter script, for the nose-art-style flight quote accent
+     (swapped in for Caveat, a generic casual-handwriting font with no aviation character). */
+  @font-face{font-family:'Yesteryear';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/yesteryear-400.woff2) format('woff2')}
 </style>
 <style>
   @property --border-angle{syntax:"<angle>";inherits:false;initial-value:0deg}
@@ -28,9 +32,9 @@
     --cream:#D9D2C1;
     --cream-dim:#9a948a;
     --sky:#50ADE2;
-    --font-display:"Anton","Arial Narrow",sans-serif;
+    --font-display:"Alfa Slab One","Arial Narrow",sans-serif;
     --font-body:"Barlow","Helvetica Neue",sans-serif;
-    --font-script:"Caveat",cursive;
+    --font-script:"Yesteryear",cursive;
   }
   *{margin:0;padding:0;box-sizing:border-box}
   html{scroll-behavior:initial}
@@ -80,7 +84,7 @@
   #hero video,#hero img.fallback{width:100%;height:100%;object-fit:cover}
   #hero .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,13,15,.35),rgba(13,13,15,.15) 40%,rgba(13,13,15,.92) 96%)}
   #hero .content{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:0 5vw 9vh}
-  #hero h1{font-family:var(--font-display);text-transform:uppercase;line-height:.84;font-size:clamp(64px,15.5vw,260px);letter-spacing:0;margin-left:-.06em;white-space:nowrap}
+  #hero h1{font-family:var(--font-display);text-transform:uppercase;line-height:.86;font-size:clamp(40px,9.8vw,168px);letter-spacing:-.01em;margin-left:-.03em;white-space:nowrap}
   #hero h1 .l1{display:block;color:var(--cream)}
   #hero h1 .l2{display:block;color:transparent;-webkit-text-stroke:2px var(--gold);text-stroke:2px var(--gold)}
   #hero .sub{display:flex;flex-wrap:wrap;align-items:center;gap:26px;margin-top:34px}
