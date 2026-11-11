@@ -1,0 +1,43 @@
+# Skills Index — web-agent
+
+One line per skill, pulled from its own description. Nothing below was moved, renamed, or deleted — this file is purely additive. 39 skills total.
+
+- **brand-extractor** — Reverse-engineer a client's brand identity from their website and apply it to deliverables.
+- **browserbase-scraper** — Cloud browser scraper for the SA lead-gen pipeline; replaces local Playwright with Browserbase-hosted stealth sessions and geo-matched residential proxies.
+- **caveman** — Token reduction skill — agent talks like a caveman, ~75% fewer output tokens, 100% technical accuracy preserved.
+- **cinematic-website-builder** — Build cinematic, production-grade websites using 30 scroll/cursor/click/ambient effect modules. STAGE 3 (BUILD) of the SA website pipeline.
+- **cinematic-website-director** — Master production contract + QA/completion-gate layer for cinematic website builds; loads on top of the standard pipeline, not instead of it.
+- **cli-printing-press** — Auto-generates token-efficient Go CLIs + Claude Code skills + MCP servers from API docs or an undocumented website.
+- **design-motion-principles** — Space Age motion OS — GSAP + Lenis production standards, scroll choreography, reduced-motion fallbacks, anti-slop motion audit.
+- **design-taste-frontend** — Space Age frontend design taste OS — VL-01 Dark Glassmorphism system, banned fonts, VARIANCE/MOTION/DENSITY dials.
+- **exa-mcp** — Exa MCP server — semantic web search, code search, company research, LinkedIn people search, deep research, live web fetch.
+- **firecrawl-mcp** — Official Firecrawl MCP server — web scraping, search, crawling, autonomous deep research, page interaction.
+- **gbrain** — Persistent AI agent brain with self-wiring knowledge graph, hybrid vector+graph search, 34 sub-skills (Garry Tan / YC).
+- **gsap-core** — Official GSAP skill for the core API — `gsap.to/from/fromTo`, easing, duration, stagger, `matchMedia`.
+- **gsap-scrolltrigger** — Official GSAP skill for ScrollTrigger — scroll-linked animation, pinning, scrub, triggers, parallax.
+- **gsap-supercharged** — Advanced GSAP patterns — scroll storytelling, SplitText reveals, MorphSVG, Flip, Draggable, Physics2D.
+- **gsap-timeline** — Official GSAP skill for timelines — `gsap.timeline()`, position parameter, nesting, playback sequencing.
+- **hermes-webui** — Lightweight dark-themed web UI for Hermes Agent — full CLI parity from a browser, no build step.
+- **karpathy-autoresearch** — Autonomous overnight AI research agent (Karpathy) — modifies LLM training code, runs fixed experiments, tracks val_bpb, keeps improvements.
+- **lead-to-brief** — Automation glue of the SA lead-gen pipeline — turns a raw scraped CSV row into a structured Build Brief for every downstream skill.
+- **mobbin-operator** — Terminal-native Mobbin client (`mobbin-pp-cli`) with offline SQLite mirror, FTS5 search, compound design-intelligence commands.
+- **open-design-openrouter** — Runbook for connecting a local Open Design install to OpenRouter instead of Claude/OpenAI directly.
+- **outreach-copywriter** — Generates the exact cold email + Vapi phone script for the SA local-business outreach pipeline ($300–750 site offer).
+- **paperclip** — Open-source AI agent company orchestration platform — multi-agent swarms toward business goals, org charts, budgets, audit trails.
+- **penpot** — Self-hosted Penpot design tool as a Figma replacement — setup/troubleshooting on the Space Age VPS.
+- **sa-deploy-operator** — Final stage of the SA site pipeline — ships the completed single-file site to Vercel, captures the production URL.
+- **sa-figma-framer-spline** — Figma + Framer Motion + Spline design-to-production skill; sits between `ui-ux-designer` and `cinematic-website-builder`.
+- **sa-local-seo-geo** — Production-grade Local SEO + GEO skill for the SA lead-gen pipeline — injected into every cinematic build targeting local search.
+- **sa-scroll-cinematics** — Reusable scroll-animation + WebGL shader patterns reverse-engineered from two Awwwards-tier reference builds.
+- **sa-voice-agent-builder** — Mass-production voice-agent layer for the SA outreach pipeline, built on Gemini 3.1 Flash Live instead of Vapi.
+- **sa-workflow-copier** — Watches a website-building tutorial video and outputs a complete, executable, step-by-step build workflow.
+- **sa-youtube-cli** — YouTube intelligence CLI — search, full transcripts, chapter breakdowns, video download, channel scraping.
+- **scroll-film-studio** — Build a scroll-film website — the whole page as one continuous cinematic shot that plays on scroll.
+- **scroll-world** — Build an immersive scroll-scrubbed "fly through the world" landing page using Higgsfield.
+- **spaceage-apple-immersive-web-design** — Apple-grade fluid web interfaces — scroll storytelling, GSAP ScrollTrigger/SplitText/Flip, Liquid Glass chrome, kinetic typography.
+- **spaceage-savo-creative-director-os** — Strategic creative direction (visual/story/trust/motion/layout/conversion) before any builder model runs.
+- **superpowers** — Complete software development methodology for coding agents — spec-first, TDD-enforced, parallel-agent engineering discipline.
+- **ui-ux-designer** — Senior Design Director skill — fires before any site build, produces the full cinematic design brief (style, structure, motion).
+- **ui-ux-pro-max** — UI/UX design intelligence — 50+ styles, 161 color palettes, 57 font pairings, 161 product types, 99 UX guidelines, 25 chart types.
+- **vapi-orchestrator** — Turns outreach-copywriter's `vapi_script` + the lead `build_brief` into a ready-to-deploy Vapi agent configuration JSON.
+- **website-fusion-engine** — Clone, recreate, migrate, rebrand, remix, or fuse websites from URLs, screenshots, recordings, uploaded assets, or wireframes.
