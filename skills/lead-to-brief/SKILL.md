@@ -74,27 +74,42 @@ name, category, address, phone, website, siteStatus, siteScore, siteNotes, sourc
 ### Step 1 — Parse & Validate
 Extract these fields. If any are missing, infer from what's available:
 - `business_name` — clean, title case
-- `category` — normalize to standard (Landscaping / Roofing / Cleaning / HVAC / Plumbing / Electrical / Painting / Concrete / Tree Service / Pest Control)
+- `category` — normalize to standard (Landscaping / Roofing / Cleaning / HVAC / Plumbing / Electrical / Painting / Concrete / Tree Service / Pest Control / Med Spa / Hair Salon / Barbershop / Auto Repair / Independent Retail / Daycare & Preschool / Appliance Repair / Moving & Storage / Handyman / Pet Grooming & Boarding / Event Planning)
 - `city` + `state` — extract from address if not explicit
 - `phone` — normalize to (XXX) XXX-XXXX
 - `site_status` — none / weak / decent
 - `site_weakness` — parsed from siteNotes
 
 ### Step 2 — Category Intelligence
-Map category to design and copy intelligence:
 
-| Category | Tone | Visual Archetype | Hero Concept | Primary CTA |
-|---|---|---|---|---|
-| Landscaping | Dependable, outdoor, craft | GOLD_CINEMATIC | Aerial manicured lawn, golden hour | Free Estimate |
-| Roofing | Protective, strong, local | DARK_AUTHORITY | Storm-ready home, dramatic sky | Free Inspection |
-| Cleaning | Fresh, professional, reliable | CLEAN_BRIGHT | Pristine space, high contrast | Book a Clean |
-| HVAC | Trusted, technical, local | BLUE_TECH | Comfort home, cool tones | Free Quote |
-| Plumbing | Reliable, urgent, local | INDUSTRIAL | Tools, pipes, clean resolution | Call Now |
-| Electrical | Safe, certified, expert | DARK_ELECTRIC | Illuminated home, precision | Get a Quote |
-| Painting | Creative, transformative | WARM_EDITORIAL | Before/after reveal concept | Free Estimate |
-| Concrete | Solid, durable, local | DARK_CONCRETE | Finished driveway, clean lines | Free Quote |
-| Tree Service | Skilled, outdoor, safe | FOREST_DARK | Tree canopy, dramatic removal | Free Estimate |
-| Pest Control | Protective, clean, fast | CLEAN_DARK | Protected home, clean space | Book Service |
+> **Visual direction is owned by `spaceage-savo-creative-director-os`'s Industry Decision
+> Matrix**, not this table. `SAVO Route` below is a pointer, not a restatement — load SAVO
+> for the actual material/motion/hero reasoning. This table's own job is Tone and Primary
+> CTA (copy direction), which stay here since SAVO doesn't cover those.
+
+| Category | Tone | SAVO Route | Primary CTA |
+|---|---|---|---|
+| Landscaping | Dependable, outdoor, craft | `landscaping` → cinematic_editorial | Free Estimate |
+| Roofing | Protective, strong, local | `roofing` → industrial_brutalism | Free Inspection |
+| Cleaning | Fresh, professional, reliable | `cleaning` → premium_minimalism | Book a Clean |
+| HVAC | Trusted, technical, local | `HVAC` → premium_minimalism (cool-blue accent) | Free Quote |
+| Plumbing | Reliable, urgent, local | `plumbing` → industrial_brutalism | Call Now |
+| Electrical | Safe, certified, expert | `electrical` → industrial_brutalism | Get a Quote |
+| Painting | Creative, transformative | `painting` → cinematic_editorial | Free Estimate |
+| Concrete | Solid, durable, local | `concrete` → industrial_brutalism | Free Quote |
+| Tree Service | Skilled, outdoor, safe | `tree_service` → cinematic_editorial | Free Estimate |
+| Pest Control | Protective, clean, fast | `pest_control` → premium_minimalism | Book Service |
+| Med Spa | Desirable, trusted, calm | `med_spa` → liquid_glass_iridescent | Book Consultation |
+| Hair Salon | Desirable, expressive, trusted | `hair_salon` → liquid_glass_iridescent | Book Appointment |
+| Barbershop | Classic, skilled, character | `barbershop` → industrial_brutalism | Book a Cut |
+| Auto Repair | Trusted, technical, honest | `auto_repair` → industrial_brutalism | Get a Quote |
+| Independent Retail | Discovery, desire, local | `independent_retail` → cinematic_editorial | Shop Now |
+| Daycare & Preschool | Warm, safe, nurturing | `daycare_preschool` → warm_trust | Schedule a Tour |
+| Appliance Repair | Trusted, technical, local | `appliance_repair` → premium_minimalism | Schedule Repair |
+| Moving & Storage | Reliable, capable, local | `moving_storage` → industrial_brutalism | Get a Free Quote |
+| Handyman | Reliable, resourceful, local | `handyman` → industrial_brutalism | Book a Handyman |
+| Pet Grooming & Boarding | Warm, caring, trusted | `pet_grooming_boarding` → warm_trust | Book Grooming |
+| Event Planning | Experiential, premium, creative | `event_planning` → cinematic_editorial | Get a Quote |
 
 ### Step 3 — SEO Intelligence
 Generate local SEO terms from city + category:
@@ -113,6 +128,17 @@ Generate local SEO terms from city + category:
 | Painting | HousePainter |
 | Tree Service | TreeService |
 | Pest Control | PestControlService |
+| Med Spa | DaySpa |
+| Hair Salon | HairSalon |
+| Barbershop | HairSalon *(no exact schema.org type — closest valid match)* |
+| Auto Repair | AutoRepair |
+| Independent Retail | Store |
+| Daycare & Preschool | ChildCare |
+| Appliance Repair | LocalBusiness *(no exact schema.org type — generic fallback)* |
+| Moving & Storage | MovingCompany |
+| Handyman | HomeAndConstructionBusiness |
+| Pet Grooming & Boarding | LocalBusiness *(no exact schema.org type — generic fallback)* |
+| Event Planning | ProfessionalService *(no exact schema.org type — closest valid match)* |
 
 ### Step 4 — Output Brief
 
@@ -145,14 +171,14 @@ build_brief:
     opportunity: ""        # one sentence on why they need this
 
   design:
-    moodboard: ""          # from category intelligence table
+    moodboard: ""          # SAVO material route for this category (spaceage-savo-creative-director-os)
     tone: ""
     color_primary: ""      # hex
     color_accent: ""       # hex
     color_background: ""   # hex
     font_display: ""       # Bebas Neue / Orbitron / etc.
     font_body: ""          # DM Sans / etc.
-    hero_concept: ""       # full cinematic hero description
+    hero_concept: ""       # SAVO's `hero:` field for this category, expanded to a full description
     hero_image_query: ""   # Unsplash search query for hero photo
 
   copy:
