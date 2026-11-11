@@ -6,16 +6,20 @@ description: >
   Senior Design Director skill for Space Age AI Solutions. Fires before any site build.
   Produces a full cinematic design brief — visual style direction, section structure,
   motion system, typography, color tokens, UX flow, and AI visual direction — that feeds
-  directly into Google Stitch 2.0 for prototyping, then cinematic-website-builder for
-  production HTML. Triggers on: "design the site", "UI/UX", "landing page design",
-  "design direction", "visual direction", "design system", "layout", "wireframe",
-  "design brief", "what should the site look like", or any request to design before
-  building. Always runs BEFORE Google Stitch 2.0 and cinematic-website-builder.
+  directly into cinematic-website-builder for production HTML. On the Premium build path
+  only, the brief additionally routes through Google Stitch 2.0 for human-reviewed layout
+  prototyping first; the Standard/mass-production path skips Stitch and goes straight to
+  Build, per the master pipeline's Stage 2.5 fork (Stitch requires a human at a browser —
+  it has no API and cannot run unattended at lead-gen volume). Triggers on: "design the
+  site", "UI/UX", "landing page design", "design direction", "visual direction", "design
+  system", "layout", "wireframe", "design brief", "what should the site look like", or any
+  request to design before building. Always runs BEFORE cinematic-website-builder (and
+  before Google Stitch 2.0 when Stitch is in play).
 allowed-tools: Read, WebSearch
 ---
 
 # UI/UX DESIGNER — Senior Design Director
-**Version:** 1.0.0 | **Priority:** Runs before Google Stitch 2.0 and cinematic-website-builder
+**Version:** 1.0.0 | **Priority:** Runs before cinematic-website-builder (and before Google Stitch 2.0 on the Premium path)
 
 ---
 
@@ -28,9 +32,14 @@ sa-design-md (formalize DESIGN.md token file)
         ↓
   ui-ux-designer  ←── YOU ARE HERE
         ↓
-  Google Stitch 2.0 (UI prototype)
-        ↓
-  cinematic-website-builder (production HTML)
+        ├── STANDARD PATH (scraped lead, mass production)
+        │   → straight to cinematic-website-builder — the moodboard lookup + this
+        │     skill's own Composition Rules ARE the layout decision; no separate
+        │     wireframe-review step, nothing here needs a human at a browser.
+        │
+        └── PREMIUM PATH (named client, custom scope, or explicitly requested)
+            → Google Stitch 2.0 (human reviews 3-5 layout variations)
+            → cinematic-website-builder
         ↓
   local-business-seo (schema, NAP, llms.txt)
         ↓
@@ -41,8 +50,11 @@ sa-design-md (formalize DESIGN.md token file)
   Vercel Deploy
 ```
 
-**Rule:** Never hand off to Google Stitch 2.0 or cinematic-website-builder without a
-completed design brief from this skill. The brief IS the spec both downstream tools consume.
+**Rule:** Never hand off to cinematic-website-builder without a completed design brief
+from this skill — the brief IS the spec cinematic-website-builder consumes. On the
+Premium path, also never hand off to Google Stitch 2.0 without one, for the same reason.
+**Default to Standard (no Stitch) unless the build is explicitly Premium** — don't route
+a scraped lead-gen build through a manual review step it doesn't need.
 
 ---
 
@@ -56,7 +68,8 @@ Load this skill IMMEDIATELY when any of the following occur:
 - User says "wireframe", "layout", "section structure", "design system"
 - Any site build request where no design brief exists yet
 - User says "make it look premium", "cinematic design", "luxury UI"
-- Upstream of any Google Stitch 2.0 or cinematic-website-builder invocation
+- Upstream of any cinematic-website-builder invocation (and any Google Stitch 2.0
+  invocation, on the Premium path only)
 
 ---
 
@@ -109,6 +122,26 @@ Every design should feel like:
 
 ---
 
+## PHASE 0 — DESIGN RESEARCH (run before any direction is chosen)
+
+Pull real references before committing to a visual direction. Five sources, in
+priority order:
+
+1. **mobbin-operator skill** — strongest source: real shipped production UI, not
+   marketing renders. Use its `mobbin-pp-cli` `deck` / `bench` / `grab` commands
+   per that skill's SKILL.md to pull screens matching the client's vertical and
+   the intended moodboard.
+2. Awwwards — cinematic/award-tier motion and layout patterns
+3. Dribbble — visual styling and component treatments
+4. Behance — full case studies and brand systems
+5. Pinterest — broad aesthetic boards
+
+For fetching any live site referenced in research (competitor sites, client
+inspiration links), use the **firecrawl-mcp** skill as the fetch engine rather
+than raw web fetch.
+
+---
+
 ## CORE DESIGN PHILOSOPHY
 
 ### PRIMARY DESIGN OBJECTIVE
@@ -141,27 +174,57 @@ It should:
 
 ---
 
-## DESIGN RESEARCH SOURCES
+## MOODBOARD REGISTRY — CANONICAL
 
-Before locking visual direction, pull real reference — do not improvise a look from
-memory. Draw from, in priority order:
+**This table is the single source of truth for moodboard letters.** Section 0 of the
+master pipeline assigns moodboard ownership to this skill; the registry lives here and
+nowhere else. `cinematic-website-builder` and `design-taste-frontend` reference these
+letters — they must not define their own.
 
-1. **`mobbin-operator`** — real shipped production UI from live apps (offline SQLite
-   mirror + FTS5 search). The strongest source: actual product screens and flows, not
-   marketing renders. Use `mobbin-pp-cli deck` / `bench` / `grab` to benchmark
-   onboarding, paywall, and pattern references for the client's vertical.
-2. **Pinterest / Dribbble / Behance / Awwwards** — aspirational/marketing-grade visual
-   direction and award-winning motion. Good for mood and ambition, weaker for real UX.
-3. **`ui-ux-pro-max`** — the underlying style/pattern database (color palettes, font
-   pairings, named UI styles, product-type reasoning). Treat it as the deep reference
-   library that the SA-brand layer below draws on.
+The canonical set is **A–N (14 letters)**. There is no O–Z and no doubled-letter range
+(AA–HH); earlier references to `FF` and `HH` were remapped into this set.
 
-Fetch engine for any of the above (or a client/competitor site): use `firecrawl-mcp`
-(`firecrawl_scrape` / `firecrawl_search` / `firecrawl_map`) rather than a raw fetch.
+| Letter | Aesthetic | Primary Use | Full spec lives in |
+| :---- | :---- | :---- | :---- |
+| **A** | Space Age Dark Data-Viz | LoyaltyBot, dashboards | §02 below + design-taste-frontend → *VL-01 Dark Glassmorphism* |
+| **B** | Hardware Console | Developer tools | ⚠ no full spec yet |
+| **C** | 3D Clay | Consumer apps | §05 below (partial) |
+| **D** | Liquid Glass | Music, luxury | §01 below + design-taste-frontend → *Liquid Glass / Iridescent* |
+| **E** | Exploded Diagram | Tech hardware | ⚠ no full spec yet |
+| **F** | Urban Street / Hip-Hop | Record Exec, music | ⚠ no full spec yet |
+| **G** | Forest / Organic | Terra Root, wellness | ⚠ no full spec yet |
+| **H** | Fashion Editorial | Portfolio, luxury brands, DTC | §06 below + design-taste-frontend → *Commercial Hero / Digital Product* |
+| **I** | Brutalist | Art, anti-establishment | design-taste-frontend → *Industrial Brutalism* |
+| **J** | Cinematic Film | Film projects, portfolios, agency work | §04 below + design-taste-frontend → *Agency Kinetic* |
+| **K** | Neon Cyberpunk | Gaming, nightlife | ⚠ no full spec yet |
+| **L** | Silicon Valley Clean | SaaS, B2B, minimal editorial | design-taste-frontend → *Premium Utilitarian Minimalism* |
+| **M** | Maximalist Luxury | Space Age Credit | §03 below (partial) |
+| **N** | Retro Futurist | Space Age AI brand | ⚠ no full spec yet |
+
+**Six letters (B, E, F, G, K, N) have a name and a use case but no full aesthetic
+spec.** Routing a build to one of those means improvising the palette, type, and
+texture from the name alone — flag it rather than doing it silently, and treat the
+result as unvalidated until Mr. Black supplies the source definitions.
+
+### Prior conflicts, now resolved
+
+Three files previously used incompatible letterings for the same aesthetics. Resolved
+in favour of this table:
+
+| Letter | Was also claimed as | Resolution |
+| :---- | :---- | :---- |
+| **G** | *Industrial Brutalism* (design-taste-frontend) vs *Forest/Organic* (here) | Brutalism moved to **I** — G stays Forest/Organic. These are opposite aesthetics; a build routed to G was getting either one depending on load order. |
+| **B, C** | *Premium Utilitarian Minimalism* | Moved to **L** (Silicon Valley Clean). B and C keep Hardware Console / 3D Clay. |
+| **E, F** | *Agency Kinetic* | Moved to **J** (Cinematic Film). E and F keep Exploded Diagram / Urban Street. |
+| **FF** | *Liquid Glass / Iridescent* | Folded into **D** — FF was never defined anywhere. |
+| **HH** | *Commercial Hero / Digital Product* | Folded into **H** (Fashion Editorial) — HH was never defined anywhere. |
 
 ---
 
 ## VISUAL STYLE SYSTEM
+
+The numbered styles below are the full aesthetic specs. The **Full spec** column in the
+registry above maps each letter to the style that backs it.
 
 ### 01. Liquid Glass
 Use:
@@ -288,11 +351,6 @@ Best for: AI services / SaaS / Analytics / Dashboards / Productized services
 
 ## MOTION DESIGN SYSTEM
 
-> Canonical motion source: `gsap-supercharged` (implementation) and
-> `design-motion-principles` (which motion to use and why). This section sets the
-> *direction* for a build's motion; reach for those skills for the actual patterns
-> rather than re-specifying them here.
-
 ### GSAP SCROLLTRIGGER — Primary Animation Framework
 Use for:
 - Pinned sections
@@ -366,6 +424,12 @@ Should feel: Cinematic / Smooth / Expensive / Interactive / Immersive
 
 ### SHADER EFFECTS
 Use: Liquid distortion / Aurora backgrounds / Glow fields / Interactive gradients / Dynamic reflections / Noise distortion / Atmospheric motion
+
+> **Implementation is not decided here.** This list names *which* effect a build
+> gets. The canonical implementation for each named effect — cost tier, working
+> code, performance budget — lives in the **shader-effects** skill. Load it
+> before building any of the above. Do not hand-roll a shader; do not pull
+> Three.js for a background (Tier 3, approval-gated, never on the Standard path).
 
 ---
 
@@ -648,10 +712,15 @@ Should feel: Futuristic / Intelligent / Enterprise-grade / Cinematic / Premium
 
 ## DESIGN OUTPUT FORMAT
 
-This skill outputs a **Design Brief** — a structured spec consumed by Google Stitch 2.0.
+This skill outputs a **Design Brief** — a structured spec consumed by
+cinematic-website-builder directly (Standard path) or by Google Stitch 2.0 first
+(Premium path). Set `build_path` explicitly; it decides `next_step`. Default to
+`standard` unless the build is a named client or Mr. Black explicitly requests a
+layout review before build.
 
 ```yaml
 design_brief:
+  build_path: "standard"  # standard | premium — decides next_step below
   style_system: "VL-01 Dark Glassmorphism | Liquid Glass | Editorial | Bento"
   primary_color: "#2979FF"  # or industry override from sa-design-md
   surface_base: "#050508"
@@ -677,7 +746,7 @@ design_brief:
     - sa_explode_to_menu
   mobile_first: true
   animation_philosophy: "cinematic / purposeful / GPU-friendly"
-  next_step: "Google Stitch 2.0 prototype"
+  next_step: "cinematic-website-builder"  # or "Google Stitch 2.0 prototype" when build_path: premium
 ```
 
 ---
@@ -757,18 +826,18 @@ dependencies:
   - brand-extractor (upstream — optional)
   - sa-design-md (upstream — DESIGN.md token file)
 downstream:
-  - Google Stitch 2.0 (prototype)
-  - cinematic-website-builder (production HTML)
+  - Google Stitch 2.0 (prototype — Premium path only, build_path: premium)
+  - cinematic-website-builder (production HTML — always; directly on Standard path)
   - SA-higgsfield-operator (hero image + video)
 outputs:
-  - Design Brief (structured YAML spec)
+  - Design Brief (structured YAML spec, includes build_path)
   - Section structure
   - Visual style direction
   - Motion system spec
   - Typography spec
   - AI visual direction
 fires_before:
-  - google-stitch
   - cinematic-website-builder
+  - google-stitch (Premium path only)
 never_skip: true
 ```

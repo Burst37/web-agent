@@ -1,127 +1,557 @@
 ---
 name: design-motion-principles
-description: >
-  Space Age motion OS. Enforces GSAP + Lenis production standards, scroll choreography,
-  reduced-motion fallbacks, and anti-slop motion audit. Load before any animation spec,
-  GSAP implementation, or frontend motion review. Based on Emil/Jakub/Jhey motion framework
-  and VL-01 motion layer.
+description: "SA-enhanced motion and interaction design expert. Two modes: CREATE (build interactive components with purposeful motion) or AUDIT (review existing animations and catch AI-slop motion patterns). Covers Emil Kowalski restraint-first, Jakub Krehel production-polish, and Jhey Tompkins creative-experimentation philosophies. Adds Space Age extensions: VL-01 Dark Glassmorphism motion layer, cinematic scroll choreography, physics-based cursor interactions, and GSAP/ScrollTrigger/Motion integration for cinematic-website-builder handoff. Trigger on: any request involving animation, transition, hover state, micro-interaction, motion audit, or make-it-feel-alive requests."
 ---
 
-# Design Motion Principles OS
+# Design Motion Principles — SA-Enhanced Edition
 
-## VL-01 Motion Layer (Default)
+## SCOPE
 
-```javascript
-// Canonical GSAP + Lenis bootstrap — every Space Age site
-import Lenis from '@studio-freight/lenis';
-import gsap from 'gsap';
-import ScrollTrigger from 'gsap/ScrollTrigger';
+Web and app UI motion: HTML/CSS, React, Framer Motion / Motion, GSAP + ScrollTrigger, iOS/Android transitions. Space Age extension adds: VL-01 glassmorphism motion layer, cinematic site scroll choreography, cursor physics, and direct handoff to `cinematic-website-builder` (Modules 1–30).
 
-gsap.registerPlugin(ScrollTrigger);
+---
 
-const lenis = new Lenis({ duration: 1.2, easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)) });
+## STEP 0: DETECT MODE (DO THIS FIRST)
 
-lenis.on('scroll', ScrollTrigger.update);
-gsap.ticker.add((time) => { lenis.raf(time * 1000); });
-gsap.ticker.lagSmoothing(0);
-```
+| Signal | Mode |
+| :---- | :---- |
+| "build", "create", "add animation", "animate this", "implement", "make it feel…" | **CREATE** |
+| "audit", "review", "evaluate", "check", "feedback on", "is this motion good" | **AUDIT** |
+| Ambiguous | Ask: Create or Audit? |
 
-## Motion Philosophy (Emil/Jakub/Jhey Framework)
+---
 
-**Three principles:**
-1. Motion reveals structure — animation shows hierarchy, not decoration
-2. Entry > idle > exit — every element has a lifecycle
-3. Scroll-driven > time-driven — tie motion to user intent
+## THE THREE DESIGNERS
 
-## Motion Hierarchy
+- **Emil Kowalski** (Linear, ex-Vercel) — Restraint, speed, purposeful motion. Best for productivity tools.  
+- **Jakub Krehel** (jakub.kr) — Subtle production polish. Best for shipped consumer apps.  
+- **Jhey Tompkins** (@jh3yy) — Playful experimentation, CSS innovation. Best for creative sites and portfolios.
 
-| Layer | What It Controls | GSAP Tool |
-|---|---|---|
-| Macro | Page-level camera, parallax depth | ScrollTrigger scrub |
-| Section | Reveal choreography, stagger entrance | ScrollTrigger start/end |
-| Component | Individual element lifecycle | gsap.from/to/fromTo |
-| Micro | Hover, click, focus feedback | gsap.to with short duration |
+Each answers a different question:
 
-## Motion Vocabulary
+- **Emil** — *"Should this animate at all?"*  
+- **Jakub** — *"Is this subtle and polished enough for production?"*  
+- **Jhey** — *"What could this become?"*
 
-| Motion | GSAP Pattern | Duration | Ease |
-|---|---|---|---|
-| Hero entrance | gsap.from(el, {y:60, opacity:0}) | 0.8s | power3.out |
-| Stagger reveal | gsap.from(els, {y:40, opacity:0, stagger:0.12}) | 0.6s | power2.out |
-| Parallax depth | gsap.to(el, {y: "-20%", ease:"none", scrollTrigger:{scrub:true}}) | scrub | none |
-| Pinned section | ScrollTrigger pin:true, scrub:1 | scrub | none |
-| Kinetic type | SplitText + gsap.from(chars, {y:100, stagger:0.02}) | 0.5s | expo.out |
-| Section exit | gsap.to(el, {opacity:0, y:-30}) | 0.4s | power2.in |
+### Context → Designer Weighting
 
-## Canonical ScrollTrigger Patterns
+| Project Type | Primary | Secondary | Selective |
+| :---- | :---- | :---- | :---- |
+| Productivity tool (Linear, Raycast) | Emil | Jakub | Jhey (onboarding only) |
+| Kids app / Educational | Jakub | Jhey | Emil (high-freq game) |
+| Creative portfolio | Jakub | Jhey | Emil (high-freq interactions) |
+| Marketing / landing page | Jakub | Jhey | Emil (forms, nav) |
+| SaaS dashboard | Emil | Jakub | Jhey (empty states) |
+| Mobile app | Jakub | Emil | Jhey (delighters) |
+| E-commerce | Jakub | Emil | Jhey (product showcase) |
+| **Space Age cinematic site** | **Jakub** | **Jhey** | **Emil (data/forms)** |
+| **VL-01 glassmorphism dashboard** | **Emil** | **Jakub** | **Jhey (LED indicators)** |
 
-**Implementation lives in `gsap-supercharged`** (with prerequisites `gsap-core`,
-`gsap-scrolltrigger`, `gsap-timeline`). Load that skill for the canonical,
-copy-ready implementations — reveal-on-scroll, pinned horizontal scroll, parallax
-rigs, staggers, SplitText, magnetic hover, counters, page transitions. This skill
-defines *which* motion to reach for and *why* (see the vocabulary and hierarchy
-tables above); `gsap-supercharged` defines *how* to build it. Do not re-inline
-those effect skeletons here — reference the one source so patterns don't drift.
+---
 
-The only non-negotiable this skill still pins down is cleanup: in React/Next.js,
-every GSAP animation must run inside `gsap.context()` (or `useGSAP()`) and be
-reverted on unmount to prevent ScrollTrigger memory leaks.
+## CORE PRINCIPLES (BOTH MODES)
 
-## Reduced Motion Law (Non-Negotiable)
+### The Frequency Gate
 
-```javascript
-// Always implement this check
-const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+Before any animation, ask how often users trigger it:
 
-if (!prefersReducedMotion) {
-  // Full animation
-  gsap.from('.hero-text', { y: 80, opacity: 0, duration: 1, ease: 'power3.out' });
-} else {
-  // Instant reveal fallback
-  gsap.set('.hero-text', { opacity: 1 });
+| Frequency | Recommendation |
+| :---- | :---- |
+| Rare (monthly) | Expressive motion welcome |
+| Occasional (daily) | Subtle, fast motion |
+| Frequent (100s/day) | No animation or instant transition |
+| Keyboard-initiated | **Never animate** |
+
+### Duration Guidelines
+
+| Context | Duration |
+| :---- | :---- |
+| Productivity UI (Emil) | Under 300ms, 180ms ideal |
+| Production polish (Jakub) | 200–500ms |
+| Creative/playful (Jhey) | Whatever serves the effect |
+| **Space Age cinematic reveals** | **600–900ms with spring** |
+| **VL-01 micro-interactions** | **150–250ms** |
+
+### The Golden Rule
+
+"The best animation is that which goes unnoticed." Exception: Space Age cinematic sites where motion IS the brand experience.
+
+### Accessibility is NOT Optional
+
+Every animation must handle `prefers-reduced-motion`. No exceptions. Wrap GSAP contexts in `if (reduce) return;`. Use `useReducedMotion()` from Motion.
+
+---
+
+## SPACE AGE MOTION EXTENSIONS
+
+### Extension A: VL-01 Glassmorphism Motion Layer
+
+Applied to all Space Age dashboards, portals, and admin UIs.
+
+**LED Dome Pulse (status indicators):**
+
+@keyframes ledPulse {
+
+  0%, 100% { box-shadow: 0 0 6px 2px var(--accent), inset 0 1px 0 rgba(255,255,255,0.12); }
+
+  50% { box-shadow: 0 0 14px 6px var(--accent), inset 0 1px 0 rgba(255,255,255,0.18); }
+
+}
+
+.led-dome { animation: ledPulse 2.4s ease-in-out infinite; }
+
+**Glass panel entrance (motion/react):**
+
+<motion.div
+
+  initial={{ opacity: 0, backdropFilter: "blur(0px)", y: 20 }}
+
+  animate={{ opacity: 1, backdropFilter: "blur(40px)", y: 0 }}
+
+  transition={{ type: "spring", duration: 0.7, bounce: 0 }}
+
+  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+
+/>
+
+**Specular shimmer on hover:**
+
+.glass-card::before {
+
+  content: '';
+
+  position: absolute;
+
+  inset: 0;
+
+  background: linear-gradient(135deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.07) 50%, rgba(255,255,255,0) 100%);
+
+  transform: translateX(-100%);
+
+  transition: transform 0.6s ease;
+
+}
+
+.glass-card:hover::before { transform: translateX(100%); }
+
+**Liquid Glass — interactive panel (mouse-tracked tilt + caustic highlight).**
+Extends the glass panel above with pointer-driven depth. Reuses this file's own
+glass tokens (`blur(40px)`, `rgba(255,255,255,0.04)` fill, `rgba(255,255,255,0.08)`
+border) and the canonical `16px` radius from `design-taste-frontend`'s bento spec
+— do not introduce a second radius/blur value for the same VL-01 surface.
+
+```tsx
+import { motion, useMotionValue, useTransform, useSpring } from "motion/react"
+
+const springConfig = { stiffness: 300, damping: 30, mass: 0.8 }
+
+export function GlassPanel({ children }: { children: React.ReactNode }) {
+  const mouseX = useMotionValue(0)
+  const mouseY = useMotionValue(0)
+
+  // Tilt range: -6deg to +6deg — beyond this reads as a gimmick, not depth.
+  const rotateX = useSpring(useTransform(mouseY, [-0.5, 0.5], [6, -6]), springConfig)
+  const rotateY = useSpring(useTransform(mouseX, [-0.5, 0.5], [-6, 6]), springConfig)
+  const highlightX = useSpring(useTransform(mouseX, [-0.5, 0.5], [-10, 10]), springConfig)
+  const highlightY = useSpring(useTransform(mouseY, [-0.5, 0.5], [-10, 10]), springConfig)
+
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = e.currentTarget.getBoundingClientRect()
+    mouseX.set((e.clientX - rect.left) / rect.width - 0.5)
+    mouseY.set((e.clientY - rect.top) / rect.height - 0.5)
+  }
+  function handleMouseLeave() { mouseX.set(0); mouseY.set(0) }
+
+  return (
+    <motion.div
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{ rotateX, rotateY, transformStyle: "preserve-3d", transformPerspective: 800 }}
+    >
+      <div style={{
+        backdropFilter: "blur(40px) saturate(180%)",
+        WebkitBackdropFilter: "blur(40px) saturate(180%)",
+        background: "rgba(255,255,255,0.04)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: "16px",
+        position: "relative", overflow: "hidden",
+      }}>
+        {/* Caustic highlight — moves with the pointer, GPU-composited (transform only) */}
+        <motion.div style={{
+          position: "absolute", inset: 0, pointerEvents: "none",
+          background: "radial-gradient(ellipse 60% 50% at 50% 0%, rgba(255,255,255,0.18) 0%, transparent 70%)",
+          x: highlightX, y: highlightY,
+        }} />
+        {children}
+      </div>
+    </motion.div>
+  )
 }
 ```
 
-## Lenis + GSAP Integration Rules
+Transparent-text-cutout variant (background shows through the letterforms):
 
-- Always call `lenis.raf()` inside `gsap.ticker.add()` — not in a separate `requestAnimationFrame`
-- `gsap.ticker.lagSmoothing(0)` prevents jank on background tabs
-- For Next.js App Router: initialize Lenis in a client component with `'use client'`
-- Destroy Lenis on cleanup: `lenis.destroy()` in useEffect return
-- Do NOT use both Lenis and native `scroll-behavior: smooth` — they conflict
-
-## Motion Spec Table Template
-
-```markdown
-| Section | Element | Motion | Trigger | Duration | Ease |
-|---|---|---|---|---|---|
-| Hero | Headline | Slide up + fade | Page load | 0.8s | power3.out |
-| Hero | Subhead | Slide up + fade | +0.15s delay | 0.7s | power3.out |
-| Hero | CTA | Fade in | +0.3s delay | 0.6s | power2.out |
-| Section 2 | Cards | Stagger reveal | Scroll 85% | 0.6s×0.12 | power2.out |
-| Gallery | Track | Horizontal scroll | Pin scrub | scrub:1 | none |
+```tsx
+export function GlassText({ text, fontSize = 96 }: { text: string; fontSize?: number }) {
+  return (
+    <div style={{
+      fontSize, fontWeight: 700,
+      background: "linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.5))",
+      WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+      filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.3))",
+    }}>{text}</div>
+  )
+}
 ```
 
-## Forbidden Motion Patterns
+DO: use `useSpring` for all hover physics on glass — never a CSS `transition` for the
+tilt, it reads mechanical. Test on dark backgrounds first — glass reads poorly on
+white without separate tuning. Keep the caustic highlight to `transform` only (as
+above) so it stays GPU-composited.
 
-- `transition: all 0.3s ease` — too generic, causes layout thrash
-- CSS `@keyframes` for scroll-tied animation — use GSAP ScrollTrigger
-- `setInterval` for animation — use GSAP ticker
-- Infinite rotation/pulse on body content — only for decorative BG elements
-- `transform: translateZ(0)` everywhere — only on actually animated elements
-- GSAP without cleanup in React — always use `gsap.context().revert()`
+DO NOT: use `filter: blur()` on the glass element itself (blurs the content, not the
+background — use `backdrop-filter`). Skip the caustic highlight layer — without it the
+panel looks flat and plasticky. Stack glass-on-glass without a real blur increase.
 
-## Anti-Slop Motion Audit
+**Escalation to real WebGL refraction (Spline):** the above is a CSS/Framer
+approximation — correct for cards, navbars, and panels. For one full-bleed hero
+glass object where true light-bending refraction is the whole point, that's the
+same Tier 3 justification as `shader-effects`' escalation rule (approval-gated,
+Premium path only, never mobile — GPU-heavy). Don't reach for Spline for routine
+glass surfaces; the CSS approximation above covers those correctly and cheaply.
 
-Run this check before calling any motion work complete:
+### Extension B: Cinematic Scroll Choreography
 
-- [ ] All animations have reduced-motion fallback
-- [ ] No `transition: all` in component CSS
-- [ ] GSAP context cleanup present in all React components
-- [ ] ScrollTrigger `toggleActions` specified (not default)
-- [ ] Lenis initialized once at app root, not per-component
-- [ ] Hero entrance total time < 1.2s
-- [ ] No animation serves only decoration — each has conversion/storytelling purpose
-- [ ] Mobile animations are lighter (reduce stagger, reduce distance)
-- [ ] LCP element (hero image/headline) not delayed by animation
-- [ ] `will-change` only on elements with active transforms
+For `cinematic-website-builder` integration. Maps directly to Modules 1–30.
+
+**Macro → Dolly → Orbit scroll sequence:**
+
+// GSAP timeline — hero enters with macro wide pull, then dolly in
+
+const tl = gsap.timeline({
+
+  scrollTrigger: {
+
+    trigger: ".hero-section",
+
+    start: "top top",
+
+    end: "+=200%",
+
+    scrub: 1.5,
+
+    pin: true
+
+  }
+
+});
+
+tl.fromTo(".hero-bg", { scale: 1.15 }, { scale: 1, ease: "none" })
+
+  .fromTo(".hero-copy", { opacity: 0, y: 60 }, { opacity: 1, y: 0, ease: "power2.out" }, 0.2)
+
+  .fromTo(".hero-sub", { opacity: 0 }, { opacity: 1 }, 0.5);
+
+**Parallax depth stack:**
+
+gsap.utils.toArray("[data-parallax]").forEach(el => {
+
+  const depth = el.dataset.parallax || 0.2;
+
+  gsap.to(el, {
+
+    yPercent: -100 * depth,
+
+    ease: "none",
+
+    scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: true }
+
+  });
+
+});
+
+### Extension C: Physics-Based Cursor Interactions
+
+For premium landing pages and cinematic sites with Module 10 cursor system.
+
+**Magnetic button (motion/react — NEVER useState):**
+
+"use client";
+
+import { useRef } from "react";
+
+import { motion, useMotionValue, useTransform, useSpring } from "motion/react";
+
+export function MagneticButton({ children }) {
+
+  const ref = useRef(null);
+
+  const x = useMotionValue(0);
+
+  const y = useMotionValue(0);
+
+  const springX = useSpring(x, { stiffness: 150, damping: 15 });
+
+  const springY = useSpring(y, { stiffness: 150, damping: 15 });
+
+  const handleMouseMove = (e) => {
+
+    const rect = ref.current.getBoundingClientRect();
+
+    const cx = rect.left + rect.width / 2;
+
+    const cy = rect.top + rect.height / 2;
+
+    x.set((e.clientX - cx) * 0.4);
+
+    y.set((e.clientY - cy) * 0.4);
+
+  };
+
+  return (
+
+    <motion.button
+
+      ref={ref}
+
+      onMouseMove={handleMouseMove}
+
+      onMouseLeave={() => { x.set(0); y.set(0); }}
+
+      style={{ x: springX, y: springY }}
+
+    >
+
+      {children}
+
+    </motion.button>
+
+  );
+
+}
+
+### Extension D: Text Reveal Techniques
+
+Cinematic text reveals for hero headlines.
+
+**Word-by-word stagger:**
+
+const words = headline.split(" ");
+
+return (
+
+  <motion.h1>
+
+    {words.map((word, i) => (
+
+      <motion.span
+
+        key={i}
+
+        style={{ display: "inline-block", overflow: "hidden" }}
+
+        initial={{ clipPath: "inset(100% 0 0 0)" }}
+
+        animate={{ clipPath: "inset(0% 0 0 0)" }}
+
+        transition={{ duration: 0.6, delay: i * 0.08, ease: [0.16, 1, 0.3, 1] }}
+
+      >
+
+        {word}&nbsp;
+
+      </motion.span>
+
+    ))}
+
+  </motion.h1>
+
+);
+
+**Scramble decode (Orbitron headers for Space Age dashboard):**
+
+const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+function scrambleTo(el, finalText, duration = 800) {
+
+  let frame = 0;
+
+  const totalFrames = duration / 16;
+
+  const interval = setInterval(() => {
+
+    el.textContent = finalText.split("").map((char, i) => {
+
+      if (i < Math.floor((frame / totalFrames) * finalText.length)) return char;
+
+      return chars[Math.floor(Math.random() * chars.length)];
+
+    }).join("");
+
+    if (frame++ >= totalFrames) { el.textContent = finalText; clearInterval(interval); }
+
+  }, 16);
+
+}
+
+---
+
+## MOTION RECIPES QUICK REFERENCE
+
+### Standard Enter (Jakub-grade production)
+
+initial={{ opacity: 0, translateY: "calc(-100% - 4px)", filter: "blur(4px)" }}
+
+animate={{ opacity: 1, translateY: 0, filter: "blur(0px)" }}
+
+transition={{ type: "spring", duration: 0.45, bounce: 0 }}
+
+### Subtle Exit (never compete with what's entering)
+
+exit={{ translateY: "-12px", opacity: 0, filter: "blur(4px)" }}
+
+transition={{ duration: 0.2 }}
+
+### Scroll Reveal Stagger (Motion, no GSAP needed)
+
+<motion.li
+
+  initial={{ opacity: 0, y: 24 }}
+
+  whileInView={{ opacity: 1, y: 0 }}
+
+  viewport={{ once: true, amount: 0.3 }}
+
+  transition={{ duration: 0.6, delay: i * 0.06, ease: [0.16, 1, 0.3, 1] }}
+
+/>
+
+### Spring Config Tokens
+
+const springs = {
+
+  snappy:    { type: "spring", stiffness: 400, damping: 30 },  // UI feedback
+
+  smooth:    { type: "spring", duration: 0.45, bounce: 0 },    // enters/exits
+
+  elastic:   { type: "spring", stiffness: 100, damping: 10 },  // playful/kids
+
+  cinematic: { type: "spring", duration: 0.9, bounce: 0.05 },  // Space Age reveals
+
+};
+
+### Easing Tokens
+
+:root {
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  --ease-in-expo: cubic-bezier(0.7, 0, 0.84, 0);
+
+  --ease-spring: linear(0, 0.004, 0.016 /* ... use generator */);
+
+}
+
+---
+
+## GSAP CANONICAL SKELETONS
+
+The GSAP skeleton implementations (Sticky Stack, Horizontal Pan, and the full effect
+library) live in the **gsap-supercharged** skill — that is the single canonical motion
+source. See `gsap-supercharged` (plus its prerequisites `gsap-core`,
+`gsap-scrolltrigger`, `gsap-timeline`) for canonical implementations. Do not duplicate
+skeleton code here; this skill owns motion *principles* and audit criteria only.
+
+---
+
+## FORBIDDEN PATTERNS
+
+- **`window.addEventListener("scroll", ...)`** — BANNED. Use `useScroll()`, ScrollTrigger, IntersectionObserver, or CSS `animation-timeline`.  
+- **Creating ambient/background ScrollTriggers before pinned scenes** — BANNED. ScrollTriggers refresh in *creation order*. A background trigger created before a pinned scene computes its start/end positions before that scene's pin-spacer exists, so it silently fires thousands of pixels early — no error, no warning, just wrong. **Always create every `pin: true` ScrollTrigger first, ambient/decorative ones after.**  
+- **`useState` for mouse position or scroll progress** — BANNED. Use `useMotionValue` + `useTransform`.  
+- **`requestAnimationFrame` loops touching React state** — BANNED.  
+- **GSAP without `ctx.revert()` cleanup** — BANNED. Always return cleanup.  
+- **Mixing GSAP and Motion in the same component tree** — BANNED.  
+- **Animation without `prefers-reduced-motion` guard when MOTION > 3** — BANNED.  
+- **Animating `top`, `left`, `width`, `height`** — BANNED. Only `transform` and `opacity`.
+
+---
+
+## ANTI-SLOP MOTION PATTERNS (AUDIT FLAGS)
+
+When auditing, flag these as AI-slop:
+
+1. **Bounce overuse** — Everything bounces. Professional apps don't bounce.  
+2. **Uniform stagger** — All items delay by exactly 100ms. Use `i * 0.06`.  
+3. **Linear easing everywhere** — Dead, robotic. Use springs or custom bezier.  
+4. **Exit = reverse of enter** — Lazy. Exits should be subtler and faster.  
+5. **Hover scale 1.05 on everything** — Indiscriminate. Only interactive affordances.  
+6. **3s+ infinite rotation/pulse on non-status elements** — Attention hijack.  
+7. **Page-load stagger on 20+ items** — Forces user to wait. Cap at 8 items.  
+8. **Animate on keyboard nav** — Accessibility violation. No exceptions.  
+9. **Missing reduced-motion media query** — Vestibular disorder risk.  
+10. **GSAP without cleanup** — Memory leak.
+
+---
+
+## HANDOFF TO CINEMATIC-WEBSITE-BUILDER
+
+When motion scope exceeds UI components and enters full-page scroll choreography:
+
+**Module mapping:**
+
+- Module 1–3 (Scroll Reveals) → This skill CREATE mode  
+- Module 4–7 (Parallax, Pinning) → GSAP Canonical Skeletons above  
+- Module 8–10 (Cursor Physics) → Extension C above  
+- Module 11–15 (Text Animations) → Extension D above  
+- Module 16–20 (Section Transitions) → Cinematic Scroll Choreography above  
+- Module 21–30 (Ambient / Environment) → Hand off to `cinematic-website-builder`
+
+**Handoff signal:** When the user asks for "full-page animation architecture" or references Space Age cinematic sites, output the motion strategy brief and pass to `cinematic-website-builder` with module annotations.
+
+---
+
+## ACCESSIBILITY MANDATE
+
+/* All animations must have this block */
+
+@media (prefers-reduced-motion: reduce) {
+
+  *, *::before, *::after {
+
+    animation-duration: 0.01ms !important;
+
+    animation-iteration-count: 1 !important;
+
+    transition-duration: 0.01ms !important;
+
+    scroll-behavior: auto !important;
+
+  }
+
+}
+
+// Motion/React pattern
+
+const reduce = useReducedMotion();
+
+const variants = {
+
+  hidden: reduce ? false : { opacity: 0, y: 24 },
+
+  visible: { opacity: 1, y: 0 }
+
+};
+
+---
+
+## OUTPUT FORMAT — AUDIT MODE
+
+Audit output = branded HTML report with:
+
+1. **Summary scorecard** — per-designer rating (Emil / Jakub / Jhey / SA standard)  
+2. **Per-finding cards** with looping live demos  
+3. **Severity levels** — Critical (a11y), High (slop), Medium (refinement), Low (preference)  
+4. **Fix code snippets** — drop-in replacements  
+5. **SA-specific flags** — VL-01 violations, cinematic site standard gaps
+
