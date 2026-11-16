@@ -161,7 +161,7 @@ codex --plugin-dir /home/caveman/plugins/caveman
 | DeepSeek V4 Pro builder | ✅ Yes | 65% output tokens |
 | Gemini Flash QA | ✅ Yes | 72% output tokens |
 | Codex deployer | ✅ Yes | 68% output tokens |
-| Vapi voice agent | — | N/A (speech) |
+| Voice agent | — | N/A (speech) |
 
 ---
 

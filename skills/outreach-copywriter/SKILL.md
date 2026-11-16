@@ -4,13 +4,13 @@ display_name: SPACE AGE — Outreach Copywriter
 version: 1.0.0
 last_updated: 2026-07-15
 description: >
-  Generates the exact cold email and Vapi phone script for the Space Age local business
+  Generates the exact cold email and voice-agent phone script for the Space Age local business
   outreach pipeline. Not generic copywriting — this skill knows the specific offer
   ($300–750 website), the specific audience (small local business owner with no/weak site),
   and the exact psychological framework (I already built it, here it is, do you want it).
   Use IMMEDIATELY after lead-to-brief produces a build_brief. Outputs production-ready email
-  HTML variables AND the Vapi conversation script in one call. Trigger on: any mention of
-  "write the email", "outreach copy", "email the lead", "phone script", "vapi script", or
+  HTML variables AND the voice conversation script in one call. Trigger on: any mention of
+  "write the email", "outreach copy", "email the lead", "phone script", "voice script", or
   when the pipeline sends the build_brief to the copy generation step.
 ---
 
@@ -18,7 +18,7 @@ description: >
 ## Space Age AI Solutions — Cold Outreach Copy Engine
 
 This skill writes the two pieces of outreach that close the deal: the cold email and the
-Vapi phone call script. Both are built around one psychological hook that has the highest
+voice-agent phone call script. Both are built around one psychological hook that has the highest
 conversion rate for this offer type: **the site already exists before they're asked to pay.**
 
 ## THE CORE PSYCHOLOGY
@@ -112,13 +112,13 @@ email_output:
 - ❌ More than 3 paragraphs before the URL block
 - ❌ The word "synergy", "leverage", "solutions", "cutting-edge"
 
-## OUTPUT 2 — VAPI PHONE SCRIPT
+## OUTPUT 2 — VOICE PHONE SCRIPT
 
-Vapi executes this as a structured conversation tree. Output must be valid for Vapi's
-conversation flow format.
+`sa-voice-agent-builder` compiles this structured conversation tree into the Gemini Live
+system instruction.
 
 ```yaml
-vapi_script:
+voice_script:
   voice: "shimmer"          # warm, professional female voice
   first_message: ""         # the cold open — 2 sentences max
   nodes:
@@ -158,7 +158,7 @@ vapi_script:
       - "callback_time"
 ```
 
-### VAPI SCRIPT RULES
+### VOICE SCRIPT RULES
 
 - First message: state the reason for the call in sentence 1. No fake familiarity.
 - Every objection handler: validate their concern in 5 words, then pivot in 15.
@@ -181,7 +181,7 @@ we move on to the next business on our list."
 ## NEVER DO
 
 - Never write a subject line with the word "Free" (spam filter trigger)
-- Never write a Vapi script with sentences over 25 words (hard to follow when spoken)
+- Never write a voice script with sentences over 25 words (hard to follow when spoken)
 - Never use the word "AI" in customer-facing copy for this offer
 - Never include more than 5 features in the includes list
 - Never price below $300 or above $750 in any outreach
@@ -191,11 +191,11 @@ we move on to the next business on our list."
 
 Per SA standing infra: **direct API calls + Hermes Telegram control only — no n8n.**
 The calling process passes the build_brief to this skill, makes the Anthropic call
-directly, and pings Hermes on completion. Data contract (email_output + vapi_script)
+directly, and pings Hermes on completion. Data contract (email_output + voice_script)
 unchanged.
 
 ```bash
-# 1. Direct API call — generate email copy + Vapi script from the brief
+# 1. Direct API call — generate email copy + voice script from the brief
 COPY=$(curl -s -X POST https://api.anthropic.com/v1/messages \
   -H "x-api-key: $ANTHROPIC_API_KEY" \
   -H "anthropic-version: 2023-06-01" \
@@ -206,13 +206,13 @@ COPY=$(curl -s -X POST https://api.anthropic.com/v1/messages \
   "max_tokens": 2500,
   "system": "[PASTE THIS FULL SKILL.md AS SYSTEM PROMPT]",
   "messages": [
-    { "role": "user", "content": "Generate email copy and Vapi script from this brief:\n\n$BUILD_BRIEF_YAML" }
+    { "role": "user", "content": "Generate email copy and voice script from this brief:\n\n$BUILD_BRIEF_YAML" }
   ]
 }
 JSON
 )
 
-# 2. Persist email_output + vapi_script back to the brief / copy store
+# 2. Persist email_output + voice_script back to the brief / copy store
 
 # 3. Hermes Telegram status ping
 curl -s -X POST "https://api.telegram.org/bot$HERMES_TOKEN/sendMessage" \
@@ -229,4 +229,4 @@ Secrets come from the process environment — never embed them in the brief or t
 - **Upstream:** lead-to-brief (reads outreach + business + site_audit blocks)
 - **Downstream → email send:** email_output variables → direct API call to the email
   provider (Instantly / Gmail API) from the calling process — no n8n
-- **Downstream → vapi-orchestrator:** vapi_script block → agent deployment
+- **Downstream → sa-voice-agent-builder:** voice_script block → agent deployment

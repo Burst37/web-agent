@@ -134,7 +134,7 @@ Elegant improvements > marginal gains with complexity.
 |---|---|---|
 | Site quality loop | Cinematic website builder output | Conversion rate proxy |
 | Outreach copy A/B | Cold email subject lines + body | Open rate (scraped from inbox) |
-| Voice agent scripts | Vapi conversation flows | Booking rate |
+| Voice agent scripts | Voice conversation flows | Booking rate |
 | SEO content | Meta descriptions, H1s | Rank position |
 | Lead scoring | Brief quality assessment | Close rate correlation |
 

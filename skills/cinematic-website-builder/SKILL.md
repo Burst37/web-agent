@@ -1347,5 +1347,5 @@ Fail any box → back to Stage 3, do not deploy. On pass → hand off to `sa-dep
    `sa-local-seo-geo`, Higgsfield assets on demand)
 5. **Stage 4 QA GATE** (below) → blocking checklist
 6. `sa-deploy-operator` → Stage 5 deploy (Vercel → live URL → Hermes → vault)
-7. `sa-voice-agent-builder` / `vapi-orchestrator` → Stage 6 voice
+7. `sa-voice-agent-builder` → Stage 6 voice
 8. `outreach-copywriter` → Stage 7 outreach → Stage 8 vault log

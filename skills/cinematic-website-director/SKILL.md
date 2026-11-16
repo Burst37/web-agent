@@ -69,7 +69,7 @@ STAGE 4    QA gate — cinematic-website-builder's own checklist is the floor; t
            Sections 15-22 are the ceiling for enhanced/cinematic/flagship/multi-site/
            non-code-first builds
 STAGE 5    sa-deploy-operator                             → deploy + Hermes/vault log
-STAGE 6    vapi-orchestrator (production) / sa-voice-agent-builder (roadmapped) → voice
+STAGE 6    sa-voice-agent-builder (roadmapped — skip until live) → voice
 STAGE 7    outreach-copywriter                             → outreach copy
 ```
 
@@ -256,8 +256,8 @@ incomplete.
 
 ### Voice
 
-13. `vapi-orchestrator` (production today) or `sa-voice-agent-builder` (Gemini Flash Live
-    direct-API path — roadmapped; check its own `Status` field before routing to it) —
+13. `sa-voice-agent-builder` (Gemini Flash Live direct-API path — roadmapped; check its
+    own `Status` field before routing to it, and skip the stage until it is live) —
     mandatory for every website unless explicitly disabled (Section 10). Resolve to whichever
     is actually live; do not hardwire to a name that isn't shipped.
 
@@ -1125,9 +1125,8 @@ No critical conversion path may depend on video/audio playback.
 
 Every website created by the factory must ship with a configured voice-agent capability unless the operator explicitly disables it for legal/compliance reasons.
 
-Route to `vapi-orchestrator` (production-ready today) or `sa-voice-agent-builder` (Gemini
-Flash Live direct-API path — roadmapped, check its `Status` field before use). Resolve to
-whichever is actually live rather than hardwiring to one; both consume the same manifest
+Route to `sa-voice-agent-builder` (Gemini Flash Live direct-API path — roadmapped, check
+its `Status` field before use; skip the voice stage until it is live). It consumes the manifest
 below.
 
 Minimum manifest:
@@ -1734,7 +1733,7 @@ against this repo's actual `skills/` directory as of 2026-08-14:
 | SA_GSAPMotionLibrary_SKILL | `gsap-core`, `gsap-scrolltrigger`, `gsap-timeline`, `gsap-supercharged` | present, live |
 | hover/cursor effect source material | `design-motion-principles` | present, live |
 | Higgsfield Master + MCP integration + asset automation | `mcp__Higgsfield__*` MCP tools | tool present; no repo skill wrapper |
-| voice-agent builder/deep skills | `vapi-orchestrator` (live), `sa-voice-agent-builder` (roadmapped) | partially present |
+| voice-agent builder/deep skills | `sa-voice-agent-builder` (roadmapped) | roadmapped |
 | Playwright/browser automation | `browserbase-scraper`, plus `cinematic-website-builder`'s own Playwright QA integration | present, live |
 | design-loop | Sections 15-17 of this skill | present, live — this file is the canonical home |
 | diagnose/autonomous-loop concepts | Section 23 of this skill | present, live — this file is the canonical home |
