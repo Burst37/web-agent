@@ -6,7 +6,7 @@ last_updated: 2026-04-18
 description: >
   The automation glue of the Space Age lead gen pipeline. Takes a raw CSV row from the
   Google Maps scraper and outputs a fully structured Build Brief consumed by every downstream
-  skill — cinematic-website-builder, outreach-copywriter, vapi-orchestrator. Use IMMEDIATELY
+  skill — cinematic-website-builder, outreach-copywriter, sa-voice-agent-builder. Use IMMEDIATELY
   whenever a scraped lead row needs to be converted into a production-ready brief. This is
   what makes the pipeline automated — without it every build requires a manual Claude session.
   Trigger on: any lead row, any mention of "brief", "build this lead", "convert the lead",
@@ -34,8 +34,8 @@ Direct pipeline trigger (calling process — no n8n)
 Build Brief (YAML)
       ↓
 ┌─────────────────┬──────────────────┬──────────────────┐
-│ cinematic-      │ outreach-        │ vapi-            │
-│ website-builder │ copywriter       │ orchestrator     │
+│ cinematic-      │ outreach-        │ sa-voice-agent-  │
+│ website-builder │ copywriter       │ builder          │
 └─────────────────┴──────────────────┴──────────────────┘
 ```
 
@@ -183,7 +183,7 @@ build_brief:
     email_hook: ""         # one sentence opening
     price_anchor: 750
     price_floor: 300
-    vapi_intro: ""         # first 2 sentences of the phone script
+    voice_intro: ""         # first 2 sentences of the phone script
 
   deploy:
     vercel_project_name: "" # {name_slug}-{city_slug}
@@ -249,5 +249,5 @@ environment — never embed them in the brief or the skill.
   flagged HIGH priority — the calling process invokes this skill directly (no n8n)
 - **Downstream → cinematic-website-builder:** passes `design` + `seo` + `services` + `copy` blocks
 - **Downstream → outreach-copywriter:** passes `business` + `outreach` + `site_audit` blocks
-- **Downstream → vapi-orchestrator:** passes `business` + `outreach` + `deploy` blocks
+- **Downstream → sa-voice-agent-builder:** passes `business` + `outreach` + `deploy` blocks
 - **Downstream → local-business-seo:** passes `seo` + `business` + `services` blocks

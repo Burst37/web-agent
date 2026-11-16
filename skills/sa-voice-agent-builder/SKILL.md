@@ -5,23 +5,20 @@ version: 0.1.0
 last_updated: 2026-07-15
 description: >
   Mass-production voice-agent layer for the Space Age outreach pipeline, built on Gemini
-  3.1 Flash Live (realtime bidirectional audio) instead of the Vapi platform. Reads the
-  outreach-copywriter vapi_script and the lead build_brief and produces a deployable
+  3.1 Flash Live (realtime bidirectional audio). Reads the
+  outreach-copywriter voice_script and the lead build_brief and produces a deployable
   realtime voice agent plus a queued outbound call — over a direct API + telephony bridge,
   matching SA's direct-API + Hermes infra (no n8n, no third-party agent platform). This is
-  the default for mass production; keep vapi-orchestrator as the fast-path for rush jobs.
+  the only voice path in the pipeline.
   Trigger on: "gemini voice agent", "build the voice agent", "flash live agent", "mass
-  production calls", or when the pipeline reaches the voice step and cost/volume favors
-  the direct Gemini path over Vapi.
+  production calls", or when the pipeline reaches the voice step.
 ---
 
 # SA VOICE AGENT BUILDER — Gemini Flash Live
 ## Space Age AI Solutions — Voice Agent Deployment Layer (direct-API default)
 
-Same job as `vapi-orchestrator`, different substrate. Vapi is a managed platform (great
-for a one-off rush call); this skill runs the agent directly on **Gemini 3.1 Flash Live**
-so mass-production volume isn't gated by per-minute platform fees or an external
-orchestrator. Architecture matches SA standing infra: direct API + Hermes Telegram, no n8n.
+This skill runs the agent directly on **Gemini 3.1 Flash Live**, so mass-production
+volume isn't gated by per-minute platform fees or an external orchestrator. Architecture matches SA standing infra: direct API + Hermes Telegram, no n8n.
 
 > **Status:** roadmapped (Phase 7.5). This file is the build spec + architecture. Endpoint
 > names and payload shapes for the Gemini Live realtime API must be confirmed against the
@@ -29,29 +26,14 @@ orchestrator. Architecture matches SA standing infra: direct API + Hermes Telegr
 
 ---
 
-## WHEN TO USE THIS vs vapi-orchestrator
-
-| | sa-voice-agent-builder (Gemini Flash Live) | vapi-orchestrator (Vapi) |
-|---|---|---|
-| Role | **Mass-production default** | Rush / fast-path |
-| Infra fit | Direct API + Hermes (native) | Managed platform |
-| Cost at volume | Lower (no platform per-minute margin) | Higher |
-| Setup for one call | More (own telephony bridge) | Less (turnkey) |
-| Best for | Batches of 20–80 leads/day | A single urgent lead now |
-
-Both consume the **same** `vapi_script` + `build_brief` contract, so a lead can be routed
-to either without regenerating copy.
-
----
-
 ## INPUT
 
-- `vapi_script` block from `outreach-copywriter` (first_message, nodes, objection
+- `voice_script` block from `outreach-copywriter` (first_message, nodes, objection
   handlers, booking action, end_of_call_report fields).
 - `build_brief` — `business` (name, phone), `outreach` (price_anchor, price_floor,
   owner_name), `deploy.live_url` (the preview URL to reference on the call).
 
-The conversation tree in `vapi_script` maps directly onto the Gemini Live **system
+The conversation tree in `voice_script` maps directly onto the Gemini Live **system
 instruction** + tool definitions below — no separate script format.
 
 ---
@@ -59,10 +41,10 @@ instruction** + tool definitions below — no separate script format.
 ## ARCHITECTURE
 
 ```
-build_brief + vapi_script
+build_brief + voice_script
         │
         ▼
- system instruction  ── compiled from vapi_script nodes + rules
+ system instruction  ── compiled from voice_script nodes + rules
         │
         ▼
  Gemini Live session  ◄── realtime audio ──►  Telephony bridge  ◄── PSTN ──►  Prospect
@@ -95,9 +77,9 @@ PCM the Live API expects and streams both directions.
 
 ## PROCEDURE
 
-### Step 1 — Compile the system instruction from vapi_script
-Fold `vapi_script.first_message`, each node's `message`, the objection triggers, and the
-VAPI SCRIPT RULES into a single Gemini Live system instruction. Encode the objection
+### Step 1 — Compile the system instruction from voice_script
+Fold `voice_script.first_message`, each node's `message`, the objection triggers, and the
+VOICE SCRIPT RULES into a single Gemini Live system instruction. Encode the objection
 `trigger` phrases as intent guidance ("if the caller says anything like X, respond with
 Y"), and expose `send_sms` and `end_call` as function-calling tools.
 
@@ -124,7 +106,7 @@ async with client.aio.live.connect(model=os.environ["GEMINI_LIVE_MODEL"],
 ### Step 3 — Telephony bridge (outbound call)
 Place the outbound PSTN call via Twilio to `business.phone` from `SA_CALLER_NUMBER`, attach
 a Media Streams websocket, and relay audio frames both ways (μ-law 8kHz ⇄ the Live API's
-PCM sample rate — resample in the bridge). Enforce the same guardrails as the Vapi path:
+PCM sample rate — resample in the bridge). Enforce these guardrails:
 E.164 only, business-hours window, honor do_not_call.
 
 ### Step 4 — Tools
@@ -158,8 +140,7 @@ call_result:
   obsidian_logged: true
 ```
 
-Identical shape to the Vapi outcome report, so downstream CRM write-back and follow-up
-routing are engine-agnostic.
+Downstream CRM write-back and follow-up routing read this shape.
 
 ---
 
@@ -174,9 +155,8 @@ routing are engine-agnostic.
 ---
 
 ## SKILL CONNECTIONS
-- **Upstream:** `outreach-copywriter` (vapi_script) + `lead-to-brief` (business, outreach,
+- **Upstream:** `outreach-copywriter` (voice_script) + `lead-to-brief` (business, outreach,
   deploy blocks).
-- **Sibling / fallback:** `vapi-orchestrator` — same contract, managed-platform fast-path.
 - **Downstream → CRM (direct):** writes the outcome report back to the lead row.
 - **Downstream → Hermes + Obsidian:** status ping + permanent call log.
 

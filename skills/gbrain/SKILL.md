@@ -32,7 +32,7 @@ Built by Garry Tan to power his actual production agent fleet. Self-wiring knowl
 | Hermes Agent (VPS) | Primary memory layer — persistent across all sessions |
 | Lead gen pipeline | Store every scraped lead, enrich with entity graph |
 | Client relationships | People + company graph auto-built from outreach |
-| Voice call logs | Ingest Vapi transcripts → searchable memory |
+| Voice call logs | Ingest voice-call transcripts → searchable memory |
 | Record Exec roster | Artist profiles, contacts, deals — persistent graph |
 
 ---

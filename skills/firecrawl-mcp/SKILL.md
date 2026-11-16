@@ -25,7 +25,7 @@ Search + scrape + crawl + research. Full web interaction layer for any MCP-compa
 | Cinematic Website Builder Phase 0.5 | Scrape client URL → extract brand tokens |
 | Lead gen competitor analysis | Deep crawl competitor sites → extract positioning |
 | Lead profile enrichment | Scrape business website → extract NAP, services, reviews |
-| Outreach personalization | Scrape lead's site → feed rapport profiles to Vapi |
+| Outreach personalization | Scrape lead's site → feed rapport profiles to the voice agent |
 | SEO audit | Crawl entire site → extract all meta, headings, schema |
 | Price monitoring | Scrape competitor pricing pages |
 

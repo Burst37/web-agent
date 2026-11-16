@@ -724,7 +724,7 @@ DOWNSTREAM:
 
 PARALLEL:
   sa-email-architect → email campaign targeting same service area
-  vapi-orchestrator → voice agent uses same FAQ content
+  sa-voice-agent-builder → voice agent uses same FAQ content
   outreach-copywriter → shares first-hand content for email copy
 ```
 

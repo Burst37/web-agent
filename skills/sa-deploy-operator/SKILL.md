@@ -30,7 +30,7 @@ lead-to-brief → ui-ux-designer → cinematic-website-builder → sa-local-seo-
       ↓
 Live Vercel URL → written back to brief → Hermes ping → Obsidian log
       ↓
-outreach-copywriter / vapi-orchestrator (now have {preview_url} to reference)
+outreach-copywriter / sa-voice-agent-builder (now have {preview_url} to reference)
 ```
 
 ---
@@ -78,7 +78,7 @@ DEPLOY_URL=$(vercel --prod --yes \
 ### Step 2 — Write the live URL back into the brief
 ```bash
 # Update the deploy block in the brief file so downstream skills reference the real URL.
-# (outreach-copywriter and vapi-orchestrator read deploy.preview_subdomain / {preview_url}.)
+# (outreach-copywriter and sa-voice-agent-builder read deploy.preview_subdomain / {preview_url}.)
 yq -i ".build_brief.deploy.live_url = \"$DEPLOY_URL\"" "$BRIEF_FILE"
 yq -i ".build_brief.deploy.deployed_at = \"$(date -u +%FT%TZ)\"" "$BRIEF_FILE"
 ```
@@ -135,6 +135,6 @@ deploy_result:
 ## SKILL CONNECTIONS
 - **Upstream:** `cinematic-website-builder` (completed build) + `sa-local-seo-geo`
   (SEO/GEO injection) + `lead-to-brief` (`deploy` block).
-- **Downstream → `outreach-copywriter` / `vapi-orchestrator`:** both now have a real
+- **Downstream → `outreach-copywriter` / `sa-voice-agent-builder`:** both now have a real
   `{preview_url}` to reference in email and call scripts.
 - **Downstream → Obsidian vault:** permanent deploy record for the session-end log.
