@@ -1,0 +1,5 @@
+tests/assets/
+tests/qa/
+tests/*.dist.html
+tests/_dbg.html
+tests/fixtures/letters-*.png
